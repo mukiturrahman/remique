@@ -1,0 +1,82 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model User {
+  id                String             @id @default(uuid())
+  whatsappId        String             @unique @map("whatsapp_id")
+  phoneNumber       String             @map("phone_number")
+  name              String?
+  timezone          String             @default("Asia/Dhaka")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  reminders         Reminder[]
+  messages          Message[]
+  conversationState ConversationState?
+
+  @@map("users")
+}
+
+model Message {
+  id                String           @id @default(uuid())
+  userId            String?          @map("user_id")
+  whatsappMessageId String           @unique @map("whatsapp_message_id")
+  direction         MessageDirection
+  messageText       String           @map("message_text")
+  rawPayload        Json?            @map("raw_payload")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Reminder {
+  id              String         @id @default(uuid())
+  userId          String         @map("user_id")
+  title           String
+  originalMessage String         @map("original_message")
+  scheduledAt     DateTime       @map("scheduled_at")
+  timezone        String         @default("Asia/Dhaka")
+  recurrenceRule  String?        @map("recurrence_rule")
+  status          ReminderStatus @default(SCHEDULED)
+  qstashMessageId String?        @map("qstash_message_id")
+  attempts        Int            @default(0)
+  errorMessage    String?        @map("error_message")
+  sentAt          DateTime?      @map("sent_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("reminders")
+}
+
+model ConversationState {
+  userId        String   @id @map("user_id")
+  pendingIntent String   @map("pending_intent")
+  pendingData   Json     @default("{}") @map("pending_data")
+  expiresAt     DateTime @map("expires_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("conversation_states")
+}
