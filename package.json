@@ -15,8 +15,6 @@
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
-    "@neon/config": "^0.1.0",
-    "@neon/env": "^0.1.0",
     "@prisma/client": "^6.3.0",
     "@upstash/qstash": "^2.7.20",
     "clsx": "^2.1.1",
