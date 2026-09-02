@@ -48,15 +48,39 @@ export class WhatsAppApiError extends Error {
   }
 
   /**
-   * True when retrying the exact same request could plausibly succeed.
-   * Everything else (auth, bad recipient, template problems) is permanent.
+   * How this failure should be handled:
+   *
+   *  - 'transient': retrying the identical request may succeed. Let QStash retry.
+   *  - 'operator':  broken credentials or configuration. Retrying now is useless,
+   *                 but a human can fix it — so the message must stay replayable.
+   *  - 'permanent': the request itself is bad (bad recipient, malformed payload).
+   *                 No retry, no replay.
    */
+  get failureClass(): 'transient' | 'operator' | 'permanent' {
+    const code = this.code ?? -1;
+
+    if (this.httpStatus >= 500) return 'transient';
+    if (this.httpStatus === 429) return 'transient';
+    // 130429 = throughput limit, 131048 = spam rate limit, 131056 = pair rate limit,
+    // 133016 = temporarily blocked, 1/2/4 = transient/unknown API errors.
+    if ([1, 2, 4, 130429, 131048, 131056, 133016].includes(code)) return 'transient';
+
+    // Credential and configuration problems. 190 = expired/invalid access token,
+    // 200/10/3 = missing permission, 2500 = invalid OAuth request,
+    // 102/104 = session or token absent.
+    if ([3, 10, 102, 104, 190, 200, 2500].includes(code)) return 'operator';
+    if (this.errorType === 'OAuthException') return 'operator';
+
+    // Template configuration (132xxx) and phone-number registration (133xxx)
+    // are also fixable by the operator, not by retrying.
+    if (code >= 132000 && code < 134000) return 'operator';
+
+    return 'permanent';
+  }
+
+  /** True when retrying the exact same request could plausibly succeed. */
   get isRetryable(): boolean {
-    if (this.httpStatus >= 500) return true;
-    if (this.httpStatus === 429) return true;
-    // 130429 = throughput limit, 131056 = pair rate limit, 131048 = spam rate limit,
-    // 133016 = temporarily blocked, 500/2 = unknown transient API error.
-    return [1, 2, 4, 130429, 131048, 131056, 133016].includes(this.code ?? -1);
+    return this.failureClass === 'transient';
   }
 }
 
@@ -178,4 +202,63 @@ export async function sendWhatsAppTemplate(
       components,
     },
   });
+}
+
+export type WhatsAppTokenStatus =
+  | { ok: true; phoneNumberId: string; displayPhoneNumber?: string; verifiedName?: string }
+  | { ok: false; httpStatus: number; code?: number; error: string };
+
+/**
+ * Cheap liveness probe for WHATSAPP_TOKEN. Reads the phone number the app is
+ * configured against — no message is sent, so this is safe to poll.
+ * Catches an expired token before a real user does.
+ */
+export async function checkWhatsAppToken(): Promise<WhatsAppTokenStatus> {
+  const url =
+    `${GRAPH_BASE}/${env.WHATSAPP_PHONE_NUMBER_ID}` +
+    `?fields=id,display_phone_number,verified_name`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${env.WHATSAPP_TOKEN}` },
+    cache: 'no-store',
+  });
+
+  const rawBody = await response.text();
+
+  if (!response.ok) {
+    let metaError: any = undefined;
+    try {
+      metaError = JSON.parse(rawBody)?.error;
+    } catch {
+      // Non-JSON body — surfaced via rawBody below.
+    }
+
+    console.error(
+      `[Remique][WhatsApp] token-check FAILED ` +
+        `http=${response.status} code=${metaError?.code ?? '-'} ` +
+        `type=${metaError?.type ?? '-'} ` +
+        `message=${JSON.stringify(metaError?.message ?? null)} ` +
+        `raw=${rawBody.slice(0, 300)}`
+    );
+
+    return {
+      ok: false,
+      httpStatus: response.status,
+      code: metaError?.code,
+      error: metaError?.message ?? rawBody.slice(0, 300),
+    };
+  }
+
+  const body = JSON.parse(rawBody) as {
+    id: string;
+    display_phone_number?: string;
+    verified_name?: string;
+  };
+
+  return {
+    ok: true,
+    phoneNumberId: body.id,
+    displayPhoneNumber: body.display_phone_number,
+    verifiedName: body.verified_name,
+  };
 }

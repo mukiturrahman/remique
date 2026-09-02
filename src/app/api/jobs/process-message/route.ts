@@ -71,11 +71,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ status: 'processed', messageId }, { status: 200 });
   } catch (error: any) {
-    const isPermanent = error instanceof WhatsAppApiError && !error.isRetryable;
+    // Anything that is not a classified WhatsApp error is treated as transient.
+    const failureClass =
+      error instanceof WhatsAppApiError ? error.failureClass : 'transient';
 
     console.error(
       `[Remique] process-message failed messageId=${messageId ?? '-'} ` +
-        `permanent=${isPermanent} error=${error?.message}`
+        `class=${failureClass} error=${error?.message}`
     );
 
     if (messageId) {
@@ -84,10 +86,10 @@ export async function POST(request: NextRequest) {
           where: { id: messageId },
           data: {
             processingError: error?.message?.slice(0, 500) ?? 'Unknown processing error',
-            // A permanent failure (bad token, bad recipient, unapproved template)
-            // will fail identically on every retry — burn it down instead of
-            // making QStash grind through its backoff schedule.
-            ...(isPermanent ? { processedAt: new Date() } : {}),
+            // Only a genuinely bad request is burned. An 'operator' failure
+            // (expired token, missing permission, unapproved template) leaves
+            // processedAt null so the message can be replayed once it is fixed.
+            ...(failureClass === 'permanent' ? { processedAt: new Date() } : {}),
           },
         });
       } catch (dbError: any) {
@@ -95,7 +97,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (isPermanent) {
+    if (failureClass === 'operator') {
+      // Retrying now cannot help, so ack to stop QStash burning its backoff
+      // schedule — but the message stays unprocessed and replayable.
+      console.error(
+        '[Remique] ACTION REQUIRED: WhatsApp credentials/config rejected. ' +
+          'Message left unprocessed for replay. Check /api/health?deep=1'
+      );
+      return NextResponse.json({ status: 'operator_action_required' }, { status: 200 });
+    }
+
+    if (failureClass === 'permanent') {
       return NextResponse.json({ status: 'permanent_failure' }, { status: 200 });
     }
 
