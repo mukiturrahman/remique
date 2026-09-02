@@ -1,6 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import { z } from 'zod';
 
 const envSchema = z.object({
@@ -19,16 +16,31 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-export const env: Env = {
-  NODE_ENV: (process.env.NODE_ENV as any) || 'development',
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  DATABASE_URL: process.env.DATABASE_URL || '',
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
-  WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN || '',
-  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-  WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || '',
-  WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
-  QSTASH_TOKEN: process.env.QSTASH_TOKEN || '',
-  QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
-  QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
-};
+// Validates all env vars at startup — throws with a clear message if anything is missing.
+const _parsed = envSchema.safeParse(process.env);
+
+if (!_parsed.success) {
+  console.error('[Remique] ❌ Invalid environment variables:');
+  console.error(_parsed.error.flatten().fieldErrors);
+  // In production, throw so the deployment fails loudly rather than silently degrading.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Missing or invalid environment variables. Check Vercel env config.');
+  }
+}
+
+export const env: Env = _parsed.success
+  ? _parsed.data
+  : {
+      // Fallback for local dev when some vars are missing (won't crash dev server)
+      NODE_ENV: (process.env.NODE_ENV as any) || 'development',
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      DATABASE_URL: process.env.DATABASE_URL || '',
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+      WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN || '',
+      WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+      WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || '',
+      WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
+      QSTASH_TOKEN: process.env.QSTASH_TOKEN || '',
+      QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
+      QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
+    };

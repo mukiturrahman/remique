@@ -15,14 +15,14 @@ export async function processIncomingUserMessage(user: User, userMessage: string
     },
   });
 
-  // 2. Extract structured entities with Gemini 2.0 Flash
+  // 2. Extract structured entities with Gemini
   const geminiResult = await parseReminderWithGemini(
     userMessage,
     user.timezone,
     activeState?.pendingData
   );
 
-  // Flow A: Clarification Required (e.g. missing time)
+  // ─── Flow A: Clarification Required ────────────────────────────────
   if (geminiResult.needs_clarification || geminiResult.intent === 'clarification_required') {
     await prisma.conversationState.upsert({
       where: { userId: user.id },
@@ -44,7 +44,7 @@ export async function processIncomingUserMessage(user: User, userMessage: string
     return;
   }
 
-  // Flow B: Create Reminder
+  // ─── Flow B: Create Reminder ────────────────────────────────────────
   if (geminiResult.intent === 'create_reminder' && geminiResult.scheduled_iso) {
     const validated = validateAndNormalizeDate(geminiResult.scheduled_iso, user.timezone);
 
@@ -78,13 +78,21 @@ export async function processIncomingUserMessage(user: User, userMessage: string
         data: { qstashMessageId: qstashMsgId },
       });
     } catch (schedErr: any) {
-      console.error('QStash scheduling error:', schedErr);
+      console.error('[Remique] QStash scheduling error:', schedErr.message);
+      // Mark as FAILED so the stuck record is visible for debugging
+      await prisma.reminder.update({
+        where: { id: reminder.id },
+        data: { status: 'FAILED', errorMessage: schedErr.message?.slice(0, 500) },
+      });
+      await sendWhatsAppMessage(
+        user.phoneNumber,
+        `⚠️ Sorry, I couldn't schedule your reminder due to a technical issue. Please try again.`
+      );
+      return;
     }
 
     // Clear any active pending conversation state
-    await prisma.conversationState.deleteMany({
-      where: { userId: user.id },
-    });
+    await prisma.conversationState.deleteMany({ where: { userId: user.id } });
 
     // Send instant confirmation
     const confirmMsg =
@@ -95,7 +103,7 @@ export async function processIncomingUserMessage(user: User, userMessage: string
     return;
   }
 
-  // Flow C: List Reminders
+  // ─── Flow C: List Reminders ─────────────────────────────────────────
   if (geminiResult.intent === 'list_reminders') {
     const upcoming = await prisma.reminder.findMany({
       where: {
@@ -123,9 +131,42 @@ export async function processIncomingUserMessage(user: User, userMessage: string
     return;
   }
 
-  // Flow D: Unknown / Greeting Fallback
+  // ─── Flow D: Cancel Reminder ─────────────────────────────────────────
+  if (geminiResult.intent === 'cancel_reminder') {
+    // Find the most recently created SCHEDULED reminder
+    const latestReminder = await prisma.reminder.findFirst({
+      where: {
+        userId: user.id,
+        status: 'SCHEDULED',
+        scheduledAt: { gte: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!latestReminder) {
+      await sendWhatsAppMessage(
+        user.phoneNumber,
+        "You don't have any upcoming reminders to cancel. 🗓️"
+      );
+      return;
+    }
+
+    await prisma.reminder.update({
+      where: { id: latestReminder.id },
+      data: { status: 'CANCELLED' },
+    });
+
+    const local = DateTime.fromJSDate(latestReminder.scheduledAt).setZone(user.timezone);
+    await sendWhatsAppMessage(
+      user.phoneNumber,
+      `✅ Done! I've cancelled your reminder:\n*${latestReminder.title}* — ${local.toFormat("ccc, LLL d 'at' h:mm a")}`
+    );
+    return;
+  }
+
+  // ─── Flow E: Unknown / Greeting Fallback ────────────────────────────
   await sendWhatsAppMessage(
     user.phoneNumber,
-    `Hi! I'm *Remique* 🔔 — your AI reminder assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"Kalke shokal 10 tay meeting er reminder dao"_\n• _"Remind me in 30 minutes to check the oven"_`
+    `Hi! I'm *Remique* 🔔 — your AI reminder assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"Kalke shokal 10 tay meeting er reminder dao"_\n• _"Remind me in 30 minutes to check the oven"_\n• _"Show my reminders"_\n• _"Cancel my last reminder"_`
   );
 }

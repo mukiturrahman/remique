@@ -6,12 +6,26 @@ import { Receiver } from '@upstash/qstash';
 import { env } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
+  let reminderId: string | undefined;
+
   try {
     const rawBody = await request.text();
     const signature = request.headers.get('upstash-signature');
 
-    // Verify QStash cryptographic signature if keys are configured
-    if (env.QSTASH_CURRENT_SIGNING_KEY && signature) {
+    // ─────────────────────────────────────────────────────────────────
+    // QStash Signature Verification
+    // Required in production. Optional in dev (allows manual curl testing).
+    // ─────────────────────────────────────────────────────────────────
+    if (env.NODE_ENV === 'production') {
+      if (!env.QSTASH_CURRENT_SIGNING_KEY) {
+        console.error('[Remique] QSTASH_CURRENT_SIGNING_KEY is not set in production — blocking request.');
+        return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+      }
+      if (!signature) {
+        console.warn('[Remique] Missing upstash-signature header — blocking unauthenticated request.');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       const receiver = new Receiver({
         currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
         nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY || env.QSTASH_CURRENT_SIGNING_KEY,
@@ -27,9 +41,18 @@ export async function POST(request: NextRequest) {
         console.error('[Remique] QStash signature verification failed');
         return NextResponse.json({ error: 'Invalid QStash signature' }, { status: 401 });
       }
+    } else if (env.QSTASH_CURRENT_SIGNING_KEY && signature) {
+      // In dev, verify if keys are present but don't block if they're missing
+      const receiver = new Receiver({
+        currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+        nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY || env.QSTASH_CURRENT_SIGNING_KEY,
+      });
+      await receiver.verify({ signature, body: rawBody, url: request.url });
     }
 
-    const { reminderId } = JSON.parse(rawBody) as { reminderId: string };
+    const parsed = JSON.parse(rawBody) as { reminderId: string };
+    reminderId = parsed.reminderId;
+
     if (!reminderId) {
       return NextResponse.json({ error: 'Missing reminderId' }, { status: 400 });
     }
@@ -59,19 +82,36 @@ export async function POST(request: NextRequest) {
       lastInbound &&
       DateTime.now().diff(DateTime.fromJSDate(lastInbound.createdAt), 'hours').hours < 24;
 
-    if (isWithin24h) {
-      // Send free-form text inside 24h window
-      await sendWhatsAppMessage(
-        reminder.user.phoneNumber,
-        `🔔 *Remique Reminder:*\n${reminder.title}`
-      );
-    } else {
-      // Send approved Utility Template outside 24h window
-      await sendWhatsAppTemplate(
-        reminder.user.phoneNumber,
-        'reminder_alert',
-        'en',
-        [reminder.title]
+    // ─────────────────────────────────────────────────────────────────
+    // Send the reminder — handle delivery failure gracefully
+    // ─────────────────────────────────────────────────────────────────
+    try {
+      if (isWithin24h) {
+        await sendWhatsAppMessage(
+          reminder.user.phoneNumber,
+          `🔔 *Remique Reminder:*\n${reminder.title}`
+        );
+      } else {
+        await sendWhatsAppTemplate(
+          reminder.user.phoneNumber,
+          'reminder_alert',
+          'en',
+          [reminder.title]
+        );
+      }
+    } catch (sendError: any) {
+      // Delivery failed — mark as FAILED with the error message for debugging
+      console.error(`[Remique] Failed to deliver reminder ${reminderId}:`, sendError.message);
+      await prisma.reminder.update({
+        where: { id: reminderId },
+        data: {
+          status: 'FAILED',
+          errorMessage: sendError.message?.slice(0, 500) ?? 'Unknown delivery error',
+        },
+      });
+      return NextResponse.json(
+        { status: 'delivery_failed', error: sendError.message },
+        { status: 500 }
       );
     }
 
@@ -85,6 +125,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: 'sent', reminderId }, { status: 200 });
   } catch (error: any) {
     console.error('[Remique] Error dispatching scheduled reminder:', error);
+
+    // Always clean up stuck PROCESSING records in the outer catch
+    if (reminderId) {
+      try {
+        await prisma.reminder.update({
+          where: { id: reminderId },
+          data: {
+            status: 'FAILED',
+            errorMessage: error.message?.slice(0, 500) ?? 'Unexpected error',
+          },
+        });
+      } catch (dbError) {
+        console.error('[Remique] Failed to mark reminder as FAILED in DB:', dbError);
+      }
+    }
+
     return NextResponse.json({ status: 'error', error: error.message }, { status: 500 });
   }
 }
