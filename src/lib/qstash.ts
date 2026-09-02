@@ -8,6 +8,7 @@ export function getQStashClient(): Client {
   if (!qstashInstance) {
     qstashInstance = new Client({
       token: env.QSTASH_TOKEN,
+      ...(env.QSTASH_URL ? { baseUrl: env.QSTASH_URL } : {}),
     });
   }
   return qstashInstance;

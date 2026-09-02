@@ -10,6 +10,9 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_VERIFY_TOKEN is required'),
   WHATSAPP_APP_SECRET: z.string().optional(),
   QSTASH_TOKEN: z.string().min(1, 'QSTASH_TOKEN is required'),
+  // Upstash pins accounts to a region. Without this the SDK talks to the global
+  // endpoint, which rejects requests for a region-scoped account.
+  QSTASH_URL: z.string().url().optional(),
   QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
   QSTASH_NEXT_SIGNING_KEY: z.string().optional(),
   // Gates the expensive /api/health checks. Without it the deep probe is
@@ -44,6 +47,7 @@ export const env: Env = _parsed.success
       WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || '',
       WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
       QSTASH_TOKEN: process.env.QSTASH_TOKEN || '',
+      QSTASH_URL: process.env.QSTASH_URL,
       QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
       QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
       HEALTH_CHECK_SECRET: process.env.HEALTH_CHECK_SECRET,
