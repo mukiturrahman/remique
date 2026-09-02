@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       console.warn(
         `[Remique] Re-enqueueing unprocessed message ${whatsappMessageId} (id=${existingMessage.id})`
       );
-      await enqueueAndRecord(existingMessage.id);
+      await enqueueAndRecord(existingMessage.id, true);
       return NextResponse.json({ status: 're_enqueued' }, { status: 200 });
     }
 
@@ -156,8 +156,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function enqueueAndRecord(messageId: string): Promise<void> {
-  const qstashMessageId = await enqueueInboundMessage(messageId);
+async function enqueueAndRecord(messageId: string, replay = false): Promise<void> {
+  const qstashMessageId = await enqueueInboundMessage(messageId, { replay });
   await prisma.message.update({
     where: { id: messageId },
     data: { qstashMessageId },

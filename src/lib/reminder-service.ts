@@ -70,13 +70,21 @@ export async function processIncomingUserMessage(user: User, userMessage: string
       },
     });
 
-    // Schedule delayed HTTP webhook with Upstash QStash
+    // Schedule delayed HTTP webhook with Upstash QStash.
+    // A null id means the reminder is beyond QStash's holding window — the row
+    // stays SCHEDULED and the sweeper enqueues it once it comes into range.
     try {
       const qstashMsgId = await scheduleDelayedReminder(reminder.id, validated.scheduledAtUtc!);
-      await prisma.reminder.update({
-        where: { id: reminder.id },
-        data: { qstashMessageId: qstashMsgId },
-      });
+      if (qstashMsgId) {
+        await prisma.reminder.update({
+          where: { id: reminder.id },
+          data: { qstashMessageId: qstashMsgId },
+        });
+      } else {
+        console.log(
+          `[Remique] Reminder ${reminder.id} is beyond the QStash window — deferred to the sweeper.`
+        );
+      }
     } catch (schedErr: any) {
       console.error('[Remique] QStash scheduling error:', schedErr.message);
       // Mark as FAILED so the stuck record is visible for debugging

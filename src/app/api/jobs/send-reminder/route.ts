@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/whatsapp';
+import { sendWhatsAppMessage, sendWhatsAppTemplate, WhatsAppApiError } from '@/lib/whatsapp';
 import { DateTime } from 'luxon';
 import { verifyQStashRequest } from '@/lib/qstash';
 
@@ -35,11 +35,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'already_completed' }, { status: 200 });
     }
 
-    // Atomically transition status to PROCESSING
-    await prisma.reminder.update({
-      where: { id: reminderId },
+    // Claim the reminder atomically. The sweeper can re-enqueue a delivery that
+    // QStash also still holds, so two workers may race for the same row — the
+    // conditional update guarantees only one of them sends.
+    const claim = await prisma.reminder.updateMany({
+      where: { id: reminderId, status: 'SCHEDULED' },
       data: { status: 'PROCESSING', attempts: { increment: 1 } },
     });
+
+    if (claim.count === 0) {
+      return NextResponse.json({ status: 'not_claimable' }, { status: 200 });
+    }
 
     // Check 24-Hour Customer Service Window
     const lastInbound = await prisma.message.findFirst({
@@ -69,19 +75,39 @@ export async function POST(request: NextRequest) {
         );
       }
     } catch (sendError: any) {
-      // Delivery failed — mark as FAILED with the error message for debugging
-      console.error(`[Remique] Failed to deliver reminder ${reminderId}:`, sendError.message);
+      const failureClass =
+        sendError instanceof WhatsAppApiError ? sendError.failureClass : 'transient';
+      const errorMessage = sendError.message?.slice(0, 500) ?? 'Unknown delivery error';
+
+      console.error(
+        `[Remique] Failed to deliver reminder ${reminderId} class=${failureClass}: ${sendError.message}`
+      );
+
+      // Only a genuinely bad request is terminal. Transient and operator
+      // failures go back to SCHEDULED so the sweeper can retry them once the
+      // rate limit clears or the credentials are fixed. The attempts counter
+      // bounds how long that goes on.
       await prisma.reminder.update({
         where: { id: reminderId },
-        data: {
-          status: 'FAILED',
-          errorMessage: sendError.message?.slice(0, 500) ?? 'Unknown delivery error',
-        },
+        data:
+          failureClass === 'permanent'
+            ? { status: 'FAILED', errorMessage }
+            : { status: 'SCHEDULED', qstashMessageId: null, errorMessage },
       });
-      return NextResponse.json(
-        { status: 'delivery_failed', error: sendError.message },
-        { status: 500 }
-      );
+
+      if (failureClass === 'operator') {
+        console.error(
+          '[Remique] ACTION REQUIRED: reminder delivery rejected by Meta. ' +
+            'Reminder left SCHEDULED for the sweeper to retry.'
+        );
+        return NextResponse.json({ status: 'operator_action_required' }, { status: 200 });
+      }
+
+      if (failureClass === 'permanent') {
+        return NextResponse.json({ status: 'delivery_failed', error: errorMessage }, { status: 200 });
+      }
+
+      return NextResponse.json({ status: 'delivery_failed', error: errorMessage }, { status: 500 });
     }
 
     // Mark as SENT

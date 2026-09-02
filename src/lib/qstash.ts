@@ -86,11 +86,32 @@ function resolveTargetUrl(path: string, appUrl: string): string {
 }
 
 /**
+ * Deliberately conservative bound on how far ahead QStash will hold a message.
+ * A reminder further out than this is stored with no QStash message and picked
+ * up by the sweeper once it moves inside the window, so a reminder set months
+ * ahead is never silently dropped.
+ */
+export const QSTASH_MAX_DELAY_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function isWithinQStashWindow(scheduledAtUtc: Date, now: Date = new Date()): boolean {
+  return scheduledAtUtc.getTime() - now.getTime() <= QSTASH_MAX_DELAY_MS;
+}
+
+/**
+ * Dedup keys are bucketed by minute so a retry from the sweeper is allowed
+ * through, while two sweeps landing in the same minute cannot double-publish.
+ */
+function minuteBucket(now: Date = new Date()): number {
+  return Math.floor(now.getTime() / 60_000);
+}
+
+/**
  * Hands an inbound WhatsApp message to the async worker.
  * The webhook must never do Gemini/WhatsApp work inline — this is the handoff.
  */
 export async function enqueueInboundMessage(
   messageId: string,
+  opts: { replay?: boolean } = {},
   appUrl: string = env.NEXT_PUBLIC_APP_URL
 ): Promise<string> {
   const response = await getQStashClient().publishJSON({
@@ -99,24 +120,38 @@ export async function enqueueInboundMessage(
     // QStash retries with exponential backoff; a transient Gemini/WhatsApp
     // failure recovers on its own instead of being lost.
     retries: 3,
-    deduplicationId: `remique_msg_${messageId}`,
+    deduplicationId: opts.replay
+      ? `remique_msg_${messageId}_${minuteBucket()}`
+      : `remique_msg_${messageId}`,
   });
 
   return response.messageId;
 }
 
+/**
+ * Schedules the reminder delivery callback.
+ * Returns null when the reminder is too far out for QStash to hold — the row
+ * stays SCHEDULED with a null qstashMessageId and the sweeper claims it later.
+ */
 export async function scheduleDelayedReminder(
   reminderId: string,
   scheduledAtUtc: Date,
+  opts: { replay?: boolean } = {},
   appUrl: string = env.NEXT_PUBLIC_APP_URL
-): Promise<string> {
+): Promise<string | null> {
+  if (!isWithinQStashWindow(scheduledAtUtc)) {
+    return null;
+  }
+
   const notBeforeUnix = Math.floor(scheduledAtUtc.getTime() / 1000);
 
   const response = await getQStashClient().publishJSON({
     url: resolveTargetUrl('/api/jobs/send-reminder', appUrl),
     body: { reminderId },
     notBefore: notBeforeUnix,
-    deduplicationId: `remique_${reminderId}`,
+    deduplicationId: opts.replay
+      ? `remique_${reminderId}_${minuteBucket()}`
+      : `remique_${reminderId}`,
   });
 
   return response.messageId;

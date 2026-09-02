@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyQStashRequest } from '@/lib/qstash';
 import { processIncomingUserMessage } from '@/lib/reminder-service';
-import { WhatsAppApiError } from '@/lib/whatsapp';
+import { WhatsAppApiError, sendWhatsAppMessage } from '@/lib/whatsapp';
 
 // All the slow, fallible work lives here: Gemini parsing, reminder scheduling
 // and the WhatsApp reply. QStash retries this with backoff, so a cold start or
 // a transient upstream error no longer costs the user their reply.
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+
+// Per-user abuse ceiling. Every inbound message costs a Gemini call, three DB
+// writes and a WhatsApp send, so an unthrottled sender can drain the Gemini
+// quota on their own. Counted against the [userId, direction, createdAt] index.
+const MAX_MESSAGES_PER_HOUR = 30;
 
 export async function POST(request: NextRequest) {
   let messageId: string | undefined;
@@ -54,6 +59,44 @@ export async function POST(request: NextRequest) {
         data: { processedAt: new Date(), processingError: 'No linked user' },
       });
       return NextResponse.json({ status: 'no_user' }, { status: 200 });
+    }
+
+    // ── Per-user rate limit ──────────────────────────────────────────
+    // Checked before Gemini so a flood costs one COUNT query, not one LLM call.
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCount = await prisma.message.count({
+      where: {
+        userId: message.userId!,
+        direction: 'INBOUND',
+        createdAt: { gte: oneHourAgo },
+      },
+    });
+
+    if (recentCount > MAX_MESSAGES_PER_HOUR) {
+      console.warn(
+        `[Remique] Rate limit hit userId=${message.userId} count=${recentCount} messageId=${messageId}`
+      );
+
+      // Tell them once, on the message that crosses the line. Replying to every
+      // throttled message would just move the cost from Gemini to WhatsApp.
+      if (recentCount === MAX_MESSAGES_PER_HOUR + 1) {
+        try {
+          await sendWhatsAppMessage(
+            message.user.phoneNumber,
+            "You've sent a lot of messages in a short time, so I'm pausing for a bit. " +
+              'Try again in an hour and I will pick straight back up. ⏳'
+          );
+        } catch (notifyError: any) {
+          console.error('[Remique] Failed to send rate-limit notice:', notifyError?.message);
+        }
+      }
+
+      await prisma.message.update({
+        where: { id: messageId },
+        data: { processedAt: new Date(), processingError: 'Rate limited' },
+      });
+
+      return NextResponse.json({ status: 'rate_limited' }, { status: 200 });
     }
 
     await prisma.message.update({
