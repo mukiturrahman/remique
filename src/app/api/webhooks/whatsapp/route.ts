@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/db';
-import { processIncomingUserMessage } from '@/lib/reminder-service';
+import { enqueueInboundMessage } from '@/lib/qstash';
 import { normalizePhoneNumber } from '@/lib/date-normalizer';
 import { createHmac, timingSafeEqual } from 'crypto';
+
+// This route must stay fast: verify, persist, enqueue, ack. No Gemini, no
+// WhatsApp send. Meta gets its 200 in well under a second even on a cold start,
+// and all fallible work happens in /api/jobs/process-message where QStash
+// can retry it.
+export const runtime = 'nodejs';
+export const maxDuration = 15;
 
 // ─────────────────────────────────────────────
 // Helper: Validate Meta's x-hub-signature-256
@@ -86,17 +93,28 @@ export async function POST(request: NextRequest) {
     const messageText = message.text?.body?.trim() || '';
     const profileName = contact?.profile?.name || 'User';
 
-    // Step A: Idempotency Check (prevent duplicate webhook processing)
+    // ─── Step A: Drop only messages we have already ANSWERED ──────────
+    // A row that exists but has processedAt = null means a previous attempt
+    // died before replying. Meta's retry must re-enqueue it, not drop it.
     const existingMessage = await prisma.message.findUnique({
       where: { whatsappMessageId },
+      select: { id: true, processedAt: true },
     });
 
-    if (existingMessage) {
+    if (existingMessage?.processedAt) {
       console.log(`[Remique] Duplicate message dropped: ${whatsappMessageId}`);
       return NextResponse.json({ status: 'duplicate_dropped' }, { status: 200 });
     }
 
-    // Step B: Upsert User Profile
+    if (existingMessage) {
+      console.warn(
+        `[Remique] Re-enqueueing unprocessed message ${whatsappMessageId} (id=${existingMessage.id})`
+      );
+      await enqueueAndRecord(existingMessage.id);
+      return NextResponse.json({ status: 're_enqueued' }, { status: 200 });
+    }
+
+    // ─── Step B: Upsert User Profile ──────────────────────────────────
     const user = await prisma.user.upsert({
       where: { whatsappId: rawSenderNumber },
       update: {
@@ -111,25 +129,37 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Step C: Persist Message Record (without raw payload to save storage)
-    await prisma.message.create({
+    // ─── Step C: Persist inbound message as UNPROCESSED work ──────────
+    const stored = await prisma.message.create({
       data: {
         userId: user.id,
         whatsappMessageId,
         direction: 'INBOUND',
         messageText,
       },
+      select: { id: true },
     });
 
-    // Step D: Process reminder NLP & QStash asynchronously
-    await processIncomingUserMessage(user, messageText);
+    // ─── Step D: Hand off to the async worker and ack Meta ────────────
+    await enqueueAndRecord(stored.id);
 
-    return NextResponse.json({ status: 'ok' }, { status: 200 });
+    return NextResponse.json({ status: 'queued', messageId: stored.id }, { status: 200 });
   } catch (error: any) {
-    console.error('[Remique] Webhook handler error:', error);
+    // Returning 500 is deliberate: it makes Meta retry, and because the message
+    // row is still unprocessed the retry now does real work instead of being
+    // swallowed by the duplicate check.
+    console.error('[Remique] Webhook handler error:', error?.message, error);
     return NextResponse.json(
-      { status: 'error', message: error.message },
+      { status: 'error', message: error?.message },
       { status: 500 }
     );
   }
+}
+
+async function enqueueAndRecord(messageId: string): Promise<void> {
+  const qstashMessageId = await enqueueInboundMessage(messageId);
+  await prisma.message.update({
+    where: { id: messageId },
+    data: { qstashMessageId },
+  });
 }

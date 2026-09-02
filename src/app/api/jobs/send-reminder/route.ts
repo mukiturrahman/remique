@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/whatsapp';
 import { DateTime } from 'luxon';
-import { Receiver } from '@upstash/qstash';
-import { env } from '@/lib/env';
+import { verifyQStashRequest } from '@/lib/qstash';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   let reminderId: string | undefined;
@@ -12,42 +14,9 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const signature = request.headers.get('upstash-signature');
 
-    // ─────────────────────────────────────────────────────────────────
-    // QStash Signature Verification
-    // Required in production. Optional in dev (allows manual curl testing).
-    // ─────────────────────────────────────────────────────────────────
-    if (env.NODE_ENV === 'production') {
-      if (!env.QSTASH_CURRENT_SIGNING_KEY) {
-        console.error('[Remique] QSTASH_CURRENT_SIGNING_KEY is not set in production — blocking request.');
-        return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
-      }
-      if (!signature) {
-        console.warn('[Remique] Missing upstash-signature header — blocking unauthenticated request.');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const receiver = new Receiver({
-        currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
-        nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY || env.QSTASH_CURRENT_SIGNING_KEY,
-      });
-
-      const isValid = await receiver.verify({
-        signature,
-        body: rawBody,
-        url: request.url,
-      });
-
-      if (!isValid) {
-        console.error('[Remique] QStash signature verification failed');
-        return NextResponse.json({ error: 'Invalid QStash signature' }, { status: 401 });
-      }
-    } else if (env.QSTASH_CURRENT_SIGNING_KEY && signature) {
-      // In dev, verify if keys are present but don't block if they're missing
-      const receiver = new Receiver({
-        currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
-        nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY || env.QSTASH_CURRENT_SIGNING_KEY,
-      });
-      await receiver.verify({ signature, body: rawBody, url: request.url });
+    const auth = await verifyQStashRequest(signature, rawBody, request.url);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const parsed = JSON.parse(rawBody) as { reminderId: string };

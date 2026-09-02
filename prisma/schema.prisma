@@ -43,8 +43,19 @@ model Message {
   messageText       String           @map("message_text")
   rawPayload        Json?            @map("raw_payload")
   createdAt         DateTime         @default(now()) @map("created_at")
+
+  // Async processing state. The webhook only writes the row; the QStash worker
+  // owns processedAt. A row with processedAt = null has NOT been answered yet,
+  // so a Meta webhook retry must re-enqueue it rather than drop it as a duplicate.
+  processedAt       DateTime?        @map("processed_at")
+  attempts          Int              @default(0)
+  processingError   String?          @map("processing_error")
+  qstashMessageId   String?          @map("qstash_message_id")
+
   user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([direction, processedAt])
+  @@index([userId, direction, createdAt])
   @@map("messages")
 }
 
