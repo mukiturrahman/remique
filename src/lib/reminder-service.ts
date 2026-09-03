@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { ConversationState, User } from '@prisma/client';
 import { prisma } from './db';
 import { parseReminderWithGemini } from './gemini';
 import { validateAndNormalizeDate } from './date-normalizer';
@@ -6,14 +6,24 @@ import { scheduleDelayedReminder } from './qstash';
 import { sendWhatsAppMessage } from './whatsapp';
 import { DateTime } from 'luxon';
 
-export async function processIncomingUserMessage(user: User, userMessage: string) {
+export async function processIncomingUserMessage(
+  user: User,
+  userMessage: string,
+  // Callers that already fetched the pending conversation state pass it in so
+  // this does not cost a second round trip on the reply path. Pass `undefined`
+  // (or omit) to have it looked up here.
+  prefetchedState?: ConversationState | null
+) {
   // 1. Check for active pending conversation state (e.g. clarification)
-  const activeState = await prisma.conversationState.findFirst({
-    where: {
-      userId: user.id,
-      expiresAt: { gt: new Date() },
-    },
-  });
+  const activeState =
+    prefetchedState !== undefined
+      ? prefetchedState
+      : await prisma.conversationState.findFirst({
+          where: {
+            userId: user.id,
+            expiresAt: { gt: new Date() },
+          },
+        });
 
   // 2. Extract structured entities with Gemini
   const geminiResult = await parseReminderWithGemini(

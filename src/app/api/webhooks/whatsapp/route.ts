@@ -1,16 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/db';
 import { enqueueInboundMessage } from '@/lib/qstash';
 import { normalizePhoneNumber } from '@/lib/date-normalizer';
+import { runMessagePipeline, type PipelineMessage } from '@/lib/message-pipeline';
 import { createHmac, timingSafeEqual } from 'crypto';
 
-// This route must stay fast: verify, persist, enqueue, ack. No Gemini, no
-// WhatsApp send. Meta gets its 200 in well under a second even on a cold start,
-// and all fallible work happens in /api/jobs/process-message where QStash
-// can retry it.
+// One invocation answers the message.
+//
+// Meta still gets its 200 before any slow work starts: everything before the
+// response is a signature check and a single write. The Gemini call, the
+// reminder row, the QStash schedule and the WhatsApp reply then run in `after()`
+// — same function instance, no queue hop, no second cold start. That removes a
+// whole round trip through QStash plus a cold Lambda from the user's wait.
+//
+// /api/jobs/process-message is still there, but only as the retry path: if the
+// inline attempt fails transiently we hand the message to QStash, and the
+// sweeper picks up anything that dies without either.
 export const runtime = 'nodejs';
-export const maxDuration = 15;
+// Covers the response *and* the `after()` work, which runs inside the same
+// invocation and is billed against this limit.
+export const maxDuration = 60;
 
 // ─────────────────────────────────────────────
 // Helper: Validate Meta's x-hub-signature-256
@@ -93,57 +104,28 @@ export async function POST(request: NextRequest) {
     const messageText = message.text?.body?.trim() || '';
     const profileName = contact?.profile?.name || 'User';
 
-    // ─── Step A: Drop only messages we have already ANSWERED ──────────
-    // A row that exists but has processedAt = null means a previous attempt
-    // died before replying. Meta's retry must re-enqueue it, not drop it.
-    const existingMessage = await prisma.message.findUnique({
-      where: { whatsappMessageId },
-      select: { id: true, processedAt: true },
+    // ─── Persist the inbound message (one round trip) ──────────────────
+    // User upsert, message insert and the duplicate check used to be three
+    // separate queries in front of the ack. connectOrCreate collapses the first
+    // two, and the unique index on whatsappMessageId does the duplicate check
+    // for free — we only pay for a lookup when it actually fires.
+    const claimed = await claimInboundMessage({
+      whatsappMessageId,
+      rawSenderNumber,
+      formattedPhoneNumber,
+      messageText,
+      profileName,
     });
 
-    if (existingMessage?.processedAt) {
+    if (!claimed) {
       console.log(`[Remique] Duplicate message dropped: ${whatsappMessageId}`);
       return NextResponse.json({ status: 'duplicate_dropped' }, { status: 200 });
     }
 
-    if (existingMessage) {
-      console.warn(
-        `[Remique] Re-enqueueing unprocessed message ${whatsappMessageId} (id=${existingMessage.id})`
-      );
-      await enqueueAndRecord(existingMessage.id, true);
-      return NextResponse.json({ status: 're_enqueued' }, { status: 200 });
-    }
+    // ─── Ack Meta now, finish the reminder in this same invocation ─────
+    after(() => processInline(claimed, profileName, formattedPhoneNumber));
 
-    // ─── Step B: Upsert User Profile ──────────────────────────────────
-    const user = await prisma.user.upsert({
-      where: { whatsappId: rawSenderNumber },
-      update: {
-        name: profileName,
-        phoneNumber: formattedPhoneNumber,
-      },
-      create: {
-        whatsappId: rawSenderNumber,
-        phoneNumber: formattedPhoneNumber,
-        name: profileName,
-        timezone: 'Asia/Dhaka',
-      },
-    });
-
-    // ─── Step C: Persist inbound message as UNPROCESSED work ──────────
-    const stored = await prisma.message.create({
-      data: {
-        userId: user.id,
-        whatsappMessageId,
-        direction: 'INBOUND',
-        messageText,
-      },
-      select: { id: true },
-    });
-
-    // ─── Step D: Hand off to the async worker and ack Meta ────────────
-    await enqueueAndRecord(stored.id);
-
-    return NextResponse.json({ status: 'queued', messageId: stored.id }, { status: 200 });
+    return NextResponse.json({ status: 'accepted', messageId: claimed.id }, { status: 200 });
   } catch (error: any) {
     // Returning 500 is deliberate: it makes Meta retry, and because the message
     // row is still unprocessed the retry now does real work instead of being
@@ -156,10 +138,133 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function enqueueAndRecord(messageId: string, replay = false): Promise<void> {
-  const qstashMessageId = await enqueueInboundMessage(messageId, { replay });
-  await prisma.message.update({
-    where: { id: messageId },
-    data: { qstashMessageId },
-  });
+interface InboundMessageInput {
+  whatsappMessageId: string;
+  rawSenderNumber: string;
+  formattedPhoneNumber: string;
+  messageText: string;
+  profileName: string;
+}
+
+/**
+ * Writes the inbound message and returns it with its user attached.
+ *
+ * Returns null only for a message we have already answered. A row that exists
+ * with processedAt = null means a previous attempt died before replying, so the
+ * existing row is handed back and processed again — Meta's retry must not be
+ * dropped as a duplicate.
+ */
+async function claimInboundMessage(
+  input: InboundMessageInput,
+  allowUserRaceRetry = true
+): Promise<PipelineMessage | null> {
+  try {
+    return await prisma.message.create({
+      data: {
+        whatsappMessageId: input.whatsappMessageId,
+        direction: 'INBOUND',
+        messageText: input.messageText,
+        user: {
+          connectOrCreate: {
+            where: { whatsappId: input.rawSenderNumber },
+            create: {
+              whatsappId: input.rawSenderNumber,
+              phoneNumber: input.formattedPhoneNumber,
+              name: input.profileName,
+              timezone: 'Asia/Dhaka',
+            },
+          },
+        },
+      },
+      include: { user: true },
+    });
+  } catch (error) {
+    const isUniqueViolation =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+
+    if (!isUniqueViolation) throw error;
+
+    const existing = await prisma.message.findUnique({
+      where: { whatsappMessageId: input.whatsappMessageId },
+      include: { user: true },
+    });
+
+    if (existing) {
+      if (existing.processedAt) return null;
+      console.warn(`[Remique] Reprocessing unanswered message ${input.whatsappMessageId}`);
+      return existing;
+    }
+
+    // The collision was on whatsappId, not on the message: two messages from a
+    // brand new sender landed at once and both tried to create the user. The
+    // user exists now, so the same insert succeeds on the second pass.
+    if (allowUserRaceRetry) {
+      return claimInboundMessage(input, false);
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * The work that used to live behind QStash. Runs after the 200 is already on
+ * the wire, so nothing here delays Meta.
+ */
+async function processInline(
+  message: PipelineMessage,
+  profileName: string,
+  formattedPhoneNumber: string
+): Promise<void> {
+  try {
+    // Refresh the WhatsApp profile only when it actually changed, and let it run
+    // alongside the pipeline instead of in front of it.
+    let profileUpdate: Promise<unknown> | null = null;
+    const user = message.user;
+
+    if (user && (user.name !== profileName || user.phoneNumber !== formattedPhoneNumber)) {
+      user.name = profileName;
+      user.phoneNumber = formattedPhoneNumber;
+      profileUpdate = prisma.user
+        .update({
+          where: { id: user.id },
+          data: { name: profileName, phoneNumber: formattedPhoneNumber },
+        })
+        .catch((err: any) =>
+          console.error('[Remique] Failed to refresh user profile:', err?.message)
+        );
+    }
+
+    const result = await runMessagePipeline(message);
+    if (profileUpdate) await profileUpdate;
+
+    if (result.retryable) {
+      // The inline attempt hit something transient. Hand it to QStash so it gets
+      // the retry chain it would have had before, instead of waiting on the
+      // five-minute sweeper.
+      await handOffToQStash(message.id);
+    }
+  } catch (error: any) {
+    console.error(
+      `[Remique] Inline processing crashed messageId=${message.id}: ${error?.message}`
+    );
+    await handOffToQStash(message.id);
+  }
+}
+
+async function handOffToQStash(messageId: string): Promise<void> {
+  try {
+    const qstashMessageId = await enqueueInboundMessage(messageId, { replay: true });
+    await prisma.message.update({
+      where: { id: messageId },
+      data: { qstashMessageId },
+    });
+    console.warn(`[Remique] Inline attempt failed — retry queued for message ${messageId}`);
+  } catch (err: any) {
+    // Last line of defence: the row is still unprocessed, so the sweeper will
+    // replay it on its next pass.
+    console.error(
+      `[Remique] Could not queue retry for message ${messageId} (${err?.message}) — ` +
+        'left for the sweeper.'
+    );
+  }
 }
