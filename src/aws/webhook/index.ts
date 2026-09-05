@@ -11,6 +11,12 @@ const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL || '';
 
 const sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'ap-southeast-1' });
 
+// Message types the worker can act on. 'image' and 'document' become saved
+// files; 'text' is everything else the bot does. Kept in sync with the worker's
+// own allowlist — enqueuing a type the worker drops would burn an SQS round
+// trip and land in the DLQ for no reason.
+const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document']);
+
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const method = event.requestContext.http.method;
 
@@ -77,9 +83,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       const change = entry?.changes?.[0]?.value;
       const message = change?.messages?.[0];
 
-      // If event is not an incoming text message (e.g. delivery receipt), ignore and return 200.
-      // We still return 200 so Meta doesn't retry delivery receipts unnecessarily.
-      if (!message || message.type !== 'text') {
+      // Only message types the worker knows how to answer are enqueued.
+      // Everything else (delivery receipts, read receipts, reactions, stickers)
+      // is acknowledged with a 200 so Meta stops retrying it.
+      if (!message || !ACCEPTED_MESSAGE_TYPES.has(message.type)) {
         return { statusCode: 200, body: 'ignored' };
       }
 

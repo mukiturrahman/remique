@@ -23,6 +23,10 @@ const envSchema = z.object({
   // disabled in production rather than left open to anonymous traffic.
   HEALTH_CHECK_SECRET: z.string().optional(),
   SQS_QUEUE_URL: z.string().url().optional(),
+  // Private bucket holding user-uploaded documents. Only the SQS worker needs
+  // it; the Next.js app never touches S3.
+  S3_BUCKET_DOCUMENTS: z.string().optional(),
+  AWS_S3_REGION: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -58,4 +62,6 @@ export const env: Env = _parsed.success
       QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
       HEALTH_CHECK_SECRET: process.env.HEALTH_CHECK_SECRET,
       SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
+      S3_BUCKET_DOCUMENTS: process.env.S3_BUCKET_DOCUMENTS,
+      AWS_S3_REGION: process.env.AWS_S3_REGION,
     };

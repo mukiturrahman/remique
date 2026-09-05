@@ -5,6 +5,7 @@ import {
   scheduleDelayedReminder,
   isWithinQStashWindow,
 } from '@/lib/qstash';
+import { deleteDocument } from '@/lib/storage';
 
 // Recovery pass. Nothing here is the happy path — every branch exists because
 // the primary QStash delivery can be lost, rejected, or never created at all.
@@ -19,6 +20,10 @@ const STUCK_MESSAGE_GRACE_MS = 5 * 60 * 1000;
 
 // A reminder left in PROCESSING beyond this had its worker die mid-flight.
 const STUCK_PROCESSING_MS = 10 * 60 * 1000;
+
+// An upload the user never named. Generous enough that someone who gets
+// distracted mid-conversation and comes back later still finds their file.
+const ORPHAN_DOCUMENT_MS = 24 * 60 * 60 * 1000;
 
 // Bounded batches so one sweep cannot exceed maxDuration or stampede QStash.
 const BATCH = 25;
@@ -42,6 +47,7 @@ export async function POST(request: NextRequest) {
       scheduledDeferred: 0,
       requeuedOverdue: 0,
       resetStuckProcessing: 0,
+      deletedOrphanDocuments: 0,
       errors: [] as string[],
     };
 
@@ -120,7 +126,33 @@ export async function POST(request: NextRequest) {
     });
     result.resetStuckProcessing = reset.count;
 
+    // ── 5. Documents uploaded but never named ───────────────────────────
+    // The user sent a file, was asked what to call it, and never answered.
+    // The bytes were stored before the label existed (Meta media IDs expire),
+    // so without this pass every abandoned upload bills S3 forever.
+    const orphans = await prisma.document.findMany({
+      where: {
+        label: null,
+        createdAt: { lte: new Date(now.getTime() - ORPHAN_DOCUMENT_MS) },
+      },
+      take: BATCH,
+      select: { id: true, s3Key: true },
+    });
+
+    for (const orphan of orphans) {
+      try {
+        // S3 first. A failed delete here leaves the row, so the next sweep
+        // retries — the reverse order would orphan the object permanently.
+        await deleteDocument(orphan.s3Key);
+        await prisma.document.delete({ where: { id: orphan.id } });
+        result.deletedOrphanDocuments++;
+      } catch (err: any) {
+        result.errors.push(`orphan document ${orphan.id}: ${err?.message}`);
+      }
+    }
+
     const didWork =
+      result.deletedOrphanDocuments > 0 ||
       result.replayedMessages > 0 ||
       result.scheduledDeferred > 0 ||
       result.requeuedOverdue > 0 ||
@@ -133,6 +165,7 @@ export async function POST(request: NextRequest) {
           `scheduledDeferred=${result.scheduledDeferred} ` +
           `requeuedOverdue=${result.requeuedOverdue} ` +
           `resetStuckProcessing=${result.resetStuckProcessing} ` +
+          `deletedOrphanDocuments=${result.deletedOrphanDocuments} ` +
           `errors=${result.errors.length}`
       );
       for (const err of result.errors) {

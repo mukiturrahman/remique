@@ -136,3 +136,27 @@ export async function scheduleDelayedReminder(
 
   return response.messageId;
 }
+
+/**
+ * Drops an already-queued delivery.
+ *
+ * Called when a reminder moves: the old QStash message still points at the old
+ * time, and QStash has no notion of "update". Without this, rescheduling a 9 PM
+ * meeting to tomorrow leaves tonight's delivery armed and the user is reminded
+ * at the time they just changed.
+ *
+ * Never throws. A message that is already gone, already delivered, or simply
+ * unreachable is not a reason to fail the reschedule — the delivery path
+ * re-checks scheduledAt before sending, so a survivor is caught there too.
+ */
+export async function cancelScheduledDelivery(qstashMessageId: string): Promise<boolean> {
+  try {
+    await getQStashClient().messages.cancel(qstashMessageId);
+    return true;
+  } catch (error: any) {
+    console.warn(
+      `[Remique] Could not cancel QStash message ${qstashMessageId}: ${error?.message}`
+    );
+    return false;
+  }
+}

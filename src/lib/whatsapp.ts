@@ -84,7 +84,7 @@ export class WhatsAppApiError extends Error {
   }
 }
 
-const GRAPH_BASE = 'https://graph.facebook.com/v22.0';
+export const GRAPH_BASE = 'https://graph.facebook.com/v22.0';
 
 /**
  * Single exit point to the Graph API so every failure gets logged the same way:
@@ -166,6 +166,39 @@ export async function sendWhatsAppMessage(
       preview_url: false,
       body: textBody,
     },
+  });
+}
+
+/**
+ * Sends a stored file back into the thread.
+ *
+ * `link` must be fetchable by Meta's servers without credentials — an S3
+ * presigned URL satisfies this because the signature travels in the query
+ * string. Meta downloads the file itself, so the URL only has to outlive that
+ * fetch, not the conversation.
+ *
+ * `filename` is only honoured for documents; WhatsApp ignores it on images.
+ */
+export async function sendWhatsAppMedia(
+  toPhoneNumber: string,
+  params: {
+    mediaType: 'image' | 'document';
+    link: string;
+    caption?: string;
+    filename?: string;
+  }
+): Promise<SendWhatsAppResponse> {
+  const media: Record<string, unknown> = { link: params.link };
+
+  if (params.caption) media.caption = params.caption;
+  if (params.mediaType === 'document' && params.filename) media.filename = params.filename;
+
+  return postToWhatsApp(`media:${params.mediaType}`, {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: toPhoneNumber.replace('+', ''),
+    type: params.mediaType,
+    [params.mediaType]: media,
   });
 }
 

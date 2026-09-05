@@ -3,9 +3,15 @@ import { prisma } from '@/lib/db';
 import { sendWhatsAppMessage, sendWhatsAppTemplate, WhatsAppApiError } from '@/lib/whatsapp';
 import { DateTime } from 'luxon';
 import { verifyQStashRequest } from '@/lib/qstash';
+import { nextOccurrence } from '@/lib/recurrence';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+
+// How far ahead of its scheduled time a delivery may legitimately arrive.
+// QStash fires a little early under load; anything beyond this is a stale
+// callback for a reminder that has since been moved.
+const EARLY_DELIVERY_GRACE_MS = 2 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   let reminderId: string | undefined;
@@ -33,6 +39,17 @@ export async function POST(request: NextRequest) {
 
     if (!reminder || reminder.status === 'SENT' || reminder.status === 'CANCELLED') {
       return NextResponse.json({ status: 'already_completed' }, { status: 200 });
+    }
+
+    // A delivery for a time that has since moved. Cancelling the old QStash
+    // message is best-effort, so this is the backstop: refuse to send early and
+    // leave the row SCHEDULED for its real delivery (or the sweeper).
+    if (reminder.scheduledAt.getTime() - Date.now() > EARLY_DELIVERY_GRACE_MS) {
+      console.log(
+        `[Remique] Ignoring stale delivery for ${reminderId}; ` +
+          `now due ${reminder.scheduledAt.toISOString()}`
+      );
+      return NextResponse.json({ status: 'not_due_yet' }, { status: 200 });
     }
 
     // Claim the reminder atomically. The sweeper can re-enqueue a delivery that
@@ -115,6 +132,46 @@ export async function POST(request: NextRequest) {
       where: { id: reminderId },
       data: { status: 'SENT', sentAt: new Date() },
     });
+
+    // A recurring reminder is a chain of one-shots: each delivery lays down the
+    // next link. Written with a null qstashMessageId so the sweeper claims it
+    // once it comes into range, rather than duplicating scheduling logic here.
+    //
+    // Deliberately after the SENT write and wrapped: this reminder has already
+    // reached the user, and a failure to lay the next link must not undo that
+    // or hand QStash a retry that would deliver it twice.
+    if (reminder.recurrenceRule) {
+      try {
+        const next = nextOccurrence(
+          reminder.scheduledAt,
+          reminder.recurrenceRule,
+          reminder.timezone
+        );
+
+        if (next) {
+          const repeat = await prisma.reminder.create({
+            data: {
+              userId: reminder.userId,
+              title: reminder.title,
+              originalMessage: reminder.originalMessage,
+              scheduledAt: next,
+              timezone: reminder.timezone,
+              category: reminder.category,
+              recurrenceRule: reminder.recurrenceRule,
+              status: 'SCHEDULED',
+            },
+          });
+          console.log(
+            `[Remique] Recurring reminder ${reminderId} (${reminder.recurrenceRule}) ` +
+              `queued next as ${repeat.id} for ${next.toISOString()}`
+          );
+        }
+      } catch (repeatError: any) {
+        console.error(
+          `[Remique] Failed to queue next occurrence for ${reminderId}: ${repeatError?.message}`
+        );
+      }
+    }
 
     console.log(`[Remique] Reminder successfully delivered: ${reminderId}`);
     return NextResponse.json({ status: 'sent', reminderId }, { status: 200 });

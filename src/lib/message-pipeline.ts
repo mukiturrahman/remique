@@ -1,7 +1,8 @@
 import { Prisma, type Message, type User } from '@prisma/client';
 import { prisma } from './db';
 import { processIncomingUserMessage } from './reminder-service';
-import { markReadAndShowTyping, sendWhatsAppMessage, WhatsAppApiError } from './whatsapp';
+import { markReadAndShowTyping, WhatsAppApiError } from './whatsapp';
+import { replyToUser } from './conversation-log';
 
 /**
  * The single implementation of "answer one inbound WhatsApp message".
@@ -108,8 +109,8 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     // throttled message would just move the cost from OpenAI to WhatsApp.
     if (recentCount === MAX_MESSAGES_PER_HOUR + 1) {
       try {
-        await sendWhatsAppMessage(
-          user.phoneNumber,
+        await replyToUser(
+          user,
           "You've sent a lot of messages in a short time, so I'm pausing for a bit. " +
             'Try again in an hour and I will pick straight back up. ⏳'
         );
@@ -128,7 +129,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
   }
 
   try {
-    await processIncomingUserMessage(user, message.messageText, activeState);
+    await processIncomingUserMessage(user, message, activeState);
     await typing;
 
     // Only now is the message truly answered.
@@ -185,12 +186,20 @@ async function recordFailure(messageId: string, error: any): Promise<PipelineRes
   return { status: 'transient_failure', retryable: true, error: errorMessage };
 }
 
+export interface InboundMedia {
+  mediaId: string;
+  mediaType: string;
+  mediaMimeType: string;
+  mediaFilename: string | null;
+}
+
 export interface InboundMessageInput {
   whatsappMessageId: string;
   rawSenderNumber: string;
   formattedPhoneNumber: string;
   messageText: string;
   profileName: string;
+  media?: InboundMedia | null;
 }
 
 /**
@@ -211,6 +220,10 @@ export async function claimInboundMessage(
         whatsappMessageId: input.whatsappMessageId,
         direction: 'INBOUND',
         messageText: input.messageText,
+        mediaId: input.media?.mediaId ?? null,
+        mediaType: input.media?.mediaType ?? null,
+        mediaMimeType: input.media?.mediaMimeType ?? null,
+        mediaFilename: input.media?.mediaFilename ?? null,
         user: {
           connectOrCreate: {
             where: { whatsappId: input.rawSenderNumber },

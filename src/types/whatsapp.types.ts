@@ -1,3 +1,16 @@
+/**
+ * Inbound media as Meta sends it. `id` is an opaque, expiring handle — the
+ * bytes are fetched separately via the Graph API, not carried in the webhook.
+ * `filename` is present on documents only.
+ */
+export interface WhatsAppMediaObject {
+  id: string;
+  mime_type: string;
+  sha256?: string;
+  caption?: string;
+  filename?: string;
+}
+
 export interface WhatsAppWebhookPayload {
   object: string;
   entry?: Array<{
@@ -22,6 +35,8 @@ export interface WhatsAppWebhookPayload {
           text?: {
             body: string;
           };
+          image?: WhatsAppMediaObject;
+          document?: WhatsAppMediaObject;
           type: string;
         }>;
       };

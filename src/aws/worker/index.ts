@@ -3,6 +3,9 @@ import { normalizePhoneNumber } from '../../lib/date-normalizer';
 import { claimInboundMessage, runMessagePipeline } from '../../lib/message-pipeline';
 import { WhatsAppApiError } from '../../lib/whatsapp';
 
+// Must match ACCEPTED_MESSAGE_TYPES in the webhook Lambda.
+const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document']);
+
 export const handler = async (event: SQSEvent): Promise<void> => {
   for (const record of event.Records) {
     let rawBody = '';
@@ -15,16 +18,29 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       const message = change?.messages?.[0];
       const contact = change?.contacts?.[0];
 
-      if (!message || message.type !== 'text') {
-        console.log(`[Remique] SQS Worker ignoring non-text message: ${record.messageId}`);
+      // Kept in sync with the webhook's allowlist.
+      if (!message || !ACCEPTED_MESSAGE_TYPES.has(message.type)) {
+        console.log(
+          `[Remique] SQS Worker ignoring unsupported type "${message?.type}": ${record.messageId}`
+        );
         continue;
       }
 
       const whatsappMessageId = message.id;
       const rawSenderNumber = message.from;
       const formattedPhoneNumber = normalizePhoneNumber(rawSenderNumber);
-      const messageText = message.text?.body?.trim() || '';
       const profileName = contact?.profile?.name || 'User';
+
+      // For media, the caption carries the user's intent ("save this as a
+      // dollar document"). An empty caption is normal and means the label has
+      // to be asked for on the next turn.
+      const media = message.type === 'image' ? message.image
+        : message.type === 'document' ? message.document
+        : null;
+
+      const messageText = (
+        message.type === 'text' ? message.text?.body : media?.caption
+      )?.trim() || '';
 
       // 1. Claim the inbound message (DB write)
       const claimed = await claimInboundMessage({
@@ -33,6 +49,14 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         formattedPhoneNumber,
         messageText,
         profileName,
+        media: media
+          ? {
+              mediaId: media.id,
+              mediaType: message.type,
+              mediaMimeType: media.mime_type,
+              mediaFilename: media.filename ?? null,
+            }
+          : null,
       });
 
       if (!claimed) {
