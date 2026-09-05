@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 enum ReminderStatus {
@@ -13,6 +14,17 @@ enum ReminderStatus {
   SENT
   CANCELLED
   FAILED
+}
+
+// What kind of thing a reminder is about. Without this every row is just a
+// reminder, so "any meetings tomorrow?" and "any reminders tomorrow?" return
+// the same undifferentiated list.
+enum ReminderCategory {
+  MEETING
+  BIRTHDAY
+  TASK
+  HABIT
+  GENERAL
 }
 
 enum MessageDirection {
@@ -31,8 +43,81 @@ model User {
   reminders         Reminder[]
   messages          Message[]
   conversationState ConversationState?
+  notes             Note[]
+  documents         Document[]
+  facts             Fact[]
 
   @@map("users")
+}
+
+// A file the user handed to the bot on WhatsApp, stored in S3.
+//
+// `label` is nullable on purpose: when an image arrives with no caption we
+// still store the bytes immediately (Meta's media IDs expire, and the user may
+// take minutes to answer), then fill the label in on the next turn. An
+// unlabeled row is invisible to retrieval and is swept after 24 hours.
+model Document {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  label     String?
+  mediaType String   @map("media_type")
+  mimeType  String   @map("mime_type")
+  fileName  String?  @map("file_name")
+  s3Key     String   @map("s3_key")
+  sizeBytes Int      @map("size_bytes")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("documents")
+}
+
+// A single durable thing the bot knows about the user, e.g.
+// subject="girlfriend", predicate="birthday", value="2026-09-10".
+//
+// Structured rather than free text so a fact can be UPDATED and FORGOTTEN.
+// The old `Note` model could only append, which is how the same user ended up
+// with "Dotinverse", a duplicate "Dotinverse", "Forget Dotinverse" and
+// "My company name is Roveup" all in context at once, all contradicting.
+//
+// The [userId, subject, predicate] uniqueness is the mechanism: restating a
+// fact overwrites it instead of adding a rival copy.
+model Fact {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  subject         String
+  predicate       String
+  value           String
+
+  // Set when the value is a date, so reminders can be computed off it
+  // ("10 minutes before her birthday") instead of guessed from prose.
+  valueDate       DateTime? @map("value_date")
+
+  // True for things that repeat every year, like birthdays. `valueDate` holds
+  // the next occurrence; the year is not meaningful on its own.
+  recurring       Boolean   @default(false)
+
+  // Which message taught us this. Lets a bad extraction be traced back.
+  sourceMessageId String?   @map("source_message_id")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subject, predicate])
+  @@index([userId, updatedAt])
+  @@map("facts")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notes")
 }
 
 model Message {
@@ -43,8 +128,27 @@ model Message {
   messageText       String           @map("message_text")
   rawPayload        Json?            @map("raw_payload")
   createdAt         DateTime         @default(now()) @map("created_at")
+
+  // Async processing state. The webhook only writes the row; the QStash worker
+  // owns processedAt. A row with processedAt = null has NOT been answered yet,
+  // so a Meta webhook retry must re-enqueue it rather than drop it as a duplicate.
+  processedAt       DateTime?        @map("processed_at")
+  attempts          Int              @default(0)
+  processingError   String?          @map("processing_error")
+  qstashMessageId   String?          @map("qstash_message_id")
+
+  // Set only for inbound media. Carried on the row so the pipeline never has to
+  // re-parse the Meta payload, and so a replayed message still knows what to
+  // download. `mediaId` is Meta's ID and expires — download promptly.
+  mediaId           String?          @map("media_id")
+  mediaType         String?          @map("media_type")
+  mediaMimeType     String?          @map("media_mime_type")
+  mediaFilename     String?          @map("media_filename")
+
   user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([direction, processedAt])
+  @@index([userId, direction, createdAt])
   @@map("messages")
 }
 
@@ -55,6 +159,11 @@ model Reminder {
   originalMessage String         @map("original_message")
   scheduledAt     DateTime       @map("scheduled_at")
   timezone        String         @default("Asia/Dhaka")
+  category        ReminderCategory @default(GENERAL)
+
+  // Was extracted by the model and then dropped on the floor: "remind me every
+  // morning" silently became a one-shot. Populated now, and the delivery path
+  // schedules the next occurrence after a successful send.
   recurrenceRule  String?        @map("recurrence_rule")
   status          ReminderStatus @default(SCHEDULED)
   qstashMessageId String?        @map("qstash_message_id")
@@ -66,6 +175,7 @@ model Reminder {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
+  @@index([userId, category, scheduledAt])
   @@index([status, scheduledAt])
   @@map("reminders")
 }

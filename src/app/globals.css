@@ -3,12 +3,159 @@
 @tailwind utilities;
 
 :root {
-  --background: #0B141A;
-  --foreground: #E9EDEF;
+  /* ground */
+  --ground: #ffffff;
+  --ground-2: #f4f7f5;
+  --ground-3: #e9efeb;
+
+  /* ink */
+  --ink: #0b1512;
+  --ink-2: #4c5a55;
+  --ink-3: #66736e;
+  --line: #dde5e0;
+  --line-strong: #c4d2cb;
+
+  /* brand */
+  --brand: #0f6b52;
+  --brand-deep: #08402f;
+  --brand-tint: #e4efe9;
+
+  /* the fired moment: the one hour a reminder lands on, nothing else */
+  --signal-ink: #a32b12;
+
+  --background: var(--ground);
+  --foreground: var(--ink);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: var(--ground);
+  font-feature-settings: "cv11", "ss01";
+  font-variant-ligatures: common-ligatures;
+}
+
+/* ── Browser surfaces: these ship with the design, not with the browser ── */
+
+::selection {
+  background: var(--brand);
+  color: #ffffff;
+}
+
+:root {
+  caret-color: var(--brand);
+  accent-color: var(--brand);
+  scrollbar-color: var(--line-strong) var(--ground-2);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ground-2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid var(--ground-2);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+a {
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: from-font;
+}
+
+/* Times and parsed values are data: keep their figures aligned. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────── */
+
+@keyframes remique-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes remique-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes remique-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.rise {
+  animation: remique-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pulse {
+  animation: remique-pulse 1.8s ease-in-out infinite;
+}
+
+.caret {
+  animation: remique-caret 1s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .pulse,
+  .caret {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }
