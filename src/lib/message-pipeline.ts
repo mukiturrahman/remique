@@ -16,7 +16,12 @@ import { replyToUser } from './conversation-log';
 // Per-user abuse ceiling. Every inbound message costs an OpenAI call, three DB
 // writes and a WhatsApp send, so an unthrottled sender can drain the OpenAI
 // quota on their own. Counted against the [userId, direction, createdAt] index.
-const MAX_MESSAGES_PER_HOUR = 30;
+//
+// Raised to 100 while we are the only users and a test session burns through
+// the limit faster than a real one would. Bring this back down before other
+// people are on it: at 100/hour a single sender can cost ~3x what the ceiling
+// was sized for.
+const MAX_MESSAGES_PER_HOUR = 100;
 
 export type PipelineStatus =
   | 'processed'
