@@ -3,17 +3,17 @@ import { z } from 'zod';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
+  DATABASE_URL: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
   // Overridable so a faster or stronger model can be swapped in from the
   // dashboard without a redeploy. Parse latency is the single largest item in
   // the reply budget, and Banglish accuracy is the reason to escalate.
   OPENAI_MODEL: z.string().min(1).default('gpt-4.1-mini'),
-  WHATSAPP_TOKEN: z.string().min(1, 'WHATSAPP_TOKEN is required'),
-  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1, 'WHATSAPP_PHONE_NUMBER_ID is required'),
-  WHATSAPP_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_VERIFY_TOKEN is required'),
+  WHATSAPP_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
-  QSTASH_TOKEN: z.string().min(1, 'QSTASH_TOKEN is required'),
+  QSTASH_TOKEN: z.string().optional(),
   // Upstash pins accounts to a region. Without this the SDK talks to the global
   // endpoint, which rejects requests for a region-scoped account.
   QSTASH_URL: z.string().url().optional(),
