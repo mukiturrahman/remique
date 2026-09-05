@@ -372,6 +372,21 @@ export async function parseUserMessage(
       },
     });
 
+    // Real token counts per message, so cost can be measured from production
+    // traffic instead of estimated. `cached` is the discounted portion — the
+    // static system prompt, once it has been seen recently.
+    const usage: any = (response as any).usage;
+    if (usage) {
+      console.log(
+        `[Remique] llm usage model=${env.OPENAI_MODEL} ` +
+          `in=${usage.input_tokens ?? '-'} ` +
+          `cached=${usage.input_tokens_details?.cached_tokens ?? 0} ` +
+          `out=${usage.output_tokens ?? '-'} ` +
+          `notes=${savedNotes.length} facts=${knownFacts.length} ` +
+          `docs=${savedDocuments.length} turns=${recentTurns.length}`
+      );
+    }
+
     const rawText = response.output_text;
     if (!rawText) return fallback;
 
