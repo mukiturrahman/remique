@@ -15,8 +15,8 @@ const BOT_WHATSAPP_LINK = "https://wa.me/8801853501469?text=Hi";
 const BOT_NUMBER = "+880 1853-501469";
 
 /**
- * The time vocabulary Remique resolves before it schedules anything. These are
- * the parser's own mappings (src/lib/gemini.ts), not illustrative examples.
+ * The vocabulary Remique resolves before it schedules or saves anything. These are
+ * the parser's own mappings (src/lib/llm.ts), not illustrative examples.
  */
 const timeWords: { word: string; bengali: string; resolves: string }[] = [
   { word: "kalke · kaal", bengali: "আগামীকাল", resolves: "Tomorrow" },
@@ -36,11 +36,11 @@ const steps: { title: string; desc: string }[] = [
   },
   {
     title: "It gets read properly",
-    desc: "Gemini pulls out the task and resolves the time against Dhaka's clock. If you left the time out, Remique asks — in the language you wrote in.",
+    desc: "The parser pulls out the task and resolves the time against Dhaka's clock. If you left the time out, Remique asks — in the language you wrote in.",
   },
   {
     title: "It arrives on time",
-    desc: "The reminder is queued the moment it is confirmed, and comes back to you on WhatsApp at that minute.",
+    desc: "Your reminders arrive exactly on time, and your saved links and notes are recalled the moment you ask for them.",
   },
 ];
 
@@ -61,8 +61,8 @@ const capabilities: {
   },
   {
     Icon: IconLedger,
-    title: "Listed and cancelled in plain words",
-    desc: "Ask to see your reminders, or to cancel the last one. No menus, no reference numbers.",
+    title: "Manage tasks and memories in plain words",
+    desc: "Ask to see your reminders, save a company link, or recall a note. No menus, no reference numbers.",
   },
   {
     Icon: IconRing,
@@ -160,7 +160,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-7 max-w-[46ch] text-[clamp(1.05rem,1.6vw,1.2rem)] leading-relaxed text-ink-2">
-              Reminders that live inside WhatsApp — written in English, Banglish or{" "}
+              An AI assistant and memory bank that lives inside WhatsApp — written in English, Banglish or{" "}
               <span lang="bn" className="font-bn font-medium text-ink">
                 বাংলা
               </span>
@@ -280,7 +280,7 @@ export default function HomePage() {
                 whichever you used, and works the same anywhere else in the world.
               </p>
               <div className="mt-9">
-                <WhatsAppButton>Send your first reminder</WhatsAppButton>
+                <WhatsAppButton>Send your first message</WhatsAppButton>
               </div>
             </div>
 
@@ -311,11 +311,10 @@ export default function HomePage() {
           />
           <div className="relative">
             <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.1rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-white">
-              Your next reminder is one message away.
+              Your second brain is one message away.
             </h2>
             <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-brand-tint">
-              Open WhatsApp, say what you need to remember and when. That is the whole
-              setup.
+              Open WhatsApp, ask a question, save a note, or set a reminder. That is the whole setup.
             </p>
             <div className="mt-10 flex flex-col items-center gap-5">
               <WhatsAppButton tone="light">Open WhatsApp</WhatsAppButton>
@@ -339,7 +338,7 @@ export default function HomePage() {
             </span>
           </div>
           <p className="text-[14.5px] leading-relaxed text-ink-3 sm:ml-auto sm:text-right">
-            A WhatsApp reminder assistant. Built in Bangladesh.
+            A WhatsApp personal assistant. Built in Bangladesh.
           </p>
           <a
             href={BOT_WHATSAPP_LINK}

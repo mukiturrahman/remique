@@ -1,7 +1,7 @@
-import type { Message, User } from '@prisma/client';
+import { Prisma, type Message, type User } from '@prisma/client';
 import { prisma } from './db';
 import { processIncomingUserMessage } from './reminder-service';
-import { sendWhatsAppMessage, WhatsAppApiError } from './whatsapp';
+import { markReadAndShowTyping, sendWhatsAppMessage, WhatsAppApiError } from './whatsapp';
 
 /**
  * The single implementation of "answer one inbound WhatsApp message".
@@ -12,8 +12,8 @@ import { sendWhatsAppMessage, WhatsAppApiError } from './whatsapp';
  * webhook to do the work itself — the retry path cannot drift from it.
  */
 
-// Per-user abuse ceiling. Every inbound message costs a Gemini call, three DB
-// writes and a WhatsApp send, so an unthrottled sender can drain the Gemini
+// Per-user abuse ceiling. Every inbound message costs an OpenAI call, three DB
+// writes and a WhatsApp send, so an unthrottled sender can drain the OpenAI
 // quota on their own. Counted against the [userId, direction, createdAt] index.
 const MAX_MESSAGES_PER_HOUR = 30;
 
@@ -62,8 +62,13 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
+  // Fired first and never awaited on the reply path. The user sees "typing…"
+  // while the LLM parse runs, which is the difference between a thread that
+  // looks dead for four seconds and one that reacts immediately.
+  const typing = markReadAndShowTyping(message.whatsappMessageId);
+
   // One wall-clock round trip for three independent reads/writes that all have
-  // to happen before the Gemini call. Issued together because this runs on the
+  // to happen before the LLM call. Issued together because this runs on the
   // user's critical path now, not in a background worker.
   const [claim, recentCount, activeState] = await Promise.all([
     // Optimistic claim on `attempts`. A Meta webhook retry (or a sweeper replay
@@ -88,18 +93,19 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
   if (claim.count === 0) {
     // Someone else owns this message right now, or it was answered between the
     // read and the claim. Either way, acking is correct.
+    await typing;
     return { status: 'not_claimable', retryable: false };
   }
 
   // ── Per-user rate limit ──────────────────────────────────────────
-  // Checked before Gemini so a flood costs one COUNT query, not one LLM call.
+  // Checked before the LLM call so a flood costs one COUNT query, not one LLM call.
   if (recentCount > MAX_MESSAGES_PER_HOUR) {
     console.warn(
       `[Remique] Rate limit hit userId=${user.id} count=${recentCount} messageId=${message.id}`
     );
 
     // Tell them once, on the message that crosses the line. Replying to every
-    // throttled message would just move the cost from Gemini to WhatsApp.
+    // throttled message would just move the cost from OpenAI to WhatsApp.
     if (recentCount === MAX_MESSAGES_PER_HOUR + 1) {
       try {
         await sendWhatsAppMessage(
@@ -117,11 +123,13 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
       data: { processedAt: new Date(), processingError: 'Rate limited' },
     });
 
+    await typing;
     return { status: 'rate_limited', retryable: false };
   }
 
   try {
     await processIncomingUserMessage(user, message.messageText, activeState);
+    await typing;
 
     // Only now is the message truly answered.
     await prisma.message.update({
@@ -131,6 +139,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
 
     return { status: 'processed', retryable: false };
   } catch (error: any) {
+    await typing;
     return recordFailure(message.id, error);
   }
 }
@@ -174,4 +183,72 @@ async function recordFailure(messageId: string, error: any): Promise<PipelineRes
   }
 
   return { status: 'transient_failure', retryable: true, error: errorMessage };
+}
+
+export interface InboundMessageInput {
+  whatsappMessageId: string;
+  rawSenderNumber: string;
+  formattedPhoneNumber: string;
+  messageText: string;
+  profileName: string;
+}
+
+/**
+ * Writes the inbound message and returns it with its user attached.
+ *
+ * Returns null only for a message we have already answered. A row that exists
+ * with processedAt = null means a previous attempt died before replying, so the
+ * existing row is handed back and processed again — Meta's retry must not be
+ * dropped as a duplicate.
+ */
+export async function claimInboundMessage(
+  input: InboundMessageInput,
+  allowUserRaceRetry = true
+): Promise<PipelineMessage | null> {
+  try {
+    return await prisma.message.create({
+      data: {
+        whatsappMessageId: input.whatsappMessageId,
+        direction: 'INBOUND',
+        messageText: input.messageText,
+        user: {
+          connectOrCreate: {
+            where: { whatsappId: input.rawSenderNumber },
+            create: {
+              whatsappId: input.rawSenderNumber,
+              phoneNumber: input.formattedPhoneNumber,
+              name: input.profileName,
+              timezone: 'Asia/Dhaka',
+            },
+          },
+        },
+      },
+      include: { user: true },
+    });
+  } catch (error) {
+    const isUniqueViolation =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+
+    if (!isUniqueViolation) throw error;
+
+    const existing = await prisma.message.findUnique({
+      where: { whatsappMessageId: input.whatsappMessageId },
+      include: { user: true },
+    });
+
+    if (existing) {
+      if (existing.processedAt) return null;
+      console.warn(`[Remique] Reprocessing unanswered message ${input.whatsappMessageId}`);
+      return existing;
+    }
+
+    // The collision was on whatsappId, not on the message: two messages from a
+    // brand new sender landed at once and both tried to create the user. The
+    // user exists now, so the same insert succeeds on the second pass.
+    if (allowUserRaceRetry) {
+      return claimInboundMessage(input, false);
+    }
+
+    throw error;
+  }
 }

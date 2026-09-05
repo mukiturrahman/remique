@@ -297,7 +297,7 @@ The browser's own chrome is themed as part of the design, not left to the user a
 - **Do** render animated content complete on the server and cancel all motion under `prefers-reduced-motion`.
 - **Do** give any looping motion a visible pause control with `aria-pressed`.
 - **Do** theme browser surfaces — selection, caret, scrollbar, focus ring — as part of any new surface.
-- **Do** treat the time-vocabulary rows as parser data mirrored from `src/lib/gemini.ts:25-32`; edit the parser first, then the page.
+- **Do** treat the time-vocabulary rows as parser data mirrored from `src/lib/llm.ts` (the Banglish temporal mappings block); edit the parser first, then the page.
 
 ### Don't:
 - **Don't** use coral for ordinary data, headings, borders, or hover states.

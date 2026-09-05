@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import {
   verifyQStashRequest,
-  enqueueInboundMessage,
   scheduleDelayedReminder,
   isWithinQStashWindow,
 } from '@/lib/qstash';
@@ -47,43 +46,9 @@ export async function POST(request: NextRequest) {
     };
 
     // ── 1. Inbound messages that were never answered ────────────────────
-    // Covers a failed QStash publish, an exhausted retry chain, and the
-    // 'operator' failures the worker intentionally leaves replayable.
-    const stuckMessages = await prisma.message.findMany({
-      where: {
-        direction: 'INBOUND',
-        processedAt: null,
-        createdAt: { lte: new Date(now.getTime() - STUCK_MESSAGE_GRACE_MS) },
-      },
-      orderBy: { createdAt: 'asc' },
-      take: BATCH,
-      select: { id: true, attempts: true },
-    });
-
-    for (const message of stuckMessages) {
-      // Give up after enough attempts rather than replaying forever.
-      if (message.attempts >= 5) {
-        await prisma.message.update({
-          where: { id: message.id },
-          data: {
-            processedAt: now,
-            processingError: 'Abandoned by sweeper after 5 attempts',
-          },
-        });
-        continue;
-      }
-
-      try {
-        const qstashMessageId = await enqueueInboundMessage(message.id, { replay: true });
-        await prisma.message.update({
-          where: { id: message.id },
-          data: { qstashMessageId },
-        });
-        result.replayedMessages++;
-      } catch (err: any) {
-        result.errors.push(`message ${message.id}: ${err?.message}`);
-      }
-    }
+    // (Obsolete: This is now handled 100% by AWS SQS automatic retries and DLQs.
+    // SQS guarantees at-least-once delivery, so we no longer need a manual sweeper
+    // for inbound messages.)
 
     // ── 2. Reminders deferred past the QStash window ────────────────────
     // Written with a null qstashMessageId at creation time; claim them once

@@ -1,6 +1,6 @@
 import { ConversationState, User } from '@prisma/client';
 import { prisma } from './db';
-import { parseReminderWithGemini } from './gemini';
+import { parseUserMessage } from './llm';
 import { validateAndNormalizeDate } from './date-normalizer';
 import { scheduleDelayedReminder } from './qstash';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -9,12 +9,8 @@ import { DateTime } from 'luxon';
 export async function processIncomingUserMessage(
   user: User,
   userMessage: string,
-  // Callers that already fetched the pending conversation state pass it in so
-  // this does not cost a second round trip on the reply path. Pass `undefined`
-  // (or omit) to have it looked up here.
   prefetchedState?: ConversationState | null
 ) {
-  // 1. Check for active pending conversation state (e.g. clarification)
   const activeState =
     prefetchedState !== undefined
       ? prefetchedState
@@ -25,38 +21,45 @@ export async function processIncomingUserMessage(
           },
         });
 
-  // 2. Extract structured entities with Gemini
-  const geminiResult = await parseReminderWithGemini(
+  // Fetch all user notes to inject as context
+  const userNotes = await prisma.note.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'desc' },
+  });
+  const notesText = userNotes.map((n) => n.content);
+
+  const parsed = await parseUserMessage(
     userMessage,
     user.timezone,
-    activeState?.pendingData
+    activeState?.pendingData,
+    notesText
   );
 
   // ─── Flow A: Clarification Required ────────────────────────────────
-  if (geminiResult.needs_clarification || geminiResult.intent === 'clarification_required') {
+  if (parsed.needs_clarification || parsed.intent === 'clarification_required') {
     await prisma.conversationState.upsert({
       where: { userId: user.id },
       update: {
         pendingIntent: 'create_reminder',
-        pendingData: { partialTitle: geminiResult.title, userMessage },
+        pendingData: { partialTitle: parsed.title, userMessage },
         expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
       },
       create: {
         userId: user.id,
         pendingIntent: 'create_reminder',
-        pendingData: { partialTitle: geminiResult.title, userMessage },
+        pendingData: { partialTitle: parsed.title, userMessage },
         expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
       },
     });
 
-    const question = geminiResult.clarification_question || 'What time should Remique remind you?';
+    const question = parsed.clarification_question || 'What time should Remique remind you?';
     await sendWhatsAppMessage(user.phoneNumber, question);
     return;
   }
 
   // ─── Flow B: Create Reminder ────────────────────────────────────────
-  if (geminiResult.intent === 'create_reminder' && geminiResult.scheduled_iso) {
-    const validated = validateAndNormalizeDate(geminiResult.scheduled_iso, user.timezone);
+  if (parsed.intent === 'create_reminder' && parsed.scheduled_iso) {
+    const validated = validateAndNormalizeDate(parsed.scheduled_iso, user.timezone);
 
     if (!validated.isValid) {
       await sendWhatsAppMessage(
@@ -66,9 +69,8 @@ export async function processIncomingUserMessage(
       return;
     }
 
-    const title = geminiResult.title || 'Reminder';
+    const title = parsed.title || 'Reminder';
 
-    // Persist reminder in Database
     const reminder = await prisma.reminder.create({
       data: {
         userId: user.id,
@@ -80,49 +82,21 @@ export async function processIncomingUserMessage(
       },
     });
 
-    // Schedule delayed HTTP webhook with Upstash QStash.
-    // A null id means the reminder is beyond QStash's holding window — the row
-    // stays SCHEDULED and the sweeper enqueues it once it comes into range.
-    try {
-      const qstashMsgId = await scheduleDelayedReminder(reminder.id, validated.scheduledAtUtc!);
-      if (qstashMsgId) {
-        await prisma.reminder.update({
-          where: { id: reminder.id },
-          data: { qstashMessageId: qstashMsgId },
-        });
-      } else {
-        console.log(
-          `[Remique] Reminder ${reminder.id} is beyond the QStash window — deferred to the sweeper.`
-        );
-      }
-    } catch (schedErr: any) {
-      console.error('[Remique] QStash scheduling error:', schedErr.message);
-      // Mark as FAILED so the stuck record is visible for debugging
-      await prisma.reminder.update({
-        where: { id: reminder.id },
-        data: { status: 'FAILED', errorMessage: schedErr.message?.slice(0, 500) },
-      });
-      await sendWhatsAppMessage(
-        user.phoneNumber,
-        `⚠️ Sorry, I couldn't schedule your reminder due to a technical issue. Please try again.`
-      );
-      return;
-    }
-
-    // Clear any active pending conversation state
-    await prisma.conversationState.deleteMany({ where: { userId: user.id } });
-
-    // Send instant confirmation
     const confirmMsg =
-      geminiResult.confirmation_phrase ||
+      parsed.reply_text ||
       `Done! 🔔 Remique will remind you on ${validated.scheduledAtLocalFormatted} to *${title}*.`;
 
     await sendWhatsAppMessage(user.phoneNumber, confirmMsg);
+
+    await Promise.all([
+      scheduleReminderDelivery(reminder.id, validated.scheduledAtUtc!),
+      prisma.conversationState.deleteMany({ where: { userId: user.id } }),
+    ]);
     return;
   }
 
   // ─── Flow C: List Reminders ─────────────────────────────────────────
-  if (geminiResult.intent === 'list_reminders') {
+  if (parsed.intent === 'list_reminders') {
     const upcoming = await prisma.reminder.findMany({
       where: {
         userId: user.id,
@@ -150,8 +124,7 @@ export async function processIncomingUserMessage(
   }
 
   // ─── Flow D: Cancel Reminder ─────────────────────────────────────────
-  if (geminiResult.intent === 'cancel_reminder') {
-    // Find the most recently created SCHEDULED reminder
+  if (parsed.intent === 'cancel_reminder') {
     const latestReminder = await prisma.reminder.findFirst({
       where: {
         userId: user.id,
@@ -182,9 +155,63 @@ export async function processIncomingUserMessage(
     return;
   }
 
-  // ─── Flow E: Unknown / Greeting Fallback ────────────────────────────
+  // ─── Flow E: Save Note ──────────────────────────────────────────────
+  if (parsed.intent === 'save_note' && parsed.note_content) {
+    await prisma.note.create({
+      data: {
+        userId: user.id,
+        content: parsed.note_content,
+      },
+    });
+
+    await sendWhatsAppMessage(
+      user.phoneNumber,
+      parsed.reply_text || '✅ I have saved that to your memory.'
+    );
+    return;
+  }
+
+  // ─── Flow F: General Reply / Knowledge Base Answer ───────────────────
+  if (parsed.intent === 'general_reply' && parsed.reply_text) {
+    await sendWhatsAppMessage(user.phoneNumber, parsed.reply_text);
+    return;
+  }
+
+  // ─── Fallback ────────────────────────────────────────────────────────
   await sendWhatsAppMessage(
     user.phoneNumber,
-    `Hi! I'm *Remique* 🔔 — your AI reminder assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"Kalke shokal 10 tay meeting er reminder dao"_\n• _"Remind me in 30 minutes to check the oven"_\n• _"Show my reminders"_\n• _"Cancel my last reminder"_`
+    `Hi! I'm *Remique* 🔔 — your AI personal assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"My wifi password is password123"_\n• _"What is my wifi password?"_\n• _"Cancel my last reminder"_`
   );
+}
+
+/**
+ * Registers the delivery callback for an already-persisted reminder.
+ *
+ * Runs after the user has been confirmed, so it never throws: a reminder left
+ * SCHEDULED with a null qstashMessageId is precisely the state the sweeper's
+ * deferred pass claims, which is also how reminders beyond the QStash holding
+ * window are handled. Failing here delays the schedule by one sweep, it does
+ * not lose the reminder.
+ */
+async function scheduleReminderDelivery(reminderId: string, scheduledAtUtc: Date): Promise<void> {
+  try {
+    const qstashMsgId = await scheduleDelayedReminder(reminderId, scheduledAtUtc);
+
+    if (!qstashMsgId) {
+      console.log(
+        `[Remique] Reminder ${reminderId} is beyond the QStash window — deferred to the sweeper.`
+      );
+      return;
+    }
+
+    await prisma.reminder.update({
+      where: { id: reminderId },
+      data: { qstashMessageId: qstashMsgId },
+    });
+  } catch (schedErr: any) {
+    console.error(
+      `[Remique] QStash scheduling error for reminder ${reminderId} ` +
+        `(left for the sweeper): ${schedErr?.message}`
+    );
+  }
 }

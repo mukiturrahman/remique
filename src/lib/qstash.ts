@@ -106,28 +106,7 @@ function minuteBucket(now: Date = new Date()): number {
   return Math.floor(now.getTime() / 60_000);
 }
 
-/**
- * Hands an inbound WhatsApp message to the async worker.
- * The webhook must never do Gemini/WhatsApp work inline — this is the handoff.
- */
-export async function enqueueInboundMessage(
-  messageId: string,
-  opts: { replay?: boolean } = {},
-  appUrl: string = env.NEXT_PUBLIC_APP_URL
-): Promise<string> {
-  const response = await getQStashClient().publishJSON({
-    url: resolveTargetUrl('/api/jobs/process-message', appUrl),
-    body: { messageId },
-    // QStash retries with exponential backoff; a transient Gemini/WhatsApp
-    // failure recovers on its own instead of being lost.
-    retries: 3,
-    deduplicationId: opts.replay
-      ? `remique_msg_${messageId}_${minuteBucket()}`
-      : `remique_msg_${messageId}`,
-  });
 
-  return response.messageId;
-}
 
 /**
  * Schedules the reminder delivery callback.

@@ -170,6 +170,30 @@ export async function sendWhatsAppMessage(
 }
 
 /**
+ * Marks the inbound message as read and shows the "typing…" bubble in the
+ * user's chat.
+ *
+ * This is a perceived-latency fix, not a real one: the parse and the reply still
+ * take as long as they take, but the user sees the bot react within a few
+ * hundred milliseconds instead of staring at a silent thread. Meta clears the
+ * indicator as soon as the real reply lands, or after 25 seconds.
+ *
+ * Never throws — a failed indicator must not cost anyone their reminder.
+ */
+export async function markReadAndShowTyping(inboundMessageId: string): Promise<void> {
+  try {
+    await postToWhatsApp('typing_indicator', {
+      messaging_product: 'whatsapp',
+      status: 'read',
+      message_id: inboundMessageId,
+      typing_indicator: { type: 'text' },
+    });
+  } catch (error: any) {
+    console.warn(`[Remique][WhatsApp] typing indicator failed: ${error?.message}`);
+  }
+}
+
+/**
  * Sends an approved WhatsApp Utility Template message (required when message is sent outside the 24h window)
  */
 export async function sendWhatsAppTemplate(

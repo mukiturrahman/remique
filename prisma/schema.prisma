@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 enum ReminderStatus {
@@ -31,8 +32,20 @@ model User {
   reminders         Reminder[]
   messages          Message[]
   conversationState ConversationState?
+  notes             Note[]
 
   @@map("users")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notes")
 }
 
 model Message {

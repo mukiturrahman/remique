@@ -4,7 +4,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
+  // Overridable so a faster or stronger model can be swapped in from the
+  // dashboard without a redeploy. Parse latency is the single largest item in
+  // the reply budget, and Banglish accuracy is the reason to escalate.
+  OPENAI_MODEL: z.string().min(1).default('gpt-4.1-mini'),
   WHATSAPP_TOKEN: z.string().min(1, 'WHATSAPP_TOKEN is required'),
   WHATSAPP_PHONE_NUMBER_ID: z.string().min(1, 'WHATSAPP_PHONE_NUMBER_ID is required'),
   WHATSAPP_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_VERIFY_TOKEN is required'),
@@ -18,6 +22,7 @@ const envSchema = z.object({
   // Gates the expensive /api/health checks. Without it the deep probe is
   // disabled in production rather than left open to anonymous traffic.
   HEALTH_CHECK_SECRET: z.string().optional(),
+  SQS_QUEUE_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -41,7 +46,8 @@ export const env: Env = _parsed.success
       NODE_ENV: (process.env.NODE_ENV as any) || 'development',
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
       DATABASE_URL: process.env.DATABASE_URL || '',
-      GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+      OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
       WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN || '',
       WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
       WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || '',
@@ -51,4 +57,5 @@ export const env: Env = _parsed.success
       QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
       QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
       HEALTH_CHECK_SECRET: process.env.HEALTH_CHECK_SECRET,
+      SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
     };

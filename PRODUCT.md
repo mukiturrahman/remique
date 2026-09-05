@@ -34,7 +34,7 @@ Confirmed capabilities (from source):
 - Language: English, Banglish, Bengali script — including mixed input; confirmation is returned in the user's own language/script.
 - Relative and absolute time ("in 30 minutes", "next Friday at 3 PM", "kalke shokal 10 tay").
 - Clarification round-trip when time is missing.
-- Parsing by Gemini (`@google/genai`), delivery scheduled through Upstash QStash, storage in Postgres via Prisma, inbound webhooks verified with Meta's HMAC signature.
+- Parsing by OpenAI (`openai`, model `gpt-5-nano`, env-overridable), delivery scheduled through Upstash QStash, storage in Postgres via Prisma, inbound webhooks verified with Meta's HMAC signature.
 
 Constraints:
 - Free to use; no account, no pricing tier exists.
@@ -50,7 +50,7 @@ Constraints:
 
 ## Evidence on Hand
 
-- Real: the bot number, the wa.me link, the actual parsing behavior and confirmation strings (mirrored from `src/lib/gemini.ts`), the real stack (Gemini, QStash, Meta HMAC).
+- Real: the bot number, the wa.me link, the actual parsing behavior and confirmation strings (mirrored from `src/lib/llm.ts`), the real stack (OpenAI, QStash, Meta HMAC).
 - The three demo conversations on the landing page are authored illustrations of real behavior, not transcripts of real users.
 - **Absent — must not be fabricated:** user counts, testimonials, reviews, uptime/SLA numbers, press, funding, delivery-rate statistics, partner logos.
 
