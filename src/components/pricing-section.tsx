@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { IconCheck, IconLock, IconArrow, MarkBkash } from "./icons";
+import { IconCheck, IconLock, IconArrow } from "./icons";
 
 type Tier = {
   name: string;
@@ -172,7 +172,7 @@ export function PricingSection() {
                   }`}
                 >
                   Subscribe with
-                  <MarkBkash className="h-[18px] w-[18px]" />
+                  <img src="/bKash-Logo.png" alt="bKash" className="h-[18px] w-[18px] rounded-[3px]" />
                   <IconArrow className="h-[17px] w-[17px] transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </a>
 
@@ -209,7 +209,7 @@ export function PricingSection() {
 
         {/* bkash trust line */}
         <p className="mt-10 flex items-center justify-center gap-2.5 text-[14px] text-ink-3">
-          <MarkBkash className="h-5 w-5" />
+          <img src="/bKash-Logo.png" alt="bKash" className="h-5 w-5 rounded-[4px]" />
           All payments processed securely through bKash
         </p>
       </div>
