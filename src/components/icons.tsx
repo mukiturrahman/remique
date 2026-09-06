@@ -113,6 +113,49 @@ export function MarkRemique(props: IconProps) {
   );
 }
 
+/** A checkmark for feature lists. */
+export function IconCheck(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <path d="m5 13 4.5 4.5L19 7" />
+    </Stroke>
+  );
+}
+
+/** A locked feature. */
+export function IconLock(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </Stroke>
+  );
+}
+
+/** bKash brand mark — the origami bird. */
+export function MarkBkash(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" {...props}>
+      <path d="M5 .5 10.5 8 2.5 8Z" fill="#D4135D" />
+      <path d="M11 .5 17 .5 13 12Z" fill="#E2136E" />
+      <path d="M10.5 8.8 19 11.5 8 18.5Z" fill="#E2136E" />
+      <path d="M10.5 8.8 13 12 8.5 12Z" fill="#C4115A" />
+      <path d="M19 9.5 22 11.5 19.5 14Z" fill="#D4135D" />
+      <path d="M2.5 8.8 10.5 8.8 6.5 22Z" fill="#9B0D47" />
+    </svg>
+  );
+}
+
+/** A person silhouette for use-case personas. */
+export function IconPerson(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+    </Stroke>
+  );
+}
+
 /** WhatsApp's own glyph — a platform affordance, kept accurate. */
 export function MarkWhatsApp(props: IconProps) {
   return (
