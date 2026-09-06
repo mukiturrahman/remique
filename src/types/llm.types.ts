@@ -84,6 +84,12 @@ export interface ParsedAssistantResponse {
    * "remove the 2nd one" is only answerable against that exact ordering.
    */
   reminder_indices?: number[] | null;
+  /**
+   * True only when the user asked to SEE their schedule ("show me all my
+   * reminders"). A question about it ("do I have anything today?") is answered
+   * conversationally instead, so a lookup does not return a bulleted dump.
+   */
+  wants_full_list?: boolean | null;
   /** True when a cancel should sweep every match, not just the latest one. */
   cancel_all?: boolean | null;
   /**
@@ -115,6 +121,16 @@ export interface ParsedAssistantResponse {
   facts?: ExtractedFact[] | null;
   forget_facts?: ForgetFactTarget[] | null;
   reply_text?: string | null;
+}
+
+/** A scheduled item shown to the model so it can answer from the schedule. */
+export interface ScheduleEntry {
+  title: string;
+  scheduledAt: Date;
+  anchorAt: Date | null;
+  offsetMinutes: number | null;
+  category: string;
+  recurrenceRule: string | null;
 }
 
 /** One earlier message, rendered into RECENT CONVERSATION. */

@@ -44,6 +44,9 @@ const NOTE_LIMIT = 40;
  */
 const RECENT_TURNS_LIMIT = 8;
 
+/** How many future reminders beyond today the model is shown. */
+const UPCOMING_CONTEXT_LIMIT = 10;
+
 /**
  * Accepts a bare "yes" to a suggested document.
  *
@@ -186,10 +189,49 @@ function parseFilterBound(iso: unknown, timezone: string): Date | null {
 }
 
 
+/** Shapes a stored reminder for the prompt's schedule block. */
+function toScheduleEntry(r: {
+  title: string;
+  scheduledAt: Date;
+  anchorAt: Date | null;
+  offsetMinutes: number | null;
+  category: string;
+  recurrenceRule: string | null;
+}) {
+  return {
+    title: r.title,
+    scheduledAt: r.scheduledAt,
+    anchorAt: r.anchorAt,
+    offsetMinutes: r.offsetMinutes,
+    category: r.category,
+    recurrenceRule: r.recurrenceRule,
+  };
+}
+
 /** First name only, for addressing the user without sounding like a form. */
 function firstName(user: User): string | null {
   const name = user.name?.trim().split(/\s+/)[0];
   return name && name.length > 1 ? name : null;
+}
+
+/**
+ * "today at 5 PM" / "tomorrow at 11:00 AM" / "Fri, Sep 11 at 9 PM".
+ *
+ * People say "tomorrow", not "Mon, Sep 7". Absolute dates are kept for
+ * anything past tomorrow, where a weekday alone is ambiguous.
+ */
+function friendlyWhen(when: Date, timezone: string): string {
+  const local = DateTime.fromJSDate(when).setZone(timezone);
+  const days = local.startOf('day').diff(
+    DateTime.now().setZone(timezone).startOf('day'),
+    'days'
+  ).days;
+  const time = local.toFormat('h:mm a');
+
+  if (days === 0) return `today at ${time}`;
+  if (days === 1) return `tomorrow at ${time}`;
+  if (days > 1 && days < 7) return `${local.toFormat('cccc')} at ${time}`;
+  return `${local.toFormat('LLL d')} at ${time}`;
 }
 
 /** "30 minutes before" / "1 hour before" — how the user refers to an alert. */
@@ -289,7 +331,11 @@ export async function processIncomingUserMessage(
 
   // Notes and document labels are both prompt context, so they are read
   // together — this is on the user's critical path.
-  const [userNotes, userFacts, recentMessages, userDocuments] = await Promise.all([
+  const dayStart = DateTime.now().setZone(user.timezone).startOf('day').toJSDate();
+  const dayEnd = DateTime.now().setZone(user.timezone).endOf('day').toJSDate();
+
+  const [userNotes, userFacts, recentMessages, todayReminders, upcomingContext, userDocuments] =
+    await Promise.all([
     prisma.note.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -309,6 +355,26 @@ export async function processIncomingUserMessage(
       take: RECENT_TURNS_LIMIT,
       select: { direction: true, messageText: true },
     }),
+    // The schedule itself. Without this the model answers "do I have anything
+    // today?" from nothing, so it either refuses or invents — and it cannot
+    // offer the useful extra ("the only thing you've got is...").
+    prisma.reminder.findMany({
+      where: {
+        userId: user.id,
+        status: 'SCHEDULED',
+        scheduledAt: { gte: dayStart, lte: dayEnd },
+      },
+      orderBy: { scheduledAt: 'asc' },
+    }),
+    prisma.reminder.findMany({
+      where: {
+        userId: user.id,
+        status: 'SCHEDULED',
+        scheduledAt: { gt: dayEnd },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: UPCOMING_CONTEXT_LIMIT,
+    }),
     prisma.document.findMany({
       // Unlabeled rows are mid-flow uploads with no name yet. They are not
       // retrievable and must never appear as a candidate.
@@ -323,6 +389,9 @@ export async function processIncomingUserMessage(
   const parsed = await parseUserMessage(userMessage, user.timezone, {
     pendingContext: activeState?.pendingData,
     savedNotes: notesText,
+    userName: user.name,
+    remindersToday: todayReminders.map(toScheduleEntry),
+    upcomingReminders: upcomingContext.map(toScheduleEntry),
     recentTurns: recentMessages
       .slice()
       .reverse()
@@ -559,6 +628,14 @@ export async function processIncomingUserMessage(
 
   // ─── Flow C: List Reminders ─────────────────────────────────────────
   if (parsed.intent === 'list_reminders') {
+    // A question about the schedule ("do I have anything today?") gets a
+    // conversational answer, not a bulleted dump. The model has the real
+    // schedule in context, so it is answering from truth rather than guessing.
+    if (!parsed.wants_full_list && parsed.reply_text?.trim()) {
+      await replyToUser(user, parsed.reply_text.trim());
+      return;
+    }
+
     const categoryFilter = normalizeCategoryFilter(parsed.filter_categories);
     const windowStart = parseFilterBound(parsed.filter_start_iso, user.timezone);
     const windowEnd = parseFilterBound(parsed.filter_end_iso, user.timezone);
@@ -905,8 +982,10 @@ export async function processIncomingUserMessage(
 
     const head =
       targets.length === 1
-        ? `Done${name ? `, ${name}` : ''}! I've removed:\n${lines}`
-        : `Done${name ? `, ${name}` : ''}! I've removed ${targets.length} of them:\n${lines}`;
+        ? `Cancelled ${targets[0].title} at ` +
+          `${DateTime.fromJSDate(targets[0].scheduledAt).setZone(user.timezone).toFormat('h:mm a')}.` +
+          `${survivors.length ? '' : ' Nothing else touched.'}`
+        : `Cancelled ${targets.length} of them${name ? `, ${name}` : ''}:\n${lines}`;
 
     const rest = survivors
       .map((sib) => {
@@ -974,8 +1053,8 @@ function buildRescheduleConfirmation(
     oldLabel && newLabel && oldLabel !== newLabel
       ? `Done${name ? `, ${name}` : ''}! The ${oldLabel} heads-up for *${target.title}* is now ` +
         `${newLabel} — you'll get it at ${when.toFormat('h:mm a')}.`
-      : `Done${name ? `, ${name}` : ''}! Moved *${target.title}* from ` +
-        `${previous.toFormat('ccc, LLL d @ h:mm a')} to ${when.toFormat('ccc, LLL d @ h:mm a')}.`;
+      : `Done${name ? `, ${name}` : ''}. Moved ${target.title} to ` +
+        `${friendlyWhen(newScheduledAt, user.timezone)}.`;
 
   if (siblings.length === 0) return head;
 
@@ -1007,15 +1086,12 @@ function buildCreationConfirmation(
 ): string {
   const name = firstName(user);
   const tz = user.timezone;
-  const tail = rejected.length > 0 ? `\n\n⚠️ ${rejected[0]}` : '';
+  const askName = name ? '' : '\n\nBy the way, what should I call you?';
+  const tail = (rejected.length > 0 ? `\n\n⚠️ ${rejected[0]}` : '') + askName;
 
   if (created.length === 1 && !anchorAt) {
     const only = created[0];
-    const when = DateTime.fromJSDate(only.scheduledAt).setZone(tz);
-    return (
-      `Done${name ? `, ${name}` : ''}! I'll remind you to *${only.title}* ` +
-      `${when.toFormat("ccc, LLL d 'at' h:mm a")}.${tail}`
-    );
+    return `Done. I'll ping you ${friendlyWhen(only.scheduledAt, tz)} about ${only.title}.${tail}`;
   }
 
   if (anchorAt) {
@@ -1029,17 +1105,16 @@ function buildCreationConfirmation(
       .join('\n');
 
     const heading =
-      created.length === 1 ? 'a reminder' : `${created.length} reminders`;
+      created.length === 1 ? 'a heads-up' : `${created.length} heads-ups`;
 
     return (
-      `Done${name ? `, ${name}` : ''}! I've set ${heading} for ` +
-      `*${anchorTitle || created[0].title}* ${anchor.toFormat("ccc, LLL d 'at' h:mm a")}:\n` +
-      `${lines}${tail}`
+      `Done${name ? `, ${name}` : ''}. ${anchorTitle || created[0].title} is ` +
+      `${friendlyWhen(anchorAt, tz)}, and I'll give you ${heading}:\n${lines}${tail}`
     );
   }
 
   const lines = created.map((c) => `• ${formatReminderLine(c, tz)}`).join('\n');
-  return `Done${name ? `, ${name}` : ''}! I've set ${created.length} reminders:\n${lines}${tail}`;
+  return `Done. That's ${created.length} set:\n${lines}${tail}`;
 }
 
 /**
@@ -1107,6 +1182,13 @@ async function persistFacts(
         },
       });
       console.log(`[Remique] fact saved ${subject}/${predicate}=${JSON.stringify(value)}`);
+
+      // A name is not just a fact — it is how every later reply addresses
+      // them, and `firstName()` reads it off the user row.
+      if (predicate === 'name' && (subject === 'me' || subject === 'user' || subject === 'i')) {
+        await prisma.user.update({ where: { id: userId }, data: { name: value } });
+        console.log(`[Remique] user name set to ${JSON.stringify(value)}`);
+      }
     } catch (error: any) {
       console.warn(`[Remique] fact write failed ${subject}/${predicate}: ${error?.message}`);
     }
