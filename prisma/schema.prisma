@@ -161,6 +161,22 @@ model Reminder {
   timezone        String         @default("Asia/Dhaka")
   category        ReminderCategory @default(GENERAL)
 
+  // The event this alert points at, e.g. the meeting itself at 9 PM. Null for
+  // a standalone reminder ("take a shower in 10 minutes") where the reminder
+  // IS the thing, rather than a heads-up about something else.
+  anchorAt        DateTime?      @map("anchor_at")
+  anchorTitle     String?        @map("anchor_title")
+
+  // How many minutes before `anchorAt` this fires. This is the handle the user
+  // reaches for: "change the 30 mins one to 1 hour" targets offsetMinutes=30,
+  // and a confirmation can then say "the 1-hour heads-up" instead of quoting a
+  // wall-clock time back at them.
+  offsetMinutes   Int?           @map("offset_minutes")
+
+  // Shared by every alert created for the same event, so editing one can
+  // restate its siblings and cancelling can offer to take the set.
+  groupId         String?        @map("group_id")
+
   // Was extracted by the model and then dropped on the floor: "remind me every
   // morning" silently became a one-shot. Populated now, and the delivery path
   // schedules the next occurrence after a successful send.
@@ -176,6 +192,7 @@ model Reminder {
 
   @@index([userId, scheduledAt])
   @@index([userId, category, scheduledAt])
+  @@index([userId, groupId])
   @@index([status, scheduledAt])
   @@map("reminders")
 }

@@ -34,6 +34,16 @@ export interface ForgetFactTarget {
   predicate: string;
 }
 
+/** One alert to create. A single message can ask for several. */
+export interface ExtractedReminder {
+  title: string;
+  scheduled_iso: string;
+  /** Minutes before the anchor, when this is a heads-up about an event. */
+  offset_minutes?: number | null;
+  category?: ReminderCategoryValue | null;
+  recurrence?: string | null;
+}
+
 export interface ParsedAssistantResponse {
   intent: AssistantIntent;
   title?: string | null;
@@ -43,6 +53,24 @@ export interface ParsedAssistantResponse {
   recurrence?: string | null;
   /** What kind of thing a new reminder is about. */
   category?: ReminderCategoryValue | null;
+
+  /**
+   * The event alerts point at ("the meeting at 9 PM"), distinct from the
+   * alerts themselves. Null when the reminder is the thing, not a heads-up.
+   */
+  anchor_iso?: string | null;
+  anchor_title?: string | null;
+
+  /**
+   * Every alert this message asks for. "remind me 15 and 30 mins before"
+   * yields two. Falls back to the scalar `title`/`scheduled_iso` when empty.
+   */
+  reminders?: ExtractedReminder[] | null;
+
+  /** Which existing alert to act on, by its offset: "the 30 mins one". */
+  target_offset_minutes?: number | null;
+  /** What that alert's offset becomes: "...change it to 1 hour". */
+  new_offset_minutes?: number | null;
   /** Window the user asked about when listing ("tomorrow", "this week"). */
   filter_start_iso?: string | null;
   filter_end_iso?: string | null;

@@ -9,6 +9,7 @@ import { putDocument, getDocumentUrl, extensionForMimeType } from './storage';
 import type { PipelineMessage } from './message-pipeline';
 import type { ParsedAssistantResponse } from '../types/llm.types';
 import { DateTime } from 'luxon';
+import { randomUUID } from 'crypto';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -182,6 +183,91 @@ function parseFilterBound(iso: unknown, timezone: string): Date | null {
   if (typeof iso !== 'string' || !iso.trim()) return null;
   const dt = DateTime.fromISO(iso, { zone: timezone });
   return dt.isValid ? dt.toJSDate() : null;
+}
+
+
+/** First name only, for addressing the user without sounding like a form. */
+function firstName(user: User): string | null {
+  const name = user.name?.trim().split(/\s+/)[0];
+  return name && name.length > 1 ? name : null;
+}
+
+/** "30 minutes before" / "1 hour before" — how the user refers to an alert. */
+export function describeOffset(minutes: number | null | undefined): string | null {
+  if (minutes == null || minutes <= 0) return null;
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} hour${hours === 1 ? '' : 's'} before`;
+  }
+  return `${minutes} minute${minutes === 1 ? '' : 's'} before`;
+}
+
+/**
+ * A schedule grouped under Today / Tomorrow / weekday headings.
+ *
+ * Rows arrive already sorted by time, and grouping by day preserves that
+ * order, so the flattened reading order matches the order parked in
+ * ConversationState. That equality is what lets "remove the 2nd one" work
+ * across day headings without printing numbers.
+ */
+export function buildGroupedList(
+  rows: Array<{
+    title: string;
+    scheduledAt: Date;
+    anchorAt: Date | null;
+    offsetMinutes: number | null;
+    recurrenceRule: string | null;
+  }>,
+  timezone: string
+): string {
+  const today = DateTime.now().setZone(timezone).startOf('day');
+  const sections: string[] = [];
+  let currentKey = '';
+  let lines: string[] = [];
+
+  const flush = () => {
+    if (lines.length) sections.push(`${currentKey}\n${lines.join('\n')}`);
+    lines = [];
+  };
+
+  for (const row of rows) {
+    const local = DateTime.fromJSDate(row.scheduledAt).setZone(timezone);
+    const days = local.startOf('day').diff(today, 'days').days;
+
+    const heading =
+      days === 0
+        ? `*Today (${local.toFormat('LLLL d')})*`
+        : days === 1
+          ? `*Tomorrow (${local.toFormat('LLLL d')})*`
+          : `*${local.toFormat('cccc')} (${local.toFormat('LLLL d')})*`;
+
+    if (heading !== currentKey) {
+      flush();
+      currentKey = heading;
+    }
+
+    const repeat = row.recurrenceRule ? ` _(${row.recurrenceRule.toLowerCase()})_` : '';
+    lines.push(`• ${formatReminderLine(row, timezone)}${repeat}`);
+  }
+
+  flush();
+  return sections.join('\n\n');
+}
+
+/** One line in a list or confirmation, showing the anchor when there is one. */
+function formatReminderLine(
+  r: { title: string; scheduledAt: Date; anchorAt: Date | null; offsetMinutes: number | null },
+  timezone: string
+): string {
+  const at = DateTime.fromJSDate(r.scheduledAt).setZone(timezone).toFormat('h:mm a');
+  const offset = describeOffset(r.offsetMinutes);
+
+  if (r.anchorAt) {
+    const anchor = DateTime.fromJSDate(r.anchorAt).setZone(timezone).toFormat('h:mm a');
+    return `${at} — ${r.title} at ${anchor}${offset ? ` (${offset})` : ''}`;
+  }
+
+  return `${at} — ${r.title}`;
 }
 
 export async function processIncomingUserMessage(
@@ -370,44 +456,105 @@ export async function processIncomingUserMessage(
     return;
   }
 
-  // ─── Flow B: Create Reminder ────────────────────────────────────────
-  if (parsed.intent === 'create_reminder' && parsed.scheduled_iso) {
-    const validated = validateAndNormalizeDate(parsed.scheduled_iso, user.timezone);
+  // ─── Flow B: Create Reminder(s) ─────────────────────────────────────
+  // One message can ask for several alerts around one event ("remind me 15
+  // and 30 mins before"). The event is the anchor; the alerts hang off it and
+  // share a group so a later edit can name its siblings.
+  if (parsed.intent === 'create_reminder') {
+    const requested = parsed.reminders?.length
+      ? parsed.reminders
+      : parsed.scheduled_iso
+        ? [
+            {
+              title: parsed.title || 'Reminder',
+              scheduled_iso: parsed.scheduled_iso,
+              offset_minutes: null,
+              category: parsed.category ?? null,
+              recurrence: parsed.recurrence ?? null,
+            },
+          ]
+        : [];
 
-    if (!validated.isValid) {
+    if (requested.length > 0) {
+      const anchorParsed = parsed.anchor_iso
+        ? DateTime.fromISO(parsed.anchor_iso, { zone: user.timezone })
+        : null;
+      const anchorAt = anchorParsed?.isValid ? anchorParsed.toJSDate() : null;
+      const anchorTitle = parsed.anchor_title?.trim() || null;
+
+      // A group is only meaningful when several alerts share an event, or when
+      // one alert has an anchor a later message might add siblings to.
+      const groupId = requested.length > 1 || anchorAt ? randomUUID() : null;
+
+      const created: Array<{
+        id: string;
+        title: string;
+        scheduledAt: Date;
+        anchorAt: Date | null;
+        offsetMinutes: number | null;
+      }> = [];
+      const rejected: string[] = [];
+
+      for (const item of requested) {
+        const validated = validateAndNormalizeDate(item.scheduled_iso, user.timezone);
+
+        if (!validated.isValid) {
+          rejected.push(validated.errorMessage || 'Invalid reminder time.');
+          continue;
+        }
+
+        const offset =
+          typeof item.offset_minutes === 'number' && item.offset_minutes > 0
+            ? item.offset_minutes
+            : null;
+
+        const reminder = await prisma.reminder.create({
+          data: {
+            userId: user.id,
+            title: item.title?.trim() || anchorTitle || 'Reminder',
+            originalMessage: userMessage,
+            scheduledAt: validated.scheduledAtUtc!,
+            timezone: user.timezone,
+            category: normalizeCategory(item.category ?? parsed.category),
+            recurrenceRule: normalizeRecurrence(item.recurrence ?? parsed.recurrence),
+            anchorAt,
+            anchorTitle,
+            offsetMinutes: offset,
+            groupId,
+            status: 'SCHEDULED',
+          },
+        });
+
+        created.push({
+          id: reminder.id,
+          title: reminder.title,
+          scheduledAt: reminder.scheduledAt,
+          anchorAt: reminder.anchorAt,
+          offsetMinutes: reminder.offsetMinutes,
+        });
+      }
+
+      if (created.length === 0) {
+        await replyToUser(user, `⚠️ ${rejected[0] || 'Invalid reminder time.'}`);
+        return;
+      }
+
+      console.log(
+        `[Remique] created ${created.length} reminder(s) group=${groupId ?? '-'} ` +
+          `anchor=${anchorAt?.toISOString() ?? '-'} rejected=${rejected.length}`
+      );
+
       await replyToUser(
         user,
-        `⚠️ ${validated.errorMessage || 'Invalid reminder time.'}`
+        buildCreationConfirmation(user, created, anchorAt, anchorTitle, rejected)
       );
+
+      await Promise.all([
+        ...created.map((c) => scheduleReminderDelivery(c.id, c.scheduledAt)),
+        prisma.conversationState.deleteMany({ where: { userId: user.id } }),
+      ]);
       return;
     }
-
-    const title = parsed.title || 'Reminder';
-
-    const reminder = await prisma.reminder.create({
-      data: {
-        userId: user.id,
-        title,
-        originalMessage: userMessage,
-        scheduledAt: validated.scheduledAtUtc!,
-        timezone: user.timezone,
-        category: normalizeCategory(parsed.category),
-        recurrenceRule: normalizeRecurrence(parsed.recurrence),
-        status: 'SCHEDULED',
-      },
-    });
-
-    const confirmMsg =
-      parsed.reply_text ||
-      `Done! 🔔 Remique will remind you on ${validated.scheduledAtLocalFormatted} to *${title}*.`;
-
-    await replyToUser(user, confirmMsg);
-
-    await Promise.all([
-      scheduleReminderDelivery(reminder.id, validated.scheduledAtUtc!),
-      prisma.conversationState.deleteMany({ where: { userId: user.id } }),
-    ]);
-    return;
   }
 
   // ─── Flow C: List Reminders ─────────────────────────────────────────
@@ -442,20 +589,14 @@ export async function processIncomingUserMessage(
       : '';
 
     if (upcoming.length === 0) {
+      const emptyName = firstName(user);
       await replyToUser(
         user,
-        `You don't have any ${noun}${windowLabel ? ` for${windowLabel}` : ' coming up'}. 🗓️`
+        `Nothing on your plate${emptyName ? `, ${emptyName}` : ''} — no ${noun}` +
+          `${windowLabel ? ` for${windowLabel}` : ' coming up'}. Want me to add something?`
       );
       return;
     }
-
-    const listText = upcoming
-      .map((r, i) => {
-        const local = DateTime.fromJSDate(r.scheduledAt).setZone(user.timezone);
-        const repeat = r.recurrenceRule ? ` _(${r.recurrenceRule.toLowerCase()})_` : '';
-        return `${i + 1}. *${r.title}* — ${local.toFormat('ccc, LLL d @ h:mm a')}${repeat}`;
-      })
-      .join('\n');
 
     // The next message is often "remove the 2nd one", and 2 has to mean the
     // second row the user actually saw — not the second row of some later query.
@@ -474,52 +615,48 @@ export async function processIncomingUserMessage(
       },
     });
 
-    const heading = noun.charAt(0).toUpperCase() + noun.slice(1);
-    await replyToUser(user, `📋 *Your ${heading}:*\n\n${listText}`);
+    const listName = firstName(user);
+    await replyToUser(
+      user,
+      `Here are your upcoming ${noun}${listName ? `, ${listName}` : ''}:\n\n` +
+        `${buildGroupedList(upcoming, user.timezone)}\n\n` +
+        `That's everything on your plate right now.`
+    );
     return;
   }
 
   // ─── Flow K: Reschedule an existing reminder ─────────────────────────
-  // Answers "move the meeting with John to Sep 9" by MOVING the row the user
-  // already has, rather than creating a rival copy alongside it.
+  // Moves the row the user already has. Targets it by position, by name, or by
+  // its offset ("the 30 mins one") — the last of which is why offsets are
+  // stored at all: the title is "Meeting with John" and contains no "30 mins".
   if (parsed.intent === 'reschedule_reminder') {
-    // The follow-up to "which one?" is a bare number or a name, so the parked
-    // list is consulted before anything is matched afresh.
     const pendingChoice =
       activeState?.pendingIntent === 'reschedule_choice'
         ? (activeState.pendingData as { reminderIds?: string[]; scheduledIso?: string } | null)
         : null;
 
-    const newIso = parsed.scheduled_iso || pendingChoice?.scheduledIso || null;
-
-    if (!newIso) {
-      await replyToUser(
-        user,
-        parsed.clarification_question || 'What time should I move it to?'
-      );
-      return;
-    }
-
-    const validated = validateAndNormalizeDate(newIso, user.timezone);
-
-    if (!validated.isValid) {
-      await replyToUser(user, `⚠️ ${validated.errorMessage || 'Invalid reminder time.'}`);
-      return;
-    }
-
-    const categoryFilter = normalizeCategoryFilter(parsed.filter_categories);
-    const titleQuery = parsed.title?.trim() || null;
-
     const listed = resolveListedReminderIds(activeState, parsed.reminder_indices);
-
     const listProblem = positionProblemMessage(listed, 'move');
     if (listProblem) {
       await replyToUser(user, listProblem);
       return;
     }
-
     const listedIds = listed.kind === 'resolved' ? listed.ids : null;
 
+    const categoryFilter = normalizeCategoryFilter(parsed.filter_categories);
+    const titleQuery = parsed.title?.trim() || null;
+    const targetOffset =
+      typeof parsed.target_offset_minutes === 'number' && parsed.target_offset_minutes > 0
+        ? parsed.target_offset_minutes
+        : null;
+    const newOffset =
+      typeof parsed.new_offset_minutes === 'number' && parsed.new_offset_minutes > 0
+        ? parsed.new_offset_minutes
+        : null;
+
+    // Candidates are resolved BEFORE any new time is required. "change the 30
+    // mins to 1 hour" names no clock time at all — the new time is derived
+    // from the anchor once we know which alert is meant.
     const candidates = await prisma.reminder.findMany({
       where: {
         userId: user.id,
@@ -530,6 +667,7 @@ export async function processIncomingUserMessage(
           ? { id: { in: pendingChoice.reminderIds } }
           : {}),
         ...(categoryFilter ? { category: { in: categoryFilter } } : {}),
+        ...(targetOffset ? { offsetMinutes: targetOffset } : {}),
         ...(titleQuery
           ? { title: { contains: titleQuery, mode: 'insensitive' as const } }
           : {}),
@@ -538,46 +676,36 @@ export async function processIncomingUserMessage(
     });
 
     if (candidates.length === 0) {
+      const label = describeOffset(targetOffset) ?? (titleQuery ? `*${titleQuery}*` : null);
       await replyToUser(
         user,
-        titleQuery
-          ? `I couldn't find anything upcoming matching *${titleQuery}*. 🗓️`
+        label
+          ? `I couldn't find a reminder matching ${label}. 🗓️`
           : "I couldn't find which one you want to move. Which is it? 🗓️"
       );
       return;
     }
 
-    // More than one genuine match. Ask rather than guess — silently moving the
-    // wrong meeting is worse than one extra question.
     if (candidates.length > 1) {
+      const iso = parsed.scheduled_iso || pendingChoice?.scheduledIso || null;
       await prisma.conversationState.upsert({
         where: { userId: user.id },
         update: {
           pendingIntent: 'reschedule_choice',
-          pendingData: {
-            reminderIds: candidates.map((c) => c.id),
-            scheduledIso: newIso,
-          },
+          pendingData: { reminderIds: candidates.map((c) => c.id), scheduledIso: iso },
           expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
         },
         create: {
           userId: user.id,
           pendingIntent: 'reschedule_choice',
-          pendingData: {
-            reminderIds: candidates.map((c) => c.id),
-            scheduledIso: newIso,
-          },
+          pendingData: { reminderIds: candidates.map((c) => c.id), scheduledIso: iso },
           expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
         },
       });
 
       const options = candidates
-        .map((c, i) => {
-          const local = DateTime.fromJSDate(c.scheduledAt).setZone(user.timezone);
-          return `${i + 1}. *${c.title}* — ${local.toFormat('ccc, LLL d @ h:mm a')}`;
-        })
+        .map((c, i) => `${i + 1}. ${formatReminderLine(c, user.timezone)}`)
         .join('\n');
-
       await replyToUser(user, `Which one should I move?\n\n${options}`);
       return;
     }
@@ -585,47 +713,90 @@ export async function processIncomingUserMessage(
     const target = candidates[0];
     const previous = DateTime.fromJSDate(target.scheduledAt).setZone(user.timezone);
 
-    // "Move it to September 9th" says nothing about the hour, and inventing one
-    // silently drags a 9 PM meeting to 9 AM. Keep the time the user already
-    // chose and change only the date.
-    let newScheduledAt = validated.scheduledAtUtc!;
+    let newScheduledAt: Date | null = null;
+    let updatedOffset = target.offsetMinutes;
 
-    if (parsed.new_date_only) {
-      const proposed = DateTime.fromJSDate(newScheduledAt).setZone(user.timezone);
-      const kept = proposed.set({
-        hour: previous.hour,
-        minute: previous.minute,
-        second: 0,
-        millisecond: 0,
-      });
+    // An offset change against a known anchor fully determines the new time,
+    // so no clock time needs to have been said.
+    if (newOffset && target.anchorAt) {
+      newScheduledAt = DateTime.fromJSDate(target.anchorAt)
+        .minus({ minutes: newOffset })
+        .toJSDate();
+      updatedOffset = newOffset;
+    } else {
+      const newIso = parsed.scheduled_iso || pendingChoice?.scheduledIso || null;
 
-      // Only honour it while the result is still in the future — otherwise the
-      // original hour has already passed today and the model's guess is better.
-      if (kept.toMillis() > Date.now()) newScheduledAt = kept.toJSDate();
+      if (!newIso) {
+        await replyToUser(
+          user,
+          parsed.clarification_question || 'What time should I move it to?'
+        );
+        return;
+      }
+
+      const validated = validateAndNormalizeDate(newIso, user.timezone);
+      if (!validated.isValid) {
+        await replyToUser(user, `⚠️ ${validated.errorMessage || 'Invalid reminder time.'}`);
+        return;
+      }
+
+      newScheduledAt = validated.scheduledAtUtc!;
+
+      // Only a date was given, so keep the hour the user already chose rather
+      // than silently dragging a 9 PM meeting to 9 AM.
+      if (parsed.new_date_only) {
+        const kept = DateTime.fromJSDate(newScheduledAt)
+          .setZone(user.timezone)
+          .set({ hour: previous.hour, minute: previous.minute, second: 0, millisecond: 0 });
+        if (kept.toMillis() > Date.now()) newScheduledAt = kept.toJSDate();
+      }
+
+      // Moving an anchored alert by clock time changes how far ahead it sits.
+      if (target.anchorAt) {
+        const gap = Math.round(
+          (target.anchorAt.getTime() - newScheduledAt.getTime()) / 60000
+        );
+        updatedOffset = gap > 0 ? gap : null;
+      }
     }
 
-    // QStash has no "update": the queued delivery still points at the old time,
-    // so it has to be dropped before the new one is armed.
     if (target.qstashMessageId) {
       await cancelScheduledDelivery(target.qstashMessageId);
     }
 
     await prisma.reminder.update({
       where: { id: target.id },
-      data: { scheduledAt: newScheduledAt, qstashMessageId: null },
+      data: {
+        scheduledAt: newScheduledAt,
+        offsetMinutes: updatedOffset,
+        qstashMessageId: null,
+      },
     });
 
     await prisma.conversationState.deleteMany({ where: { userId: user.id } });
 
     console.log(
       `[Remique] rescheduled ${target.id} ${target.scheduledAt.toISOString()} -> ` +
-        `${newScheduledAt.toISOString()} dateOnly=${Boolean(parsed.new_date_only)}`
+        `${newScheduledAt.toISOString()} offset=${target.offsetMinutes ?? '-'}->${updatedOffset ?? '-'}`
     );
+
+    // Siblings are restated so a group edit reads as a whole schedule, not an
+    // isolated row: "...you'll still get the 15-minute heads-up at 8:45 PM".
+    const siblings = target.groupId
+      ? await prisma.reminder.findMany({
+          where: {
+            userId: user.id,
+            groupId: target.groupId,
+            status: 'SCHEDULED',
+            id: { not: target.id },
+          },
+          orderBy: { scheduledAt: 'asc' },
+        })
+      : [];
 
     await replyToUser(
       user,
-      `✅ Moved *${target.title}*\nfrom ${previous.toFormat('ccc, LLL d @ h:mm a')}\n` +
-        `to ${DateTime.fromJSDate(newScheduledAt).setZone(user.timezone).toFormat('ccc, LLL d @ h:mm a')}.`
+      buildRescheduleConfirmation(user, target, newScheduledAt, updatedOffset, previous, siblings)
     );
 
     await scheduleReminderDelivery(target.id, newScheduledAt);
@@ -638,6 +809,10 @@ export async function processIncomingUserMessage(
     const windowStart = parseFilterBound(parsed.filter_start_iso, user.timezone);
     const windowEnd = parseFilterBound(parsed.filter_end_iso, user.timezone);
     const titleQuery = parsed.title?.trim() || null;
+    const cancelOffset =
+      typeof parsed.target_offset_minutes === 'number' && parsed.target_offset_minutes > 0
+        ? parsed.target_offset_minutes
+        : null;
     const now = new Date();
     const lowerBound = windowStart && windowStart > now ? windowStart : now;
 
@@ -646,6 +821,7 @@ export async function processIncomingUserMessage(
       status: 'SCHEDULED' as const,
       scheduledAt: { gte: lowerBound, ...(windowEnd ? { lte: windowEnd } : {}) },
       ...(categoryFilter ? { category: { in: categoryFilter } } : {}),
+      ...(cancelOffset ? { offsetMinutes: cancelOffset } : {}),
       ...(titleQuery
         ? { title: { contains: titleQuery, mode: 'insensitive' as const } }
         : {}),
@@ -670,7 +846,7 @@ export async function processIncomingUserMessage(
     }
 
     const isScoped = Boolean(
-      parsed.cancel_all || categoryFilter || windowEnd || titleQuery
+      parsed.cancel_all || categoryFilter || windowEnd || titleQuery || cancelOffset
     );
 
     const targets = picked.kind === 'resolved'
@@ -706,19 +882,41 @@ export async function processIncomingUserMessage(
     // The confirmation is built from the rows that were actually updated, never
     // from the model's reply_text. The old flow let the model announce a bulk
     // cancel that never happened.
+    const groupIds = [...new Set(targets.map((t) => t.groupId).filter(Boolean))] as string[];
+
+    // What survives in the same event, so removing one alert of two does not
+    // read as removing the meeting.
+    const survivors = groupIds.length
+      ? await prisma.reminder.findMany({
+          where: {
+            userId: user.id,
+            groupId: { in: groupIds },
+            status: 'SCHEDULED',
+            id: { notIn: targets.map((t) => t.id) },
+          },
+          orderBy: { scheduledAt: 'asc' },
+        })
+      : [];
+
+    const name = firstName(user);
     const lines = targets
-      .map((r) => {
-        const local = DateTime.fromJSDate(r.scheduledAt).setZone(user.timezone);
-        return `• *${r.title}* — ${local.toFormat("ccc, LLL d 'at' h:mm a")}`;
-      })
+      .map((r) => `• ${formatReminderLine(r, user.timezone)}`)
       .join('\n');
 
-    await replyToUser(
-      user,
+    const head =
       targets.length === 1
-        ? `✅ Cancelled:\n${lines}`
-        : `✅ Cancelled ${targets.length} of them:\n${lines}`
-    );
+        ? `Done${name ? `, ${name}` : ''}! I've removed:\n${lines}`
+        : `Done${name ? `, ${name}` : ''}! I've removed ${targets.length} of them:\n${lines}`;
+
+    const rest = survivors
+      .map((sib) => {
+        const at = DateTime.fromJSDate(sib.scheduledAt).setZone(user.timezone).toFormat('h:mm a');
+        const label = describeOffset(sib.offsetMinutes);
+        return label ? `the ${label} heads-up at ${at}` : `${sib.title} at ${at}`;
+      })
+      .join(', and ');
+
+    await replyToUser(user, survivors.length ? `${head}\n\nYou'll still get ${rest}.` : head);
     return;
   }
 
@@ -749,6 +947,99 @@ export async function processIncomingUserMessage(
     user,
     `Hi! I'm *Remique* 🔔 — your AI personal assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"My wifi password is password123"_\n• _"What is my wifi password?"_\n• _"Cancel my last reminder"_\n• 📁 Send me a file with a caption like _"save this as a dollar document"_\n• _"What dollar documents do I have?"_`
   );
+}
+
+/**
+ * The reply after moving one alert.
+ *
+ * Names the alert the way the user referred to it ("the 1-hour heads-up")
+ * rather than quoting a clock time back, and restates what did NOT move, so
+ * the whole event stays legible after a change to one part of it.
+ */
+function buildRescheduleConfirmation(
+  user: User,
+  target: { title: string; anchorAt: Date | null; offsetMinutes: number | null },
+  newScheduledAt: Date,
+  newOffset: number | null,
+  previous: DateTime,
+  siblings: Array<{ title: string; scheduledAt: Date; anchorAt: Date | null; offsetMinutes: number | null }>
+): string {
+  const name = firstName(user);
+  const tz = user.timezone;
+  const when = DateTime.fromJSDate(newScheduledAt).setZone(tz);
+  const oldLabel = describeOffset(target.offsetMinutes);
+  const newLabel = describeOffset(newOffset);
+
+  const head =
+    oldLabel && newLabel && oldLabel !== newLabel
+      ? `Done${name ? `, ${name}` : ''}! The ${oldLabel} heads-up for *${target.title}* is now ` +
+        `${newLabel} — you'll get it at ${when.toFormat('h:mm a')}.`
+      : `Done${name ? `, ${name}` : ''}! Moved *${target.title}* from ` +
+        `${previous.toFormat('ccc, LLL d @ h:mm a')} to ${when.toFormat('ccc, LLL d @ h:mm a')}.`;
+
+  if (siblings.length === 0) return head;
+
+  const rest = siblings
+    .map((sib) => {
+      const at = DateTime.fromJSDate(sib.scheduledAt).setZone(tz).toFormat('h:mm a');
+      const label = describeOffset(sib.offsetMinutes);
+      return label ? `the ${label} heads-up at ${at}` : `${sib.title} at ${at}`;
+    })
+    .join(', and ');
+
+  return `${head}\nYou'll still get ${rest}.`;
+}
+
+/**
+ * The reply after creating one or more alerts.
+ *
+ * Built from the rows actually written, never from the model's reply_text: a
+ * confirmation that names a time nothing was scheduled for is worse than a
+ * blunt one. When several alerts share an event, the event is stated once and
+ * the alerts listed under it, so two rows do not read as a duplicate.
+ */
+function buildCreationConfirmation(
+  user: User,
+  created: Array<{ title: string; scheduledAt: Date; anchorAt: Date | null; offsetMinutes: number | null }>,
+  anchorAt: Date | null,
+  anchorTitle: string | null,
+  rejected: string[]
+): string {
+  const name = firstName(user);
+  const tz = user.timezone;
+  const tail = rejected.length > 0 ? `\n\n⚠️ ${rejected[0]}` : '';
+
+  if (created.length === 1 && !anchorAt) {
+    const only = created[0];
+    const when = DateTime.fromJSDate(only.scheduledAt).setZone(tz);
+    return (
+      `Done${name ? `, ${name}` : ''}! I'll remind you to *${only.title}* ` +
+      `${when.toFormat("ccc, LLL d 'at' h:mm a")}.${tail}`
+    );
+  }
+
+  if (anchorAt) {
+    const anchor = DateTime.fromJSDate(anchorAt).setZone(tz);
+    const lines = created
+      .map((c) => {
+        const at = DateTime.fromJSDate(c.scheduledAt).setZone(tz).toFormat('h:mm a');
+        const offset = describeOffset(c.offsetMinutes);
+        return `• ${at}${offset ? ` — ${offset}` : ''}`;
+      })
+      .join('\n');
+
+    const heading =
+      created.length === 1 ? 'a reminder' : `${created.length} reminders`;
+
+    return (
+      `Done${name ? `, ${name}` : ''}! I've set ${heading} for ` +
+      `*${anchorTitle || created[0].title}* ${anchor.toFormat("ccc, LLL d 'at' h:mm a")}:\n` +
+      `${lines}${tail}`
+    );
+  }
+
+  const lines = created.map((c) => `• ${formatReminderLine(c, tz)}`).join('\n');
+  return `Done${name ? `, ${name}` : ''}! I've set ${created.length} reminders:\n${lines}${tail}`;
 }
 
 /**

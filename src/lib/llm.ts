@@ -43,6 +43,14 @@ EXTRACTION RULES:
    - "send_documents": User is asking to be SENT files they already listed, e.g. "send me 2", "give me the first one", "send them all", "oita pathao".
    - "general_reply": User is asking a question about their saved notes, or chatting normally.
 
+2z. Events vs alerts (for create_reminder) — read this before anything else:
+   - Separate the EVENT from the ALERTS that point at it. "I have a meeting with John tomorrow at 9PM, remind me 15 mins before and another 30 mins before" is ONE event (the meeting, 9 PM) and TWO alerts (8:45 PM and 8:30 PM).
+   - Put the event in "anchor_iso" (absolute ISO) and "anchor_title" ("Meeting with John").
+   - Put EVERY alert in the "reminders" array, one entry each, with its own absolute "scheduled_iso" and its "offset_minutes" (how many minutes before the anchor it fires: 15, 30, 60).
+   - A message can ask for several alerts at once. Never collapse them into one, and never drop the second.
+   - When the reminder IS the thing and points at no separate event ("remind me to take a shower in 10 minutes", "call Aovin at 5"), set "anchor_iso" and "anchor_title" to null and give the single entry "offset_minutes": null.
+   - Titles of alerts for an event should name the event, not the offset: "Meeting with John", not "15 min before meeting".
+
 2. Date & Time Parsing (for create_reminder):
    - Normalize to an absolute ISO-8601 string (YYYY-MM-DDTHH:mm:ss).
    - If only a date is provided, set needs_clarification: true and ask a natural question.
@@ -74,6 +82,9 @@ EXTRACTION RULES:
    - Only use this when the user is actually pointing at a position. A name ("the meeting with John") goes in "title" instead.
 
 3f. Rescheduling (for reschedule_reminder):
+   - Alerts can be targeted BY THEIR OFFSET rather than by name. "change the 30 mins to 1 hour" means: "target_offset_minutes": 30, "new_offset_minutes": 60. Compute the new "scheduled_iso" from the anchor as well, but the offsets are what identify and change it.
+   - "remove the 1 hour one" on a cancel means "target_offset_minutes": 60. Same handle, different intent.
+   - Use this whenever the user refers to an alert by how far ahead it fires. Matching on "title" would fail: the title is "Meeting with John" and contains no "30 mins".
    - "scheduled_iso" is the NEW absolute time.
    - "title" identifies WHICH one to move: put only the distinguishing words in it ("John", "dentist"), not the whole sentence.
    - "filter_categories" narrows the kind when the user names it ("the meeting with John" -> ["MEETING"]).
@@ -170,6 +181,11 @@ const ASSISTANT_SCHEMA = {
     'document_indices',
     'document_suggestions',
     'category',
+    'anchor_iso',
+    'anchor_title',
+    'reminders',
+    'target_offset_minutes',
+    'new_offset_minutes',
     'filter_start_iso',
     'filter_end_iso',
     'filter_categories',
@@ -208,6 +224,28 @@ const ASSISTANT_SCHEMA = {
     document_indices: { type: ['array', 'null'], items: { type: 'integer' } },
     document_suggestions: { type: ['array', 'null'], items: { type: 'integer' } },
     category: { type: ['string', 'null'], enum: [...['MEETING', 'BIRTHDAY', 'TASK', 'HABIT', 'GENERAL'], null] },
+    anchor_iso: { type: ['string', 'null'] },
+    anchor_title: { type: ['string', 'null'] },
+    reminders: {
+      type: ['array', 'null'],
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['title', 'scheduled_iso', 'offset_minutes', 'category', 'recurrence'],
+        properties: {
+          title: { type: 'string' },
+          scheduled_iso: { type: 'string' },
+          offset_minutes: { type: ['integer', 'null'] },
+          category: {
+            type: ['string', 'null'],
+            enum: ['MEETING', 'BIRTHDAY', 'TASK', 'HABIT', 'GENERAL', null],
+          },
+          recurrence: { type: ['string', 'null'] },
+        },
+      },
+    },
+    target_offset_minutes: { type: ['integer', 'null'] },
+    new_offset_minutes: { type: ['integer', 'null'] },
     filter_start_iso: { type: ['string', 'null'] },
     filter_end_iso: { type: ['string', 'null'] },
     filter_categories: {
