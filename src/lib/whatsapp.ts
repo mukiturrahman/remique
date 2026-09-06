@@ -227,6 +227,38 @@ export async function markReadAndShowTyping(inboundMessageId: string): Promise<v
 }
 
 /**
+ * Sends a message with tappable reply buttons.
+ *
+ * Meta caps this at three buttons with 20-character titles; anything longer is
+ * rejected outright rather than truncated on their side, so it is trimmed here.
+ * The `id` comes back verbatim on the user's tap, so it carries the action and
+ * the row it applies to — that is what lets a tap be handled exactly, with no
+ * language model in the path.
+ */
+export async function sendWhatsAppButtons(
+  toPhoneNumber: string,
+  bodyText: string,
+  buttons: Array<{ id: string; title: string }>
+): Promise<SendWhatsAppResponse> {
+  const trimmed = buttons.slice(0, 3).map((b) => ({
+    type: 'reply',
+    reply: { id: b.id.slice(0, 256), title: b.title.slice(0, 20) },
+  }));
+
+  return postToWhatsApp('interactive:button', {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: toPhoneNumber.replace('+', ''),
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: bodyText.slice(0, 1024) },
+      action: { buttons: trimmed },
+    },
+  });
+}
+
+/**
  * Sends an approved WhatsApp Utility Template message (required when message is sent outside the 24h window)
  */
 export async function sendWhatsAppTemplate(

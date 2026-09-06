@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import { prisma } from './db';
 import {
+  sendWhatsAppButtons,
   sendWhatsAppMedia,
   sendWhatsAppMessage,
   type SendWhatsAppResponse,
@@ -49,6 +50,17 @@ async function logOutbound(
 /** Sends a text reply and records it in the conversation history. */
 export async function replyToUser(user: User, text: string): Promise<SendWhatsAppResponse> {
   const response = await sendWhatsAppMessage(user.phoneNumber, text);
+  await logOutbound(user.id, response, text);
+  return response;
+}
+
+/** Sends a reply with tappable buttons and records the text of it. */
+export async function replyWithButtons(
+  user: User,
+  text: string,
+  buttons: Array<{ id: string; title: string }>
+): Promise<SendWhatsAppResponse> {
+  const response = await sendWhatsAppButtons(user.phoneNumber, text, buttons);
   await logOutbound(user.id, response, text);
   return response;
 }

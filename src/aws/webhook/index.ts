@@ -15,7 +15,7 @@ const sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'ap-southeas
 // files; 'text' is everything else the bot does. Kept in sync with the worker's
 // own allowlist — enqueuing a type the worker drops would burn an SQS round
 // trip and land in the DLQ for no reason.
-const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document']);
+const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document', 'interactive']);
 
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const method = event.requestContext.http.method;

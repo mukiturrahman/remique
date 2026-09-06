@@ -200,6 +200,8 @@ export interface InboundMedia {
 
 export interface InboundMessageInput {
   whatsappMessageId: string;
+  /** Set when this message is a tap on one of our reply buttons. */
+  buttonReplyId?: string | null;
   rawSenderNumber: string;
   formattedPhoneNumber: string;
   messageText: string;
@@ -225,6 +227,7 @@ export async function claimInboundMessage(
         whatsappMessageId: input.whatsappMessageId,
         direction: 'INBOUND',
         messageText: input.messageText,
+        buttonReplyId: input.buttonReplyId ?? null,
         mediaId: input.media?.mediaId ?? null,
         mediaType: input.media?.mediaType ?? null,
         mediaMimeType: input.media?.mediaMimeType ?? null,

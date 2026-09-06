@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendWhatsAppMessage, sendWhatsAppTemplate, WhatsAppApiError } from '@/lib/whatsapp';
+import {
+  sendWhatsAppButtons,
+  sendWhatsAppTemplate,
+  WhatsAppApiError,
+} from '@/lib/whatsapp';
+import { reminderActionButtons } from '@/lib/reminder-service';
 import { DateTime } from 'luxon';
 import { verifyQStashRequest } from '@/lib/qstash';
 import { nextOccurrence } from '@/lib/recurrence';
@@ -37,7 +42,12 @@ export async function POST(request: NextRequest) {
       include: { user: true },
     });
 
-    if (!reminder || reminder.status === 'SENT' || reminder.status === 'CANCELLED') {
+    if (
+      !reminder ||
+      reminder.status === 'SENT' ||
+      reminder.status === 'DONE' ||
+      reminder.status === 'CANCELLED'
+    ) {
       return NextResponse.json({ status: 'already_completed' }, { status: 200 });
     }
 
@@ -79,9 +89,13 @@ export async function POST(request: NextRequest) {
     // ─────────────────────────────────────────────────────────────────
     try {
       if (isWithin24h) {
-        await sendWhatsAppMessage(
+        // Buttons only work inside the customer service window; a template
+        // sent outside it can only carry buttons the template itself declares,
+        // which is a Meta review cycle rather than a payload change.
+        await sendWhatsAppButtons(
           reminder.user.phoneNumber,
-          `🔔 *Remique Reminder:*\n${reminder.title}`
+          `🔔 ${reminder.title}`,
+          reminderActionButtons(reminder.id)
         );
       } else {
         await sendWhatsAppTemplate(

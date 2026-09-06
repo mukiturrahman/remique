@@ -189,6 +189,106 @@ function parseFilterBound(iso: unknown, timezone: string): Date | null {
 }
 
 
+/** Default hour for "remind me tomorrow" when no time is implied. */
+const SNOOZE_TOMORROW_HOUR = 9;
+
+export const BUTTON_DONE = 'done';
+export const BUTTON_SNOOZE_HOUR = 'snooze60';
+export const BUTTON_SNOOZE_TOMORROW = 'snoozetom';
+
+/** Builds the three reply buttons attached to a delivered reminder. */
+export function reminderActionButtons(reminderId: string) {
+  return [
+    { id: `${BUTTON_DONE}:${reminderId}`, title: 'Done' },
+    { id: `${BUTTON_SNOOZE_HOUR}:${reminderId}`, title: 'Remind in 1 hour' },
+    { id: `${BUTTON_SNOOZE_TOMORROW}:${reminderId}`, title: 'Remind tomorrow' },
+  ];
+}
+
+/**
+ * Handles a tap on Done / Remind in 1 hour / Remind tomorrow.
+ *
+ * Snoozing creates a NEW one-shot rather than moving the delivered row. The
+ * original has already been sent, and for a recurring reminder its next
+ * occurrence is queued the moment it is delivered — moving it would either
+ * lose that link or fire the series twice.
+ */
+async function handleButtonTap(user: User, buttonReplyId: string): Promise<void> {
+  const [action, reminderId] = buttonReplyId.split(':');
+
+  const reminder = reminderId
+    ? await prisma.reminder.findFirst({ where: { id: reminderId, userId: user.id } })
+    : null;
+
+  if (!reminder) {
+    console.warn(`[Remique] button tap for unknown reminder: ${buttonReplyId}`);
+    await replyToUser(user, "I can't find that one anymore — it may have been cancelled.");
+    return;
+  }
+
+  const name = firstName(user);
+
+  if (action === BUTTON_DONE) {
+    if (reminder.status === 'DONE') {
+      await replyToUser(user, 'Already marked that one done.');
+      return;
+    }
+
+    await prisma.reminder.update({
+      where: { id: reminder.id },
+      data: { status: 'DONE', completedAt: new Date() },
+    });
+
+    console.log(`[Remique] reminder ${reminder.id} marked DONE`);
+    await replyToUser(user, `Nice one${name ? `, ${name}` : ''}. Marked as done.`);
+    return;
+  }
+
+  const snoozeTo =
+    action === BUTTON_SNOOZE_HOUR
+      ? DateTime.now().setZone(user.timezone).plus({ hours: 1 })
+      : action === BUTTON_SNOOZE_TOMORROW
+        ? DateTime.now()
+            .setZone(user.timezone)
+            .plus({ days: 1 })
+            .set({ hour: SNOOZE_TOMORROW_HOUR, minute: 0, second: 0, millisecond: 0 })
+        : null;
+
+  if (!snoozeTo) {
+    console.warn(`[Remique] unrecognised button action: ${buttonReplyId}`);
+    await replyToUser(user, "I didn't catch that one. Mind telling me what you need?");
+    return;
+  }
+
+  const snoozed = await prisma.reminder.create({
+    data: {
+      userId: user.id,
+      title: reminder.title,
+      originalMessage: reminder.originalMessage,
+      scheduledAt: snoozeTo.toJSDate(),
+      timezone: user.timezone,
+      category: reminder.category,
+      anchorAt: reminder.anchorAt,
+      anchorTitle: reminder.anchorTitle,
+      offsetMinutes: reminder.offsetMinutes,
+      groupId: reminder.groupId,
+      status: 'SCHEDULED',
+    },
+  });
+
+  console.log(
+    `[Remique] reminder ${reminder.id} snoozed -> ${snoozed.id} at ${snoozeTo.toISO()}`
+  );
+
+  await replyToUser(
+    user,
+    `No worries${name ? `, ${name}` : ''} — I'll remind you again ` +
+      `${friendlyWhen(snoozed.scheduledAt, user.timezone)}.`
+  );
+
+  await scheduleReminderDelivery(snoozed.id, snoozed.scheduledAt);
+}
+
 /** Shapes a stored reminder for the prompt's schedule block. */
 function toScheduleEntry(r: {
   title: string;
@@ -318,6 +418,15 @@ export async function processIncomingUserMessage(
   prefetchedState?: ConversationState | null
 ) {
   const userMessage = message.messageText;
+
+  // A tap on one of our own buttons carries exactly what was meant, so it is
+  // handled before any context is loaded or the model is called. Sending
+  // "Done" through an LLM would cost a request to rediscover something we
+  // already encoded in the button id.
+  if (message.buttonReplyId) {
+    await handleButtonTap(user, message.buttonReplyId);
+    return;
+  }
 
   const activeState =
     prefetchedState !== undefined

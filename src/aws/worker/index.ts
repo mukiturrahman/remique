@@ -4,7 +4,7 @@ import { claimInboundMessage, runMessagePipeline } from '../../lib/message-pipel
 import { WhatsAppApiError } from '../../lib/whatsapp';
 
 // Must match ACCEPTED_MESSAGE_TYPES in the webhook Lambda.
-const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document']);
+const ACCEPTED_MESSAGE_TYPES = new Set(['text', 'image', 'document', 'interactive']);
 
 export const handler = async (event: SQSEvent): Promise<void> => {
   for (const record of event.Records) {
@@ -38,8 +38,18 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         : message.type === 'document' ? message.document
         : null;
 
+      // A tap on one of our reply buttons. The id encodes the action and the
+      // row it applies to; the title is what the user sees, and is stored as
+      // the message text so the conversation history reads naturally.
+      const buttonReply =
+        message.type === 'interactive' ? message.interactive?.button_reply : null;
+
       const messageText = (
-        message.type === 'text' ? message.text?.body : media?.caption
+        message.type === 'text'
+          ? message.text?.body
+          : message.type === 'interactive'
+            ? buttonReply?.title
+            : media?.caption
       )?.trim() || '';
 
       // 1. Claim the inbound message (DB write)
@@ -49,6 +59,7 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         formattedPhoneNumber,
         messageText,
         profileName,
+        buttonReplyId: buttonReply?.id ?? null,
         media: media
           ? {
               mediaId: media.id,

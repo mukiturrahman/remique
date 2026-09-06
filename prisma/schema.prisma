@@ -12,6 +12,9 @@ enum ReminderStatus {
   SCHEDULED
   PROCESSING
   SENT
+  // The user tapped Done. Distinct from SENT, which only means it was
+  // delivered — plenty of delivered reminders are never acted on.
+  DONE
   CANCELLED
   FAILED
 }
@@ -145,6 +148,11 @@ model Message {
   mediaMimeType     String?          @map("media_mime_type")
   mediaFilename     String?          @map("media_filename")
 
+  // Set when the inbound message is a tap on one of our reply buttons rather
+  // than typed text. Carries which button, so the action is handled exactly
+  // and without an LLM call.
+  buttonReplyId     String?          @map("button_reply_id")
+
   user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([direction, processedAt])
@@ -186,6 +194,7 @@ model Reminder {
   attempts        Int            @default(0)
   errorMessage    String?        @map("error_message")
   sentAt          DateTime?      @map("sent_at")
+  completedAt     DateTime?      @map("completed_at")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
