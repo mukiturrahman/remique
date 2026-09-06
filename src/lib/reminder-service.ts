@@ -492,6 +492,25 @@ export async function processIncomingUserMessage(
   }
 
   if (parsed.intent === 'send_documents') {
+    // A bare "yes" must never push files. It reached here once because the
+    // assistant offered something it cannot do ("want me to help you prepare
+    // for it?"), the user agreed, and the model mapped the agreement onto the
+    // only actionable thing in its context — the document list.
+    const hasDocumentContext =
+      activeState?.pendingIntent === 'document_list' ||
+      activeState?.pendingIntent === 'confirm_documents';
+    const words = userMessage.trim().split(/\s+/);
+    const bareAffirmative = words.length <= 3 && AFFIRMATIVE.test(userMessage.trim());
+
+    if (bareAffirmative && !hasDocumentContext) {
+      console.log('[Remique] refused to send documents on a bare affirmative');
+      await replyToUser(
+        user,
+        "Happy to help — I can set a reminder, move one, or send you a file you've saved. Which would you like?"
+      );
+      return;
+    }
+
     await handleSendDocuments(
       user,
       userDocuments,

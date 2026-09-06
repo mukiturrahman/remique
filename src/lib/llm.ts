@@ -1,22 +1,22 @@
-import { DateTime } from 'luxon';
-import OpenAI from 'openai';
-import { env } from './env';
+import { DateTime } from "luxon";
+import OpenAI from "openai";
+import { env } from "./env";
 import {
-  ConversationTurn,
-  DocumentCandidate,
-  KnownFact,
-  ParsedAssistantResponse,
-  ScheduleEntry,
-} from '../types/llm.types';
+    ConversationTurn,
+    DocumentCandidate,
+    KnownFact,
+    ParsedAssistantResponse,
+    ScheduleEntry,
+} from "../types/llm.types";
 
 const client = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-  timeout: 15_000,
-  maxRetries: 1,
+    apiKey: env.OPENAI_API_KEY,
+    timeout: 15_000,
+    maxRetries: 1,
 });
 
 const SYSTEM_INSTRUCTIONS = `
-You are a personal reminder assistant talking to someone over WhatsApp. You are NOT a database interface. You are the kind of assistant who knows the person, remembers what is on their plate, and talks to them like a capable friend who handles their schedule.
+You are a personal ai assistant talking to someone over WhatsApp. You are NOT a database interface. You are the kind of assistant who knows the person, remembers what is on their plate, and talks to them like a capable friend who handles their schedule.
 You understand English, Banglish (Romanized Bengali), and Bengali script.
 
 HOW TO TALK — this governs every reply_text you write:
@@ -48,6 +48,24 @@ GOOD: "Tomorrow's completely clear so far. Want to fill it in now while it's fre
 BRAND NEW USER:
 If USER NAME below says unknown, they have never used you before. Do not dump a feature list. Greet them warmly, say in one line what you do, and ask what to call them. If their first message already contains a reminder, handle the reminder FIRST, then ask their name at the end of the same reply.
 When they give their name, record it as a fact with subject "me" and predicate "name", and greet them by it.
+
+WHAT YOU CAN ACTUALLY DO — never offer anything outside this list:
+- set a reminder, or several around one event
+- move a reminder to a new time
+- cancel a reminder
+- show what is scheduled
+- remember a fact about them, or forget one
+- store a file they send, and send back a file they named earlier
+
+You have NO other abilities. You cannot prepare for a meeting, do research, draft anything, look something up, join a call, or take notes during one. Offering help you cannot deliver is worse than offering nothing: the user says "yes", and there is nothing to say yes TO.
+BAD: "Want me to help you prepare for it?"  ← you cannot prepare anything
+BAD: "Should I look into that for you?"     ← you cannot look into things
+GOOD: "Want me to add a reminder an hour before?"
+GOOD: "Want me to move it?"
+If no offer from the list above fits, end the reply without one. A clean answer with no question is better than a promise you cannot keep.
+
+NEVER SEND A FILE UNLESS ASKED:
+"send_documents" requires the user to have named a document ("send my eTin"), picked one from a list you just showed, or agreed to a specific document you just offered by name. A bare "yes", "ok" or "sure" is NEVER a request for a file. If you are unsure what a short reply is agreeing to, ask.
 
 AMBIGUOUS TIMES:
 Do not guess silently. Ask one short question: "Tonight at 8 or tomorrow morning?"
@@ -206,320 +224,329 @@ EXTRACTION RULES:
 `.trim();
 
 const ASSISTANT_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: [
-    'intent',
-    'title',
-    'scheduled_iso',
-    'timezone',
-    'recurrence',
-    'needs_clarification',
-    'missing_fields',
-    'clarification_question',
-    'note_content',
-    'document_label',
-    'document_indices',
-    'document_suggestions',
-    'category',
-    'anchor_iso',
-    'anchor_title',
-    'reminders',
-    'target_offset_minutes',
-    'new_offset_minutes',
-    'filter_start_iso',
-    'filter_end_iso',
-    'filter_categories',
-    'reminder_indices',
-    'wants_full_list',
-    'cancel_all',
-    'new_date_only',
-    'facts',
-    'forget_facts',
-    'reply_text',
-  ],
-  properties: {
-    intent: {
-      type: 'string',
-      enum: [
-        'create_reminder',
-        'list_reminders',
-        'cancel_reminder',
-        'reschedule_reminder',
-        'clarification_required',
-        'save_note',
-        'save_document',
-        'list_documents',
-        'send_documents',
-        'general_reply',
-      ],
-    },
-    title: { type: ['string', 'null'] },
-    scheduled_iso: { type: ['string', 'null'] },
-    timezone: { type: 'string' },
-    recurrence: { type: ['string', 'null'] },
-    needs_clarification: { type: 'boolean' },
-    missing_fields: { type: ['array', 'null'], items: { type: 'string' } },
-    clarification_question: { type: ['string', 'null'] },
-    note_content: { type: ['string', 'null'] },
-    document_label: { type: ['string', 'null'] },
-    document_indices: { type: ['array', 'null'], items: { type: 'integer' } },
-    document_suggestions: { type: ['array', 'null'], items: { type: 'integer' } },
-    category: { type: ['string', 'null'], enum: [...['MEETING', 'BIRTHDAY', 'TASK', 'HABIT', 'GENERAL'], null] },
-    anchor_iso: { type: ['string', 'null'] },
-    anchor_title: { type: ['string', 'null'] },
-    reminders: {
-      type: ['array', 'null'],
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['title', 'scheduled_iso', 'offset_minutes', 'category', 'recurrence'],
-        properties: {
-          title: { type: 'string' },
-          scheduled_iso: { type: 'string' },
-          offset_minutes: { type: ['integer', 'null'] },
-          category: {
-            type: ['string', 'null'],
-            enum: ['MEETING', 'BIRTHDAY', 'TASK', 'HABIT', 'GENERAL', null],
-          },
-          recurrence: { type: ['string', 'null'] },
+    type: "object",
+    additionalProperties: false,
+    required: [
+        "intent",
+        "title",
+        "scheduled_iso",
+        "timezone",
+        "recurrence",
+        "needs_clarification",
+        "missing_fields",
+        "clarification_question",
+        "note_content",
+        "document_label",
+        "document_indices",
+        "document_suggestions",
+        "category",
+        "anchor_iso",
+        "anchor_title",
+        "reminders",
+        "target_offset_minutes",
+        "new_offset_minutes",
+        "filter_start_iso",
+        "filter_end_iso",
+        "filter_categories",
+        "reminder_indices",
+        "wants_full_list",
+        "cancel_all",
+        "new_date_only",
+        "facts",
+        "forget_facts",
+        "reply_text",
+    ],
+    properties: {
+        intent: {
+            type: "string",
+            enum: [
+                "create_reminder",
+                "list_reminders",
+                "cancel_reminder",
+                "reschedule_reminder",
+                "clarification_required",
+                "save_note",
+                "save_document",
+                "list_documents",
+                "send_documents",
+                "general_reply",
+            ],
         },
-      },
-    },
-    target_offset_minutes: { type: ['integer', 'null'] },
-    new_offset_minutes: { type: ['integer', 'null'] },
-    filter_start_iso: { type: ['string', 'null'] },
-    filter_end_iso: { type: ['string', 'null'] },
-    filter_categories: {
-      type: ['array', 'null'],
-      items: { type: 'string', enum: ['MEETING', 'BIRTHDAY', 'TASK', 'HABIT', 'GENERAL'] },
-    },
-    reminder_indices: { type: ['array', 'null'], items: { type: 'integer' } },
-    wants_full_list: { type: ['boolean', 'null'] },
-    cancel_all: { type: ['boolean', 'null'] },
-    new_date_only: { type: ['boolean', 'null'] },
-    facts: {
-      type: ['array', 'null'],
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['subject', 'predicate', 'value', 'value_date', 'recurring'],
-        properties: {
-          subject: { type: 'string' },
-          predicate: { type: 'string' },
-          value: { type: 'string' },
-          value_date: { type: ['string', 'null'] },
-          recurring: { type: 'boolean' },
+        title: { type: ["string", "null"] },
+        scheduled_iso: { type: ["string", "null"] },
+        timezone: { type: "string" },
+        recurrence: { type: ["string", "null"] },
+        needs_clarification: { type: "boolean" },
+        missing_fields: { type: ["array", "null"], items: { type: "string" } },
+        clarification_question: { type: ["string", "null"] },
+        note_content: { type: ["string", "null"] },
+        document_label: { type: ["string", "null"] },
+        document_indices: { type: ["array", "null"], items: { type: "integer" } },
+        document_suggestions: { type: ["array", "null"], items: { type: "integer" } },
+        category: {
+            type: ["string", "null"],
+            enum: [...["MEETING", "BIRTHDAY", "TASK", "HABIT", "GENERAL"], null],
         },
-      },
-    },
-    forget_facts: {
-      type: ['array', 'null'],
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['subject', 'predicate'],
-        properties: {
-          subject: { type: 'string' },
-          predicate: { type: 'string' },
+        anchor_iso: { type: ["string", "null"] },
+        anchor_title: { type: ["string", "null"] },
+        reminders: {
+            type: ["array", "null"],
+            items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["title", "scheduled_iso", "offset_minutes", "category", "recurrence"],
+                properties: {
+                    title: { type: "string" },
+                    scheduled_iso: { type: "string" },
+                    offset_minutes: { type: ["integer", "null"] },
+                    category: {
+                        type: ["string", "null"],
+                        enum: ["MEETING", "BIRTHDAY", "TASK", "HABIT", "GENERAL", null],
+                    },
+                    recurrence: { type: ["string", "null"] },
+                },
+            },
         },
-      },
+        target_offset_minutes: { type: ["integer", "null"] },
+        new_offset_minutes: { type: ["integer", "null"] },
+        filter_start_iso: { type: ["string", "null"] },
+        filter_end_iso: { type: ["string", "null"] },
+        filter_categories: {
+            type: ["array", "null"],
+            items: { type: "string", enum: ["MEETING", "BIRTHDAY", "TASK", "HABIT", "GENERAL"] },
+        },
+        reminder_indices: { type: ["array", "null"], items: { type: "integer" } },
+        wants_full_list: { type: ["boolean", "null"] },
+        cancel_all: { type: ["boolean", "null"] },
+        new_date_only: { type: ["boolean", "null"] },
+        facts: {
+            type: ["array", "null"],
+            items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["subject", "predicate", "value", "value_date", "recurring"],
+                properties: {
+                    subject: { type: "string" },
+                    predicate: { type: "string" },
+                    value: { type: "string" },
+                    value_date: { type: ["string", "null"] },
+                    recurring: { type: "boolean" },
+                },
+            },
+        },
+        forget_facts: {
+            type: ["array", "null"],
+            items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["subject", "predicate"],
+                properties: {
+                    subject: { type: "string" },
+                    predicate: { type: "string" },
+                },
+            },
+        },
+        reply_text: { type: ["string", "null"] },
     },
-    reply_text: { type: ['string', 'null'] },
-  },
 } as const;
 
 function supportsReasoningEffort(model: string): boolean {
-  return /^(gpt-5|o[134])/.test(model);
+    return /^(gpt-5|o[134])/.test(model);
 }
 
 export interface ParseOptions {
-  pendingContext?: unknown;
-  savedNotes?: string[];
-  /** Everything already known about the user, rendered as KNOWN FACTS. */
-  knownFacts?: KnownFact[];
-  /** The last few turns, oldest first, for resolving referents. */
-  recentTurns?: ConversationTurn[];
-  /** What the user is called. Empty for someone brand new. */
-  userName?: string | null;
-  /** Everything due today, so a lookup can be answered from the schedule. */
-  remindersToday?: ScheduleEntry[];
-  /** The next few beyond today. */
-  upcomingReminders?: ScheduleEntry[];
-  /** Ordered candidates; the model refers to these by 1-based position. */
-  savedDocuments?: DocumentCandidate[];
-  /** Set when the incoming WhatsApp message carried a file. */
-  attachedFile?: { mediaType: string; fileName?: string | null } | null;
+    pendingContext?: unknown;
+    savedNotes?: string[];
+    /** Everything already known about the user, rendered as KNOWN FACTS. */
+    knownFacts?: KnownFact[];
+    /** The last few turns, oldest first, for resolving referents. */
+    recentTurns?: ConversationTurn[];
+    /** What the user is called. Empty for someone brand new. */
+    userName?: string | null;
+    /** Everything due today, so a lookup can be answered from the schedule. */
+    remindersToday?: ScheduleEntry[];
+    /** The next few beyond today. */
+    upcomingReminders?: ScheduleEntry[];
+    /** Ordered candidates; the model refers to these by 1-based position. */
+    savedDocuments?: DocumentCandidate[];
+    /** Set when the incoming WhatsApp message carried a file. */
+    attachedFile?: { mediaType: string; fileName?: string | null } | null;
 }
 
 export async function parseUserMessage(
-  userMessage: string,
-  userTimezone: string = 'Asia/Dhaka',
-  options: ParseOptions = {}
+    userMessage: string,
+    userTimezone: string = "Asia/Dhaka",
+    options: ParseOptions = {},
 ): Promise<ParsedAssistantResponse> {
-  const {
-    pendingContext,
-    savedNotes = [],
-    knownFacts = [],
-    recentTurns = [],
-    userName = null,
-    remindersToday = [],
-    upcomingReminders = [],
-    savedDocuments = [],
-    attachedFile,
-  } = options;
-  const nowUser = DateTime.now().setZone(userTimezone);
+    const {
+        pendingContext,
+        savedNotes = [],
+        knownFacts = [],
+        recentTurns = [],
+        userName = null,
+        remindersToday = [],
+        upcomingReminders = [],
+        savedDocuments = [],
+        attachedFile,
+    } = options;
+    const nowUser = DateTime.now().setZone(userTimezone);
 
-  const notesSection = savedNotes.length > 0
-    ? ['USER\'S SAVED NOTES:', ...savedNotes.map(n => `- ${n}`), '']
-    : [];
+    const notesSection =
+        savedNotes.length > 0
+            ? ["USER'S SAVED NOTES:", ...savedNotes.map((n) => `- ${n}`), ""]
+            : [];
 
-  const renderEntry = (e: ScheduleEntry) => {
-    const at = DateTime.fromJSDate(e.scheduledAt).setZone(userTimezone);
-    const anchor = e.anchorAt
-      ? DateTime.fromJSDate(e.anchorAt).setZone(userTimezone).toFormat('h:mm a')
-      : null;
-    const offset =
-      e.offsetMinutes && e.offsetMinutes > 0
-        ? e.offsetMinutes % 60 === 0
-          ? `${e.offsetMinutes / 60}h before`
-          : `${e.offsetMinutes}m before`
-        : null;
-    return (
-      `- ${at.toFormat('ccc, LLL d')} at ${at.toFormat('h:mm a')}: ${e.title}` +
-      (anchor ? ` (event at ${anchor}${offset ? `, ${offset}` : ''})` : '') +
-      (e.recurrenceRule ? ` [${e.recurrenceRule.toLowerCase()}]` : '') +
-      ` [${e.category}]`
-    );
-  };
-
-  const scheduleSection = [
-    'REMINDERS TODAY:',
-    ...(remindersToday.length ? remindersToday.map(renderEntry) : ['- (nothing today)']),
-    '',
-    'UPCOMING REMINDERS:',
-    ...(upcomingReminders.length
-      ? upcomingReminders.map(renderEntry)
-      : ['- (nothing upcoming)']),
-    '',
-  ];
-
-  const identitySection = [
-    `USER NAME: ${userName?.trim() ? userName.trim() : '(unknown - brand new user)'}`,
-    '',
-  ];
-
-  const historySection = recentTurns.length > 0
-    ? [
-        'RECENT CONVERSATION (oldest first):',
-        ...recentTurns.map((t) => `${t.role === 'user' ? 'User' : 'You'}: ${t.text}`),
-        '',
-      ]
-    : [];
-
-  const factsSection = knownFacts.length > 0
-    ? [
-        'KNOWN FACTS:',
-        ...knownFacts.map((f) => {
-          const date = f.valueDate
-            ? DateTime.fromJSDate(f.valueDate).setZone(userTimezone).toFormat('LLL d, yyyy')
+    const renderEntry = (e: ScheduleEntry) => {
+        const at = DateTime.fromJSDate(e.scheduledAt).setZone(userTimezone);
+        const anchor = e.anchorAt
+            ? DateTime.fromJSDate(e.anchorAt).setZone(userTimezone).toFormat("h:mm a")
             : null;
-          return (
-            `- ${f.subject} / ${f.predicate}: ${f.value}` +
-            (date ? ` (date: ${date}${f.recurring ? ', yearly' : ''})` : '')
-          );
-        }),
-        '',
-      ]
-    : [];
+        const offset =
+            e.offsetMinutes && e.offsetMinutes > 0
+                ? e.offsetMinutes % 60 === 0
+                    ? `${e.offsetMinutes / 60}h before`
+                    : `${e.offsetMinutes}m before`
+                : null;
+        return (
+            `- ${at.toFormat("ccc, LLL d")} at ${at.toFormat("h:mm a")}: ${e.title}` +
+            (anchor ? ` (event at ${anchor}${offset ? `, ${offset}` : ""})` : "") +
+            (e.recurrenceRule ? ` [${e.recurrenceRule.toLowerCase()}]` : "") +
+            ` [${e.category}]`
+        );
+    };
 
-  const documentsSection = savedDocuments.length > 0
-    ? [
-        'SAVED DOCUMENTS:',
-        ...savedDocuments.map((doc, i) => {
-          const when = DateTime.fromJSDate(doc.createdAt)
-            .setZone(userTimezone)
-            .toFormat('LLL d, yyyy');
-          return `[${i + 1}] ${doc.label} (${doc.mediaType}, saved ${when})`;
-        }),
-        '',
-      ]
-    : [];
+    const scheduleSection = [
+        "REMINDERS TODAY:",
+        ...(remindersToday.length ? remindersToday.map(renderEntry) : ["- (nothing today)"]),
+        "",
+        "UPCOMING REMINDERS:",
+        ...(upcomingReminders.length
+            ? upcomingReminders.map(renderEntry)
+            : ["- (nothing upcoming)"]),
+        "",
+    ];
 
-  const attachmentSection = attachedFile
-    ? [
-        `ATTACHED FILE: the user just sent a ${attachedFile.mediaType}` +
-          (attachedFile.fileName ? ` named "${attachedFile.fileName}"` : '') +
-          '. They are most likely naming it to save it.',
-        '',
-      ]
-    : [];
+    const identitySection = [
+        `USER NAME: ${userName?.trim() ? userName.trim() : "(unknown - brand new user)"}`,
+        "",
+    ];
 
-  const inputText = [
-    'SYSTEM TEMPORAL CONTEXT:',
-    `- Current Local Time: ${nowUser.toISO()} (${userTimezone})`,
-    `- Current Day of Week: ${nowUser.toFormat('cccc')}`,
-    `- Timezone: ${userTimezone}`,
-    '',
-    ...identitySection,
-    ...scheduleSection,
-    ...notesSection,
-    ...historySection,
-    ...factsSection,
-    ...documentsSection,
-    ...attachmentSection,
-    pendingContext ? `PENDING CONTEXT: ${JSON.stringify(pendingContext)}\n` : null,
-    `USER MESSAGE: "${userMessage}"`,
-  ]
-    .filter((line) => line !== null)
-    .join('\n');
+    const historySection =
+        recentTurns.length > 0
+            ? [
+                  "RECENT CONVERSATION (oldest first):",
+                  ...recentTurns.map((t) => `${t.role === "user" ? "User" : "You"}: ${t.text}`),
+                  "",
+              ]
+            : [];
 
-  const fallback: ParsedAssistantResponse = {
-    intent: 'general_reply',
-    timezone: userTimezone,
-    needs_clarification: false,
-    reply_text: "I didn't quite catch that. Could you say it again?",
-  };
+    const factsSection =
+        knownFacts.length > 0
+            ? [
+                  "KNOWN FACTS:",
+                  ...knownFacts.map((f) => {
+                      const date = f.valueDate
+                          ? DateTime.fromJSDate(f.valueDate)
+                                .setZone(userTimezone)
+                                .toFormat("LLL d, yyyy")
+                          : null;
+                      return (
+                          `- ${f.subject} / ${f.predicate}: ${f.value}` +
+                          (date ? ` (date: ${date}${f.recurring ? ", yearly" : ""})` : "")
+                      );
+                  }),
+                  "",
+              ]
+            : [];
 
-  try {
-    const response = await client.responses.create({
-      model: env.OPENAI_MODEL,
-      instructions: SYSTEM_INSTRUCTIONS,
-      input: inputText,
-      ...(supportsReasoningEffort(env.OPENAI_MODEL)
-        ? { reasoning: { effort: 'minimal' as const } }
-        : { temperature: 0.1 }),
-      text: {
-        format: {
-          type: 'json_schema' as const,
-          name: 'assistant_extraction',
-          strict: true,
-          schema: ASSISTANT_SCHEMA as unknown as Record<string, unknown>,
-        },
-      },
-    });
+    const documentsSection =
+        savedDocuments.length > 0
+            ? [
+                  "SAVED DOCUMENTS:",
+                  ...savedDocuments.map((doc, i) => {
+                      const when = DateTime.fromJSDate(doc.createdAt)
+                          .setZone(userTimezone)
+                          .toFormat("LLL d, yyyy");
+                      return `[${i + 1}] ${doc.label} (${doc.mediaType}, saved ${when})`;
+                  }),
+                  "",
+              ]
+            : [];
 
-    // Real token counts per message, so cost can be measured from production
-    // traffic instead of estimated. `cached` is the discounted portion — the
-    // static system prompt, once it has been seen recently.
-    const usage: any = (response as any).usage;
-    if (usage) {
-      console.log(
-        `[Remique] llm usage model=${env.OPENAI_MODEL} ` +
-          `in=${usage.input_tokens ?? '-'} ` +
-          `cached=${usage.input_tokens_details?.cached_tokens ?? 0} ` +
-          `out=${usage.output_tokens ?? '-'} ` +
-          `notes=${savedNotes.length} facts=${knownFacts.length} ` +
-          `docs=${savedDocuments.length} turns=${recentTurns.length}`
-      );
+    const attachmentSection = attachedFile
+        ? [
+              `ATTACHED FILE: the user just sent a ${attachedFile.mediaType}` +
+                  (attachedFile.fileName ? ` named "${attachedFile.fileName}"` : "") +
+                  ". They are most likely naming it to save it.",
+              "",
+          ]
+        : [];
+
+    const inputText = [
+        "SYSTEM TEMPORAL CONTEXT:",
+        `- Current Local Time: ${nowUser.toISO()} (${userTimezone})`,
+        `- Current Day of Week: ${nowUser.toFormat("cccc")}`,
+        `- Timezone: ${userTimezone}`,
+        "",
+        ...identitySection,
+        ...scheduleSection,
+        ...notesSection,
+        ...historySection,
+        ...factsSection,
+        ...documentsSection,
+        ...attachmentSection,
+        pendingContext ? `PENDING CONTEXT: ${JSON.stringify(pendingContext)}\n` : null,
+        `USER MESSAGE: "${userMessage}"`,
+    ]
+        .filter((line) => line !== null)
+        .join("\n");
+
+    const fallback: ParsedAssistantResponse = {
+        intent: "general_reply",
+        timezone: userTimezone,
+        needs_clarification: false,
+        reply_text: "I didn't quite catch that. Could you say it again?",
+    };
+
+    try {
+        const response = await client.responses.create({
+            model: env.OPENAI_MODEL,
+            instructions: SYSTEM_INSTRUCTIONS,
+            input: inputText,
+            ...(supportsReasoningEffort(env.OPENAI_MODEL)
+                ? { reasoning: { effort: "minimal" as const } }
+                : { temperature: 0.1 }),
+            text: {
+                format: {
+                    type: "json_schema" as const,
+                    name: "assistant_extraction",
+                    strict: true,
+                    schema: ASSISTANT_SCHEMA as unknown as Record<string, unknown>,
+                },
+            },
+        });
+
+        // Real token counts per message, so cost can be measured from production
+        // traffic instead of estimated. `cached` is the discounted portion — the
+        // static system prompt, once it has been seen recently.
+        const usage: any = (response as any).usage;
+        if (usage) {
+            console.log(
+                `[Remique] llm usage model=${env.OPENAI_MODEL} ` +
+                    `in=${usage.input_tokens ?? "-"} ` +
+                    `cached=${usage.input_tokens_details?.cached_tokens ?? 0} ` +
+                    `out=${usage.output_tokens ?? "-"} ` +
+                    `notes=${savedNotes.length} facts=${knownFacts.length} ` +
+                    `docs=${savedDocuments.length} turns=${recentTurns.length}`,
+            );
+        }
+
+        const rawText = response.output_text;
+        if (!rawText) return fallback;
+
+        return JSON.parse(rawText) as ParsedAssistantResponse;
+    } catch (error: any) {
+        console.error("[Remique] OpenAI extraction error:", error?.message);
+        return fallback;
     }
-
-    const rawText = response.output_text;
-    if (!rawText) return fallback;
-
-    return JSON.parse(rawText) as ParsedAssistantResponse;
-  } catch (error: any) {
-    console.error('[Remique] OpenAI extraction error:', error?.message);
-    return fallback;
-  }
 }
