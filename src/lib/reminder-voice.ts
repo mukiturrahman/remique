@@ -38,7 +38,7 @@ function untilPhrase(offsetMinutes: number | null): string | null {
     const hours = offsetMinutes / 60;
     return `in ${hours} hour${hours === 1 ? '' : 's'}`;
   }
-  return `in ${offsetMinutes} minutes`;
+  return `in ${offsetMinutes} minute${offsetMinutes === 1 ? '' : 's'}`;
 }
 
 const HABIT_OPENERS = [
@@ -88,9 +88,17 @@ export function deliveryMessage(reminder: {
     reminder.category === 'HABIT'
       ? HABIT_OPENERS
       : reminder.category === 'BIRTHDAY'
-        ? [(t: string, n: string) => `🎂 ${sentenceCase(t)} is today${n}.`]
+        ? [
+            (t: string, n: string) => `🎂 ${sentenceCase(t)} is today${n}.`,
+            (t: string, n: string) => `Don't forget${n} — ${sentenceCase(t)} is today! 🎂`,
+            (t: string, n: string) => `Today's the day${n} — ${sentenceCase(t)}. 🎂`,
+          ]
         : reminder.category === 'MEETING'
-          ? [(t: string, n: string) => `Heads up${n} — ${sentenceCase(t)}.`]
+          ? [
+              (t: string, n: string) => `Heads up${n} — ${sentenceCase(t)}.`,
+              (t: string, n: string) => `${sentenceCase(t)} coming up${n}.`,
+              (t: string, n: string) => `Quick reminder${n}: ${sentenceCase(t)}.`,
+            ]
           : reminder.category === 'TASK'
             ? TASK_OPENERS
             : GENERAL_OPENERS;

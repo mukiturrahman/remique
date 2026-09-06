@@ -10,7 +10,7 @@ import type { PipelineMessage } from './message-pipeline';
 import type { ParsedAssistantResponse } from '../types/llm.types';
 import { DateTime } from 'luxon';
 import { randomUUID } from 'crypto';
-import { doneMessage, snoozeMessage } from './reminder-voice';
+import { doneMessage, shortName, snoozeMessage } from './reminder-voice';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -306,10 +306,8 @@ function toScheduleEntry(r: {
   };
 }
 
-/** First name only, for addressing the user without sounding like a form. */
 function firstName(user: User): string | null {
-  const name = user.name?.trim().split(/\s+/)[0];
-  return name && name.length > 1 ? name : null;
+  return shortName(user.name);
 }
 
 /**

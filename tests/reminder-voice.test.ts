@@ -97,4 +97,10 @@ describe('snoozeMessage', () => {
       assert.match(snoozeMessage('Mukitur', 'today at 5:50 PM'), /today at 5:50 PM/);
     }
   });
+
+  test('works without a name', () => {
+    const out = snoozeMessage(null, 'tomorrow at 9:00 AM');
+    assert.doesNotMatch(out, /,\s*\./);
+    assert.match(out, /tomorrow at 9:00 AM/);
+  });
 });
