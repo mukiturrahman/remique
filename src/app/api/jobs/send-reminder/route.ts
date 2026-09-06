@@ -6,6 +6,7 @@ import {
   WhatsAppApiError,
 } from '@/lib/whatsapp';
 import { reminderActionButtons } from '@/lib/reminder-service';
+import { deliveryMessage } from '@/lib/reminder-voice';
 import { DateTime } from 'luxon';
 import { verifyQStashRequest } from '@/lib/qstash';
 import { nextOccurrence } from '@/lib/recurrence';
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
         // which is a Meta review cycle rather than a payload change.
         await sendWhatsAppButtons(
           reminder.user.phoneNumber,
-          `🔔 ${reminder.title}`,
+          deliveryMessage(reminder, reminder.user.name),
           reminderActionButtons(reminder.id)
         );
       } else {

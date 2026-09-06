@@ -10,6 +10,7 @@ import type { PipelineMessage } from './message-pipeline';
 import type { ParsedAssistantResponse } from '../types/llm.types';
 import { DateTime } from 'luxon';
 import { randomUUID } from 'crypto';
+import { doneMessage, snoozeMessage } from './reminder-voice';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -226,8 +227,6 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
     return;
   }
 
-  const name = firstName(user);
-
   if (action === BUTTON_DONE) {
     if (reminder.status === 'DONE') {
       await replyToUser(user, 'Already marked that one done.');
@@ -240,7 +239,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
     });
 
     console.log(`[Remique] reminder ${reminder.id} marked DONE`);
-    await replyToUser(user, `Nice one${name ? `, ${name}` : ''}. Marked as done.`);
+    await replyToUser(user, doneMessage(user.name));
     return;
   }
 
@@ -282,8 +281,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
 
   await replyToUser(
     user,
-    `No worries${name ? `, ${name}` : ''} — I'll remind you again ` +
-      `${friendlyWhen(snoozed.scheduledAt, user.timezone)}.`
+    snoozeMessage(user.name, friendlyWhen(snoozed.scheduledAt, user.timezone))
   );
 
   await scheduleReminderDelivery(snoozed.id, snoozed.scheduledAt);
