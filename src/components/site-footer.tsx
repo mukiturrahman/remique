@@ -50,7 +50,6 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2.5">
               {[
                 { href: "/faq", label: "FAQ" },
-                { href: "/testimonials", label: "Testimonials" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link

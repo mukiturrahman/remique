@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { SiteFooter } from "@/components/site-footer";
-import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
 import { IconArrow } from "@/components/icons";
 
 const STEPS = [
@@ -40,18 +39,6 @@ const STEPS = [
   },
 ];
 
-const ACCOUNTABILITY_CHAT: ChatMessage[] = [
-  { text: "🌅 শুভ সকাল! আজকের প্ল্যান:\n\n• সকাল ৮টা — ওষুধ খাওয়া\n• সকাল ১০টা — ডাক্তারের অ্যাপয়েন্টমেন্ট\n• বিকাল ৫টা — স্টক চেক", from: "bot", time: "7:00 AM" },
-  { text: "ধন্যবাদ! ডাক্তারের টা ১১টায় করো", from: "user", time: "7:02 AM" },
-  { text: "✏️ আপডেট: **ডাক্তারের অ্যাপয়েন্টমেন্ট** এখন সকাল ১১:০০ টায়।", from: "bot", time: "7:02 AM" },
-];
-
-const BRIEFING_CHAT: ChatMessage[] = [
-  { text: "📋 আজকের সামারি:\n\n✅ ওষুধ খাওয়া — done\n⏰ ডাক্তারের অ্যাপয়েন্টমেন্ট — ১১:০০ AM\n⏰ স্টক চেক — ৫:০০ PM\n📝 ২টা নোট সেভ করা আছে", from: "bot", time: "6:30 PM" },
-  { text: "স্টক চেক done", from: "user", time: "6:31 PM" },
-  { text: "✅ মার্ক করা হয়েছে: **স্টক চেক** — done!", from: "bot", time: "6:31 PM" },
-];
-
 const CHASE_FEATURES = [
   {
     title: "Recurring reminders",
@@ -60,14 +47,6 @@ const CHASE_FEATURES = [
   {
     title: "Follow-up nudges",
     desc: "Missed a reminder? Remique sends a second message. Then a third. It does not give up until you mark it done.",
-  },
-  {
-    title: "Task management",
-    desc: "Say \"todo\" and Remique adds it to your list. Say \"done\" and it checks it off. Say \"list\" and it reads everything back.",
-  },
-  {
-    title: "Notes and memory",
-    desc: "\"Note Raj prefers calls after 6pm\" — Remique saves it. Weeks later, say \"notes about Raj\" and it recalls everything.",
   },
 ];
 
@@ -111,63 +90,17 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* ── FEATURE: ACCOUNTABILITY ────────────────────────────────────── */}
-      <section className="border-y border-line bg-ground-2">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <div>
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-                Say so, done
-              </p>
-              <h2 className="mt-4 max-w-[18ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                An accountability coach that texts you twice a day
-              </h2>
-              <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-ink-2">
-                Morning briefing at the start. Evening summary at the end. Remique keeps your day on track with two messages — one to plan, one to review.
-              </p>
-            </div>
-            <WhatsAppMockup
-              messages={ACCOUNTABILITY_CHAT}
-              accentText="plan it, forget it"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURE: DAILY BRIEFING ───────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div className="order-2 lg:order-1">
-            <WhatsAppMockup
-              messages={BRIEFING_CHAT}
-              accentText="the whole day, one glance"
-            />
-          </div>
-          <div className="order-1 lg:order-2">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-              Daily briefing
-            </p>
-            <h2 className="mt-4 max-w-[18ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-              Your whole day in one message. Before it happens.
-            </h2>
-            <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-ink-2">
-              Every morning, Remique sends you what is coming. Every evening, what got done and what did not. All in one clean message, not a list of push notifications.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* ── FEATURE: CHASE MODE ───────────────────────────────────────── */}
       <section className="border-y border-line bg-ground-2">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-            Chase mode
+            Relentless
           </p>
           <h2 className="mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-            Whatever you do, something needs chasing.
+            Whatever you need to remember, we make sure you don't forget.
           </h2>
           <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
-            Recurring tasks, follow-ups, to-do lists, saved notes — Remique handles the stuff that slips through the cracks.
+            Recurring tasks, follow-up nudges — Remique handles the stuff that slips through the cracks.
           </p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {CHASE_FEATURES.map((f) => (

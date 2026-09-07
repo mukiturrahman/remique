@@ -5,17 +5,17 @@ import { HeroRotator } from "@/components/hero-rotator";
 import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
 import { HomeFaq } from "@/components/home-faq";
 import { HomePricing } from "@/components/home-pricing";
-import { IconArrow, IconCheck, MarkWhatsApp } from "@/components/icons";
+import { IconArrow, MarkWhatsApp } from "@/components/icons";
 
 /* ── DATA ──────────────────────────────────────────────────────────── */
 
 const HERO_CHAT: ChatMessage[] = [
-  { text: "todo প্রিয়ার জন্য গিফট কিনো 🎁", from: "user", time: "9:14 AM" },
-  { text: "✅ তোমার লিস্টে যোগ হয়েছে: **প্রিয়ার জন্য গিফট কেনা** (#3)", from: "bot", time: "9:14 AM" },
-  { text: "note রাজ ৬টার পরে কল পছন্দ করে", from: "user", time: "9:15 AM" },
-  { text: "📝 সেভ হয়েছে। যেকোনো সময় বলো **রাজ-এর নোটস**।", from: "bot", time: "9:15 AM" },
-  { text: "actually গিফট-এর কাজটা শুক্রবারে করো", from: "user", time: "9:16 AM" },
-  { text: "✏️ আপডেট: **প্রিয়ার জন্য গিফট কেনা**, শুক্রবারের মধ্যে।", from: "bot", time: "9:16 AM" },
+  { text: "Remind me to pay the electricity bill tomorrow at 10 AM", from: "user", time: "9:14 AM" },
+  { text: "✅ Got it. I'll remind you to **pay the electricity bill** tomorrow at 10:00 AM.", from: "bot", time: "9:14 AM" },
+  { text: "Actually make it 11 AM", from: "user", time: "9:15 AM" },
+  { text: "✏️ Updated. I'll remind you at 11:00 AM instead.", from: "bot", time: "9:15 AM" },
+  { text: "আর বিকালে মাকে কল দিতে মনে করিয়ে দিও", from: "user", time: "9:16 AM" },
+  { text: "✅ ঠিক আছে, আজ বিকাল ৫:০০ টায় **মাকে কল দেওয়ার** কথা মনে করিয়ে দিবো।", from: "bot", time: "9:16 AM" },
 ];
 
 const LANGUAGE_EXAMPLES = [
@@ -24,52 +24,14 @@ const LANGUAGE_EXAMPLES = [
   { lang: "English", script: "en" as const, text: "remind me tomorrow morning to take medicine" },
 ];
 
-const ACCOUNTABILITY_CHAT: ChatMessage[] = [
-  { text: "🌅 শুভ সকাল! আজকের প্ল্যান:\n\n• সকাল ৮টা — ওষুধ খাওয়া\n• সকাল ১০টা — ডাক্তারের অ্যাপয়েন্টমেন্ট\n• বিকাল ৫টা — স্টক চেক", from: "bot", time: "7:00 AM" },
-  { text: "ধন্যবাদ! ডাক্তারের টা ১১টায় করো", from: "user", time: "7:02 AM" },
-  { text: "✏️ আপডেট: **ডাক্তারের অ্যাপয়েন্টমেন্ট** এখন সকাল ১১:০০ টায়।", from: "bot", time: "7:02 AM" },
-];
-
-const BRIEFING_CHAT: ChatMessage[] = [
-  { text: "📋 আজকের সামারি:\n\n✅ ওষুধ খাওয়া — done\n⏰ ডাক্তারের অ্যাপয়েন্টমেন্ট — ১১:০০ AM\n⏰ স্টক চেক — ৫:০০ PM\n📝 ২টা নোট সেভ করা আছে", from: "bot", time: "6:30 PM" },
-  { text: "স্টক চেক done", from: "user", time: "6:31 PM" },
-  { text: "✅ মার্ক করা হয়েছে: **স্টক চেক** — done!", from: "bot", time: "6:31 PM" },
-];
-
-const REVIEWS = [
-  {
-    name: "সাবরিনা",
-    role: "Medical Student",
-    text: "আমি প্রতিদিন ওষুধ খেতে ভুলে যেতাম। Remique দিয়ে একবার সেট করেছি, এখন প্রতিদিন সময়মতো মনে করিয়ে দেয়।",
-    lang: "bn" as const,
-  },
-  {
-    name: "Kamal",
-    role: "Small Business Owner",
-    text: "I run a shop and have 15 things to remember daily. Remique handles stock checks, supplier calls, and payment reminders. Better than any to-do app.",
-    lang: "en" as const,
-  },
-  {
-    name: "ফারজানা",
-    role: "Working Mother",
-    text: "বাচ্চার স্কুলের ফি, ডাক্তারের অ্যাপয়েন্টমেন্ট, বিদ্যুৎ বিল — সব Remique-এ সেট করে রেখেছি। মাথা থেকে চিন্তা নেমে গেছে।",
-    lang: "bn" as const,
-  },
-];
-
 const ALL_FEATURES = [
   { num: 1, title: "Instant confirmation", desc: "Reply comes back in seconds, in your language." },
   { num: 2, title: "Exact time resolution", desc: "\"kalke shokal 10 tay\" becomes one timestamp." },
   { num: 3, title: "Recurring reminders", desc: "Daily, weekly, monthly — describe it in words." },
   { num: 4, title: "Follow-up nudges", desc: "Missed one? Remique sends it again." },
-  { num: 5, title: "Save notes and links", desc: "Say \"note\" and Remique saves it for later." },
-  { num: 6, title: "Daily briefing", desc: "Morning plan + evening summary." },
-  { num: 7, title: "Task management", desc: "To-do lists managed in plain words." },
-  { num: 8, title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
-  { num: 9, title: "Signature verification", desc: "Every message verified via Meta HMAC." },
-  { num: 10, title: "Action from images", desc: "Send a photo, Remique extracts the task." },
-  { num: 11, title: "Priority delivery", desc: "Pro reminders fire through a priority queue." },
-  { num: 12, title: "Early access", desc: "New features ship to Pro first." },
+  { num: 5, title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
+  { num: 6, title: "Signature verification", desc: "Every message verified via Meta HMAC." },
+  { num: 7, title: "Priority delivery", desc: "Reminders fire through a priority queue." },
 ];
 
 /* ── HELPERS ────────────────────────────────────────────────────────── */
@@ -100,18 +62,6 @@ function CtaLink({
       {children}
       <IconArrow className="h-[17px] w-[17px] transition-transform duration-300 ease-out group-hover:translate-x-1" />
     </Link>
-  );
-}
-
-function Stars() {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} viewBox="0 0 20 20" className="h-4 w-4 text-[#F59E0B]" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
-    </div>
   );
 }
 
@@ -150,7 +100,7 @@ export default function HomePage() {
               <span>No app to install</span>
             </div>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <CtaLink href="/pricing">Start for free</CtaLink>
+              <CtaLink href="/pricing">Get started</CtaLink>
               <CtaLink href="/how-it-works" tone="outline">How it works</CtaLink>
             </div>
           </div>
@@ -278,62 +228,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 5. FEATURE: ACCOUNTABILITY COACH ─────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Say so, done</p>
-            <h2 className="mt-4 max-w-[18ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-              An accountability coach that texts you twice a day.
-            </h2>
-            <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-ink-2">
-              Morning briefing at the start. Evening summary at the end. Remique keeps your day on track with two messages — one to plan, one to review.
-            </p>
-            <div className="mt-8">
-              <CtaLink href="/how-it-works">See how</CtaLink>
-            </div>
-          </div>
-          <WhatsAppMockup messages={ACCOUNTABILITY_CHAT} accentText="plan it, forget it" />
-        </div>
-      </section>
-
-      {/* ── 6. FEATURE: DAILY BRIEFING ───────────────────────────────── */}
-      <section className="border-y border-line bg-ground-2">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="order-2 lg:order-1">
-              <WhatsAppMockup messages={BRIEFING_CHAT} accentText="the whole day, one glance" />
-            </div>
-            <div className="order-1 lg:order-2">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Daily briefing</p>
-              <h2 className="mt-4 max-w-[18ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                Your whole day in one message. Before it happens.
-              </h2>
-              <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-ink-2">
-                Every morning, Remique sends you what is coming. Every evening, what got done and what did not. All in one clean message.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 7. FEATURE: CHASE MODE ───────────────────────────────────── */}
+      {/* ── 5. FEATURE: RELENTLESS ───────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
         <div className="text-center">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Chase mode</p>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Relentless</p>
           <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-            Whatever you do, something needs chasing.
+            Whatever you need to remember, we make sure you don't forget.
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
-            Recurring tasks, follow-ups, to-do lists, saved notes — Remique handles the stuff that slips through the cracks.
+            Recurring reminders and follow-up nudges — Remique handles the stuff that slips through the cracks.
           </p>
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
           {[
-            { title: "Recurring reminders", desc: "\"Protidin bikal 5 tay stock check\" — repeats on any schedule you describe." },
+            { title: "Recurring reminders", desc: "\"Protidin bikal 5 tay medicine\" — repeats on any schedule you describe." },
             { title: "Follow-up nudges", desc: "Missed a reminder? Remique sends it again. And again." },
-            { title: "Task management", desc: "Say \"todo\" to add, \"done\" to check off, \"list\" to read back." },
-            { title: "Notes and memory", desc: "\"Note Raj prefers calls after 6pm\" — recalled weeks later in one message." },
           ].map((f) => (
             <div key={f.title} className="rounded-2xl border border-line bg-ground-2 p-5">
               <h3 className="font-display text-[16px] font-semibold tracking-tight text-ink">{f.title}</h3>
@@ -346,50 +255,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 8. TESTIMONIALS ──────────────────────────────────────────── */}
-      <section className="border-y border-line bg-ground-2">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <div className="text-center">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Testimonials</p>
-            <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
-              Rated five stars by people who used to forget things.
-            </h2>
-            <p className="mx-auto mt-5 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
-              Real people, real reminders, real relief.
-            </p>
-          </div>
-          <div className="mt-14 grid gap-6 sm:grid-cols-3">
-            {REVIEWS.map((r) => {
-              const isBn = r.lang === "bn";
-              return (
-                <div key={r.name} className="flex flex-col rounded-2xl border border-line bg-ground p-6">
-                  <Stars />
-                  <p
-                    lang={isBn ? "bn" : undefined}
-                    className={`mt-4 flex-1 text-[15px] leading-relaxed text-ink-2 ${isBn ? "font-bn" : ""}`}
-                  >
-                    &ldquo;{r.text}&rdquo;
-                  </p>
-                  <div className="mt-5 flex items-center gap-3 border-t border-line pt-5">
-                    <span className="inline-grid h-9 w-9 place-items-center rounded-full bg-brand-tint font-display text-[13px] font-semibold text-brand">
-                      {r.name[0]}
-                    </span>
-                    <div>
-                      <p lang={isBn ? "bn" : undefined} className={`text-[14px] font-semibold text-ink ${isBn ? "font-bn" : ""}`}>{r.name}</p>
-                      <p className="text-[13px] text-ink-3">{r.role}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-10 text-center">
-            <CtaLink href="/testimonials" tone="outline">Read more reviews</CtaLink>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 9. PRICING ───────────────────────────────────────────────── */}
+      {/* ── 6. PRICING ───────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
         <div className="text-center">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Pricing</p>
@@ -401,12 +267,9 @@ export default function HomePage() {
           </p>
         </div>
         <HomePricing />
-        <div className="mt-10 text-center">
-          <CtaLink href="/pricing">See full pricing</CtaLink>
-        </div>
       </section>
 
-      {/* ── 10. FEATURE GRID ─────────────────────────────────────────── */}
+      {/* ── 7. FEATURE GRID ─────────────────────────────────────────── */}
       <section className="border-y border-line bg-ground-2">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
           <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
@@ -428,7 +291,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 11. GREEN CTA BANNER ─────────────────────────────────────── */}
+      {/* ── 8. GREEN CTA BANNER ─────────────────────────────────────── */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-[linear-gradient(158deg,var(--brand)_0%,var(--brand-deep)_58%)] px-6 py-20 text-center sm:px-12 lg:py-28">
           <div
@@ -443,9 +306,9 @@ export default function HomePage() {
               Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.
             </p>
             <div className="mt-10 flex flex-col items-center gap-5">
-              <CtaLink href="/pricing" tone="light">See plans</CtaLink>
+              <CtaLink href="/pricing" tone="light">See plan</CtaLink>
               <p className="tabular text-[14.5px] text-brand-tint">
-                Starts at ৳200/month
+                Starts at ৳49/week
                 <span className="mx-2 opacity-50">·</span>
                 No card needed
               </p>
@@ -454,7 +317,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 12. FAQ ──────────────────────────────────────────────────── */}
+      {/* ── 9. FAQ ──────────────────────────────────────────────────── */}
       <section className="border-t border-line bg-ground-2">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
           <div className="text-center">

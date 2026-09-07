@@ -45,8 +45,8 @@ const PERSONAS: Persona[] = [
     chat: [
       { text: "Protidin bikal 5 tay stock check korte bolo", from: "user", time: "9:00 AM" },
       { text: "Done! 🔔 প্রতিদিন বিকাল ৫:০০ PM এ **Stock check** এর reminder পাঠিয়ে দিব।", from: "bot", time: "9:00 AM" },
-      { text: "note supplier Kamal er number 01712345678", from: "user", time: "9:01 AM" },
-      { text: "📝 সেভ হয়েছে। যেকোনো সময় বলো **Kamal এর নোটস**।", from: "bot", time: "9:01 AM" },
+      { text: "shokal 10 tay staff meeting", from: "user", time: "9:01 AM" },
+      { text: "Done! 🔔 আজ সকাল ১০:০০ AM এ **Staff meeting** এর reminder পাঠিয়ে দিব।", from: "bot", time: "9:01 AM" },
     ],
   },
   {

@@ -10,7 +10,6 @@ const NAV_LINKS = [
   { href: "/use-cases", label: "Use cases" },
   { href: "/pricing", label: "Pricing" },
   { href: "/faq", label: "FAQ" },
-  { href: "/testimonials", label: "Testimonials" },
 ];
 
 export function Navbar() {

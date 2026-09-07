@@ -7,7 +7,7 @@ import { IconArrow } from "@/components/icons";
 const FAQ_ITEMS = [
   {
     q: "What is Remique?",
-    a: "Remique is a WhatsApp AI assistant that sets reminders, saves notes, and manages your to-do list. You text it naturally — in English, Banglish, or Bangla — and it handles the rest.",
+    a: "Remique is a WhatsApp AI assistant that sets and manages your reminders. You text it naturally — in English, Banglish, or Bangla — and it handles the rest.",
   },
   {
     q: "Do I need to install an app?",
@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is my data safe?",
-    a: "Every message is verified with Meta's HMAC signature before Remique processes it. Your reminders and notes are stored securely and are never shared with third parties.",
+    a: "Every message is verified with Meta's HMAC signature before Remique processes it. Your reminders are stored securely and are never shared with third parties.",
   },
   {
     q: "What happens if I miss a reminder?",
@@ -37,10 +37,7 @@ const FAQ_ITEMS = [
     q: "Can I set recurring reminders?",
     a: "Yes. Say \"every day at 5pm check stock\" or \"protidin bikal 5 tay stock check\" — Remique will repeat it on the schedule you describe. Works on the Shuru plan and above.",
   },
-  {
-    q: "How do I save notes?",
-    a: "Start your message with \"note\" — for example, \"note Raj prefers calls after 6pm\". Later, say \"notes about Raj\" and Remique reads everything back.",
-  },
+
   {
     q: "Can I cancel anytime?",
     a: "Yes. There is no lock-in. Cancel through bKash or message Remique to stop your subscription. You keep access until the current billing period ends.",
