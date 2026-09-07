@@ -3,6 +3,7 @@ import { prisma } from './db';
 import { processIncomingUserMessage } from './reminder-service';
 import { markReadAndShowTyping, WhatsAppApiError } from './whatsapp';
 import { replyToUser } from './conversation-log';
+import { checkQuota } from './usage';
 
 /**
  * The single implementation of "answer one inbound WhatsApp message".
@@ -28,7 +29,9 @@ export type PipelineStatus =
   | 'already_processed'
   | 'not_claimable'
   | 'no_user'
+  | 'blocked'
   | 'rate_limited'
+  | 'quota_exceeded'
   | 'operator_action_required'
   | 'permanent_failure'
   | 'transient_failure';
@@ -65,6 +68,39 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     return { status: 'no_user', retryable: false };
   }
 
+  // ── Blocked user ─────────────────────────────────────────────────
+  // First, because it is the only check that needs no query at all — the user
+  // row is already in hand. A blocked sender must not reach the model, the
+  // context reads, or the WhatsApp API.
+  if (user.blockedAt) {
+    // The notice goes out once. Every message after it is answered with
+    // silence, which costs nothing per message and gives a hostile sender no
+    // feedback loop to push against.
+    if (!user.blockNoticeSentAt) {
+      try {
+        await replyToUser(
+          user,
+          'Your access to Remique is paused right now. ' +
+            'If you think that is a mistake, reply here and a human will look. 🔒'
+        );
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { blockNoticeSentAt: new Date() },
+        });
+      } catch (notifyError: any) {
+        console.error('[Remique] Failed to send block notice:', notifyError?.message);
+      }
+    }
+
+    await prisma.message.update({
+      where: { id: message.id },
+      data: { processedAt: new Date(), processingError: 'Blocked' },
+    });
+
+    console.warn(`[Remique] Blocked user message dropped userId=${user.id}`);
+    return { status: 'blocked', retryable: false };
+  }
+
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
@@ -76,7 +112,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
   // One wall-clock round trip for three independent reads/writes that all have
   // to happen before the LLM call. Issued together because this runs on the
   // user's critical path now, not in a background worker.
-  const [claim, recentCount, activeState] = await Promise.all([
+  const [claim, recentCount, activeState, quota] = await Promise.all([
     // Optimistic claim on `attempts`. A Meta webhook retry (or a sweeper replay
     // racing an in-flight QStash delivery) that lands while the first attempt is
     // still running loses this update and bails out instead of replying twice.
@@ -94,6 +130,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     prisma.conversationState.findFirst({
       where: { userId: user.id, expiresAt: { gt: now } },
     }),
+    checkQuota(user),
   ]);
 
   if (claim.count === 0) {
@@ -131,6 +168,50 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
 
     await typing;
     return { status: 'rate_limited', retryable: false };
+  }
+
+  // ── Per-user token quota ─────────────────────────────────────────
+  // Checked after the message-count limit because it is the more expensive of
+  // the two reads, and after the claim so a rejected message is still marked
+  // answered rather than swept and retried forever.
+  if (!quota.allowed) {
+    console.warn(
+      `[Remique] Quota exceeded userId=${user.id} window=${quota.window} ` +
+        `used=${quota.used} cap=${quota.cap} messageId=${message.id}`
+    );
+
+    // Told once, on the message that crosses the line. Replying to every
+    // message past the cap would move the cost from OpenAI to WhatsApp.
+    const alreadyToldRecently = await prisma.message.findFirst({
+      where: {
+        userId: user.id,
+        direction: 'INBOUND',
+        processingError: 'Quota exceeded',
+        createdAt: { gte: oneHourAgo },
+      },
+      select: { id: true },
+    });
+
+    if (!alreadyToldRecently) {
+      try {
+        const when = quota.window === 'daily' ? 'today' : 'this week';
+        await replyToUser(
+          user,
+          `You have used up your Remique allowance for ${when}. ` +
+            'It refills on a rolling basis, so try again a little later. ⏳'
+        );
+      } catch (notifyError: any) {
+        console.error('[Remique] Failed to send quota notice:', notifyError?.message);
+      }
+    }
+
+    await prisma.message.update({
+      where: { id: message.id },
+      data: { processedAt: new Date(), processingError: 'Quota exceeded' },
+    });
+
+    await typing;
+    return { status: 'quota_exceeded', retryable: false };
   }
 
   try {
