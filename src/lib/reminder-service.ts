@@ -6,6 +6,8 @@ import { cancelScheduledDelivery, scheduleDelayedReminder } from './qstash';
 import { replyToUser, replyWithMedia } from './conversation-log';
 import { fetchMedia, MediaTooLargeError } from './whatsapp-media';
 import { putDocument, getDocumentUrl, extensionForMimeType } from './storage';
+import { recordUsage } from './usage';
+import { env } from './env';
 import type { PipelineMessage } from './message-pipeline';
 import type { ParsedAssistantResponse } from '../types/llm.types';
 import { DateTime } from 'luxon';
@@ -491,7 +493,7 @@ export async function processIncomingUserMessage(
 
   const notesText = userNotes.map((n) => n.content);
 
-  const parsed = await parseUserMessage(userMessage, user.timezone, {
+  const { parsed, usage } = await parseUserMessage(userMessage, user.timezone, {
     pendingContext: activeState?.pendingData,
     savedNotes: notesText,
     userName: user.name,
@@ -521,6 +523,19 @@ export async function processIncomingUserMessage(
       ? { mediaType: message.mediaType || 'file', fileName: message.mediaFilename }
       : null,
   });
+
+  // Not awaited on the reply path: the model has answered and the user is
+  // waiting. `recordUsage` swallows its own errors, so a floating rejection is
+  // not possible here.
+  if (usage) {
+    void recordUsage({
+      userId: user.id,
+      messageId: message.id,
+      purpose: 'parse',
+      model: env.OPENAI_MODEL,
+      usage,
+    });
+  }
 
   // Flat and greppable. Without the resolved indices on the record, a wrong
   // document selection can only be diagnosed by inferring intent from the

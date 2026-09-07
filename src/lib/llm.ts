@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import OpenAI from "openai";
 import { env } from "./env";
+import type { TokenUsage } from "./usage-pricing";
 import {
     ConversationTurn,
     DocumentCandidate,
@@ -401,11 +402,21 @@ export interface ParseOptions {
     attachedFile?: { mediaType: string; fileName?: string | null } | null;
 }
 
+export interface ParseResult {
+    parsed: ParsedAssistantResponse;
+    /**
+     * Null when the call threw or the provider returned no usage block. The
+     * caller records nothing rather than recording zero, so a provider outage
+     * does not look like free traffic on the dashboard.
+     */
+    usage: TokenUsage | null;
+}
+
 export async function parseUserMessage(
     userMessage: string,
     userTimezone: string = "Asia/Dhaka",
     options: ParseOptions = {},
-): Promise<ParsedAssistantResponse> {
+): Promise<ParseResult> {
     const {
         pendingContext,
         savedNotes = [],
@@ -554,27 +565,34 @@ export async function parseUserMessage(
             },
         });
 
-        // Real token counts per message, so cost can be measured from production
-        // traffic instead of estimated. `cached` is the discounted portion — the
-        // static system prompt, once it has been seen recently.
-        const usage: any = (response as any).usage;
+        // Real token counts per call, so cost is measured from production
+        // traffic instead of estimated. `cached` is the discounted portion —
+        // the static system prompt, once it has been seen recently.
+        const raw: any = (response as any).usage;
+        const usage: TokenUsage | null = raw
+            ? {
+                  inputTokens: raw.input_tokens ?? 0,
+                  cachedTokens: raw.input_tokens_details?.cached_tokens ?? 0,
+                  outputTokens: raw.output_tokens ?? 0,
+              }
+            : null;
+
         if (usage) {
             console.log(
                 `[Remique] llm usage model=${env.OPENAI_MODEL} ` +
-                    `in=${usage.input_tokens ?? "-"} ` +
-                    `cached=${usage.input_tokens_details?.cached_tokens ?? 0} ` +
-                    `out=${usage.output_tokens ?? "-"} ` +
+                    `in=${usage.inputTokens} cached=${usage.cachedTokens} ` +
+                    `out=${usage.outputTokens} ` +
                     `notes=${savedNotes.length} facts=${knownFacts.length} ` +
                     `docs=${savedDocuments.length} turns=${recentTurns.length}`,
             );
         }
 
         const rawText = response.output_text;
-        if (!rawText) return fallback;
+        if (!rawText) return { parsed: fallback, usage };
 
-        return JSON.parse(rawText) as ParsedAssistantResponse;
+        return { parsed: JSON.parse(rawText) as ParsedAssistantResponse, usage };
     } catch (error: any) {
         console.error("[Remique] OpenAI extraction error:", error?.message);
-        return fallback;
+        return { parsed: fallback, usage: null };
     }
 }
