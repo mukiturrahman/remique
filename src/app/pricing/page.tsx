@@ -41,7 +41,7 @@ export default function PricingPage() {
       <Navbar />
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 pb-6 pt-16 text-center sm:px-8 lg:pt-24">
+      <section className="mx-auto max-w-6xl px-5 pb-6 pt-32 text-center sm:px-8 lg:pt-40">
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
           Pricing
         </p>
