@@ -159,6 +159,20 @@ a {
   }
 }
 
+/* A slow idle bob, so the mark reads as awake rather than animated. */
+@keyframes remique-bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  30% {
+    transform: translate3d(0, -3px, 0) rotate(-2.5deg);
+  }
+  62% {
+    transform: translate3d(0, 1px, 0) rotate(1.5deg);
+  }
+}
+
 @keyframes remique-caret {
   0%,
   45% {
@@ -182,10 +196,16 @@ a {
   animation: remique-caret 1s steps(1, end) infinite;
 }
 
+.bob {
+  animation: remique-bob 3.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .pulse,
-  .caret {
+  .caret,
+  .bob {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

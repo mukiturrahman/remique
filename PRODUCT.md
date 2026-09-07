@@ -30,6 +30,7 @@ The mechanism a neighbor could not truthfully copy: natural-language reminder pa
 ## Capabilities and Constraints
 
 Confirmed capabilities (from source):
+
 - Intents: `create_reminder`, `list_reminders`, `cancel_reminder`, `clarification_required`, `unknown`.
 - Language: English, Banglish, Bengali script — including mixed input; confirmation is returned in the user's own language/script.
 - Relative and absolute time ("in 30 minutes", "next Friday at 3 PM", "kalke shokal 10 tay").
@@ -37,13 +38,14 @@ Confirmed capabilities (from source):
 - Parsing by OpenAI (`openai`, model `gpt-5-nano`, env-overridable), delivery scheduled through Upstash QStash, storage in Postgres via Prisma, inbound webhooks verified with Meta's HMAC signature.
 
 Constraints:
+
 - Free to use; no account, no pricing tier exists.
 - Next.js 15 App Router, React 19, Tailwind 3. The landing page is a single server component at `src/app/page.tsx`.
 
 ## Brand Commitments
 
 - Name: **Remique**. Bell mark (🔔) currently used as the logo glyph; not a locked asset.
-- Tagline in use: "AI-powered WhatsApp reminder assistant. Built in Bangladesh."
+- Tagline in use: "AI-powered WhatsApp Ai assistant. Built in Bangladesh."
 - No locked logo file, no brand palette, no type commitment. The WhatsApp green currently in the code is platform-derived, not a chosen brand color — the user has approved replacing the visual world entirely.
 - Voice: direct, friendly, bilingual-comfortable. Never corporate.
 - **Standing aesthetic preference (confirmed 2026-09-02, after four re-rolls of concept directions):** the user declined every metaphor-led visual world on two grounds — too conceptual, and too risky to ship to a real user opening it on a phone. The commitment is the conventional modern-SaaS arrangement executed at a named craft bar: **Stripe, Notion, Framer** — bright and spacious, confident typography, colourful illustrative moments, expensive and friendly. Future surfaces inherit this: distinct through craft and detail, not through an adopted foreign visual world.

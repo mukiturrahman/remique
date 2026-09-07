@@ -20,7 +20,7 @@ export function Navbar() {
     <header className="fixed inset-x-0 top-4 z-50 mx-auto w-full max-w-5xl px-4 sm:top-6">
       <nav className="mx-auto flex h-[64px] items-center gap-4 rounded-full border border-white/40 bg-ground/60 px-5 shadow-lg backdrop-blur-xl sm:px-8">
         <Link href="/" className="flex items-center gap-2.5 rounded-md">
-          <Image src="/logo.png" alt="Remique Logo" width={56} height={44} className="h-10 w-auto object-contain" />
+          <Image src="/logo.png" alt="Remique Logo" width={56} height={44} className="bob h-10 w-auto object-contain" />
           <span className="font-display text-[19px] font-semibold tracking-tight text-ink">
             Remique
           </span>
