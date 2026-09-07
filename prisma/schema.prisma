@@ -44,12 +44,46 @@ model User {
   timezone          String             @default("Asia/Dhaka")
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  // ── Blocking ──────────────────────────────────────────────────
+  // Null means active. A timestamp means blocked, and when.
+  blockedAt         DateTime? @map("blocked_at")
+  blockedReason     String?   @map("blocked_reason")
+
+  // Set when the "your access is paused" notice has been delivered, so it is
+  // sent exactly once no matter how many messages follow. Cleared on unblock.
+  blockNoticeSentAt DateTime? @map("block_notice_sent_at")
+
+  // ── Denormalised usage totals ─────────────────────────────────
+  // Kept alongside usage_events so the admin user list is one query instead
+  // of a groupBy over every event ever recorded. Incremented in the same
+  // transaction as the UsageEvent insert.
+  totalInputTokens  Int @default(0) @map("total_input_tokens")
+  totalOutputTokens Int @default(0) @map("total_output_tokens")
+  totalCostMicros   Int @default(0) @map("total_cost_micros")
+  totalLlmCalls     Int @default(0) @map("total_llm_calls")
+
+  // ── Per-user quota overrides ──────────────────────────────────
+  // Null means "use the global env default". A paid plan later writes a
+  // bigger number here and needs no code change.
+  dailyTokenCap     Int? @map("daily_token_cap")
+  weeklyTokenCap    Int? @map("weekly_token_cap")
+
+  // ── Billing scaffolding, deliberately unused ──────────────────
+  // Landed now so billing does not need a second migration. Nothing reads
+  // these until a payment gateway exists.
+  planTier          String    @default("free") @map("plan_tier")
+  planPeriod        String?   @map("plan_period")
+  planStartedAt     DateTime? @map("plan_started_at")
+  planExpiresAt     DateTime? @map("plan_expires_at")
+
   reminders         Reminder[]
   messages          Message[]
   conversationState ConversationState?
   notes             Note[]
   documents         Document[]
   facts             Fact[]
+  usageEvents       UsageEvent[]
 
   @@map("users")
 }
@@ -74,6 +108,48 @@ model Document {
 
   @@index([userId, createdAt])
   @@map("documents")
+}
+
+// One row per paid API call, not per message. A message that triggers a
+// vision call and a parse call must produce two rows, or the cost of images
+// can never be separated from the cost of text.
+model UsageEvent {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+
+  // The inbound message that caused the call. Nullable because a future
+  // background call (a summarisation pass, an embedding job) has no inbound
+  // message to point at.
+  messageId     String?  @map("message_id")
+
+  // What the call was for: "parse" today; "vision", "transcribe", "embed"
+  // later. A plain string rather than an enum so adding a purpose does not
+  // need a migration.
+  purpose       String   @default("parse")
+
+  provider      String   @default("openai")
+  model         String
+
+  inputTokens   Int      @map("input_tokens")
+
+  // The discounted portion of inputTokens — the static system prompt, once
+  // OpenAI has seen it recently. Stored separately because the cost is
+  // (inputTokens - cachedTokens) at full rate plus cachedTokens at the
+  // discounted one.
+  cachedTokens  Int      @default(0) @map("cached_tokens")
+  outputTokens  Int      @map("output_tokens")
+
+  // USD * 1_000_000, integer. Floats must never hold money, and one
+  // gpt-4.1-mini call is a fraction of a cent, so cents is too coarse.
+  // Computed at write time so a later price change cannot rewrite history.
+  costMicros    Int      @map("cost_micros")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("usage_events")
 }
 
 // A single durable thing the bot knows about the user, e.g.

@@ -27,6 +27,15 @@ const envSchema = z.object({
   // it; the Next.js app never touches S3.
   S3_BUCKET_DOCUMENTS: z.string().optional(),
   AWS_S3_REGION: z.string().optional(),
+  // Token ceilings applied per user when User.dailyTokenCap / weeklyTokenCap
+  // are null. Coerced because process.env values are always strings.
+  DEFAULT_DAILY_TOKEN_CAP: z.coerce.number().int().positive().default(150_000),
+  DEFAULT_WEEKLY_TOKEN_CAP: z.coerce.number().int().positive().default(700_000),
+  // Admin dashboard. Both must be set or every /admin route returns 404.
+  // Read directly from process.env by src/lib/admin-auth.ts — these entries
+  // exist so a missing value is visible in the startup validation output.
+  ADMIN_PASSWORD: z.string().optional(),
+  ADMIN_SESSION_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -64,4 +73,8 @@ export const env: Env = _parsed.success
       SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
       S3_BUCKET_DOCUMENTS: process.env.S3_BUCKET_DOCUMENTS,
       AWS_S3_REGION: process.env.AWS_S3_REGION,
+      DEFAULT_DAILY_TOKEN_CAP: Number(process.env.DEFAULT_DAILY_TOKEN_CAP) || 150_000,
+      DEFAULT_WEEKLY_TOKEN_CAP: Number(process.env.DEFAULT_WEEKLY_TOKEN_CAP) || 700_000,
+      ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+      ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
     };
