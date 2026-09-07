@@ -2514,6 +2514,33 @@ running the old zip — repeat Steps 4 and 5.
 
 ---
 
+## Operational notes
+
+**A WhatsApp outage now costs quota as well as money.** When
+`processIncomingUserMessage` succeeds through the model call but the reply send
+throws a transient WhatsApp error, `recordFailure` returns `retryable: true`,
+the SQS worker rethrows, and the message is re-parsed on redelivery — up to
+`maxReceiveCount` times. Each attempt writes a real `usage_events` row, which is
+correct accounting: the OpenAI calls genuinely happened. But it means a Meta
+incident can push a user over their 24-hour cap on messages they never received
+a reply to, locking them out for a day through no fault of their own.
+
+Before this branch the only cost of that retry storm was OpenAI spend. If it
+becomes a real problem, the options are to exclude retried parses from the
+quota sum, or to reclassify reply-send failures as non-retryable. Neither is
+done here.
+
+**`totalCostMicros` and the token totals are `Int` (int4).** The ceiling is
+2,147,483,647 — $2,147 of lifetime cost, or 2.1B lifetime tokens, per user. At
+the default 700k/week cap that is roughly 60 years. On overflow Postgres raises
+`22003`, the transaction in `recordUsage` rejects, and the error is swallowed —
+so the `usage_events` row is lost silently along with the counter update. Revisit
+if a paid tier raises the caps by two orders of magnitude; moving to `BigInt`
+changes the TypeScript type to `bigint` and ripples into `formatTokens`,
+`formatCost`, and the arithmetic in both admin pages.
+
+---
+
 ## Follow-ups, deliberately not in this plan
 
 - **Sub-project D** (user data deletion over WhatsApp) — spec Part 5.
