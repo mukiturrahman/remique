@@ -30,6 +30,7 @@ export default {
         },
         signal: {
           ink: "var(--signal-ink)",
+          deep: "var(--signal-ink-deep)",
         },
         background: "var(--background)",
         foreground: "var(--foreground)",

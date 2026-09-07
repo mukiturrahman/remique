@@ -90,6 +90,40 @@ export function IconVerified(props: IconProps) {
   );
 }
 
+/** The same reminder coming back around on its own schedule. */
+export function IconRepeat(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <path d="M4.75 12a7.25 7.25 0 0 1 12.4-5.13l2.1 2.13" />
+      <path d="M19.25 12a7.25 7.25 0 0 1-12.4 5.13l-2.1-2.13" />
+      <path d="M19.25 4.75V9h-4.25" />
+      <path d="M4.75 19.25V15H9" />
+    </Stroke>
+  );
+}
+
+/** A message sent a second time, because the first one was missed. */
+export function IconNudge(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <path d="M3.75 5.75a2 2 0 0 1 2-2h12.5a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H9l-5.25 3.75z" />
+      <path d="M14.75 7.75h-4.5a2.25 2.25 0 0 0 0 4.5h.75" />
+      <path d="m12.75 5.75 2 2-2 2" />
+    </Stroke>
+  );
+}
+
+/** One item lifted to the front of the queue. */
+export function IconPriority(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <path d="M10.75 6.25h9.5M10.75 12h9.5M10.75 17.75h9.5" />
+      <path d="M4.75 18.25V6" />
+      <path d="m1.9 8.85 2.85-2.85 2.85 2.85" />
+    </Stroke>
+  );
+}
+
 export function IconArrow(props: IconProps) {
   return (
     <Stroke {...props}>

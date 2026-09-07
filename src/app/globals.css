@@ -29,6 +29,8 @@
 
   /* the fired moment: the one hour a reminder lands on, nothing else */
   --signal-ink: #a32b12;
+  /* the same fired moment, darkened to hold 4.7:1 on the mid-gradient green */
+  --signal-ink-deep: #7c1d0b;
 
   --background: var(--ground);
   --foreground: var(--ink);

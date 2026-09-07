@@ -7,7 +7,17 @@ import { HeroVideo } from "@/components/hero-video";
 import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
 import { HomeFaq } from "@/components/home-faq";
 import { HomePricing } from "@/components/home-pricing";
-import { IconArrow, MarkWhatsApp } from "@/components/icons";
+import {
+  IconArrow,
+  MarkWhatsApp,
+  IconInstant,
+  IconExactTime,
+  IconRepeat,
+  IconNudge,
+  IconScripts,
+  IconVerified,
+  IconPriority,
+} from "@/components/icons";
 
 /* ── DATA ──────────────────────────────────────────────────────────── */
 
@@ -27,13 +37,13 @@ const LANGUAGE_EXAMPLES = [
 ];
 
 const ALL_FEATURES = [
-  { num: 1, title: "Instant confirmation", desc: "Reply comes back in seconds, in your language." },
-  { num: 2, title: "Exact time resolution", desc: "\"kalke shokal 10 tay\" becomes one timestamp." },
-  { num: 3, title: "Recurring reminders", desc: "Daily, weekly, monthly — describe it in words." },
-  { num: 4, title: "Follow-up nudges", desc: "Missed one? Remique sends it again." },
-  { num: 5, title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
-  { num: 6, title: "Signature verification", desc: "Every message verified via Meta HMAC." },
-  { num: 7, title: "Priority delivery", desc: "Reminders fire through a priority queue." },
+  { icon: IconInstant, title: "Instant confirmation", desc: "Reply comes back in seconds, in your language." },
+  { icon: IconExactTime, title: "Exact time resolution", desc: "\"kalke shokal 10 tay\" becomes one timestamp." },
+  { icon: IconRepeat, title: "Recurring reminders", desc: "Daily, weekly, monthly — describe it in words." },
+  { icon: IconNudge, title: "Follow-up nudges", desc: "Missed one? Remique sends it again." },
+  { icon: IconScripts, title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
+  { icon: IconVerified, title: "Signature verification", desc: "Every message verified via Meta HMAC." },
+  { icon: IconPriority, title: "Priority delivery", desc: "Reminders fire through a priority queue." },
 ];
 
 /* ── HELPERS ────────────────────────────────────────────────────────── */
@@ -269,29 +279,60 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 5. FEATURE: RELENTLESS ───────────────────────────────────── */}
+      {/* ── 5. THE LOOP ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
         <div className="text-center">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Relentless</p>
-          <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-            Whatever you need to remember, we make sure you don't forget.
+          <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
+            Whatever you need to remember, we make sure you don&apos;t forget.
           </h2>
-          <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
+          <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
             Recurring reminders and follow-up nudges — Remique handles the stuff that slips through the cracks.
           </p>
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2">
-          {[
-            { title: "Recurring reminders", desc: "\"Protidin bikal 5 tay medicine\" — repeats on any schedule you describe." },
-            { title: "Follow-up nudges", desc: "Missed a reminder? Remique sends it again. And again." },
-          ].map((f) => (
-            <div key={f.title} className="rounded-2xl border border-white/40 bg-white/20 p-5 shadow-xl backdrop-blur-md">
-              <h3 className="font-display text-[16px] font-semibold tracking-tight text-ink">{f.title}</h3>
-              <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">{f.desc}</p>
-            </div>
-          ))}
+
+        <div className="mt-14 text-center">
+          <p className="inline-block max-w-[32ch] rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-left text-[15px] leading-snug text-white shadow-lift">
+            protidin bikal 5 tay medicine
+          </p>
+          <div className="mt-5 flex flex-wrap items-baseline justify-center gap-x-2.5 gap-y-1 font-mono text-[13px] uppercase tracking-[0.09em]">
+            <span className="text-[rgba(11,21,18,0.6)]">repeats</span>
+            <span className="tabular text-ink">daily</span>
+            <span className="text-[rgba(11,21,18,0.3)]">·</span>
+            <span className="text-[rgba(11,21,18,0.6)]">at</span>
+            <span className="tabular font-semibold text-signal-deep">5:00 pm</span>
+            <span className="text-[rgba(11,21,18,0.3)]">·</span>
+            <span className="tabular text-[rgba(11,21,18,0.6)]">asia/dhaka</span>
+          </div>
         </div>
-        <div className="mt-10 text-center">
+
+        <ul className="mt-16 grid text-left md:grid-cols-3 md:gap-x-10">
+          {[
+            {
+              title: "The chain lays itself.",
+              body: "Every delivery schedules the next one before it goes out. Nothing to renew, nothing to re-enter.",
+            },
+            {
+              title: "A gap never stacks.",
+              body: "If delivery is down for three days, your daily reminder resumes tomorrow — it does not fire three times catching up.",
+            },
+            {
+              title: "Missed one? Say so.",
+              body: "Every reminder ends with \u201cDone or need more time?\u201d Tell Remique when, and it comes back then.",
+            },
+          ].map((row) => (
+            <li
+              key={row.title}
+              className="border-t border-[rgba(11,21,18,0.14)] py-6 first:border-t-0 first:pt-0 md:first:border-t md:first:pt-6"
+            >
+              <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">{row.title}</h3>
+              <p className="mt-1.5 max-w-[38ch] text-[14.5px] leading-relaxed text-[rgba(11,21,18,0.72)]">
+                {row.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-14 text-center">
           <CtaLink href="/how-it-works">See all features</CtaLink>
         </div>
       </section>
@@ -310,25 +351,34 @@ export default function HomePage() {
         <HomePricing />
       </section>
 
-      {/* ── 7. FEATURE GRID ─────────────────────────────────────────── */}
-      <section className=" ">
-        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-white">
-            Everything you get, in full.
-          </h2>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {ALL_FEATURES.map((f) => (
-              <div key={f.num} className="flex gap-4 rounded-2xl border border-white/40 bg-white/20 p-5 shadow-xl backdrop-blur-md">
-                <span className="inline-grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-tint font-mono text-[13px] font-semibold text-brand">
-                  {f.num}
-                </span>
-                <div>
-                  <h3 className="font-display text-[15px] font-semibold tracking-tight text-white">{f.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-white/80">{f.desc}</p>
-                </div>
-              </div>
-            ))}
+      {/* ── 7. FULL INDEX ───────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+        <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+          <div className="lg:self-center">
+            <h2 className="max-w-[14ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
+              Everything you get, in full.
+            </h2>
+            <p className="mt-5 max-w-[38ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
+              The whole feature list on one page. No tiers hiding pieces of it, no settings to turn any of it on.
+            </p>
           </div>
+
+          <ul className="grid sm:grid-cols-2 sm:gap-x-12">
+            {ALL_FEATURES.map(({ icon: Icon, title, desc }, i) => (
+              <li
+                key={title}
+                className={`flex gap-4 border-t border-[rgba(11,21,18,0.14)] py-6 first:border-t-0 first:pt-0 ${
+                  i === 1 ? "sm:border-t-0 sm:pt-0" : ""
+                }`}
+              >
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-deep" />
+                <div>
+                  <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">{title}</h3>
+                  <p className="mt-1.5 max-w-[34ch] text-[14.5px] leading-relaxed text-[rgba(11,21,18,0.72)]">{desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
