@@ -17,8 +17,11 @@ export interface RecordUsageParams {
  *
  * Never throws. This runs after the model has already answered and the user is
  * waiting on a reply — losing an accounting row is strictly better than failing
- * a turn that otherwise succeeded. Failures are logged loudly enough to find in
- * CloudWatch.
+ * a turn that otherwise succeeded. A rejected transaction is logged loudly
+ * enough to find in CloudWatch, but not every loss takes that path: if AWS
+ * Lambda freezes the execution environment before this fire-and-forget
+ * transaction commits, the row is lost silently and the catch below never
+ * runs. Accepted — the design trades losing rows for never failing a turn.
  */
 export async function recordUsage(params: RecordUsageParams): Promise<void> {
   const { userId, messageId = null, purpose = 'parse', model, usage } = params;

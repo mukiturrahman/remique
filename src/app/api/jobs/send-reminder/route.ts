@@ -75,6 +75,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'not_claimable' }, { status: 200 });
     }
 
+    // A blocked user must never receive another send — otherwise a recurring
+    // reminder keeps relaying itself indefinitely, as paid template sends once
+    // it falls outside the 24-hour service window. Cancelling rather than
+    // silently skipping stops the recurrence chain here (no next occurrence is
+    // queued below) and keeps this delivery visible in the dashboard's
+    // past-reminders list instead of vanishing without a trace.
+    if (reminder.user.blockedAt) {
+      await prisma.reminder.update({
+        where: { id: reminderId },
+        data: { status: 'CANCELLED', errorMessage: 'User is blocked' },
+      });
+      return NextResponse.json({ status: 'user_blocked' }, { status: 200 });
+    }
+
     // Check 24-Hour Customer Service Window
     const lastInbound = await prisma.message.findFirst({
       where: { userId: reminder.userId, direction: 'INBOUND' },

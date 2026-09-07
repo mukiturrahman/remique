@@ -180,14 +180,20 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
         `used=${quota.used} cap=${quota.cap} messageId=${message.id}`
     );
 
-    // Told once, on the message that crosses the line. Replying to every
-    // message past the cap would move the cost from OpenAI to WhatsApp.
+    // Told once per window, not once per hour. The quota window itself is
+    // 24h (daily) or 7d (weekly), so the lookback here has to match whichever
+    // one was actually crossed — scoping it to oneHourAgo would re-notify
+    // every hour for the rest of the window, which for a weekly cap is dozens
+    // of paid, identical WhatsApp sends that degrade the Meta quality rating.
+    const quotaWindowAgo = new Date(
+      now.getTime() - (quota.window === 'daily' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000)
+    );
     const alreadyToldRecently = await prisma.message.findFirst({
       where: {
         userId: user.id,
         direction: 'INBOUND',
         processingError: 'Quota exceeded',
-        createdAt: { gte: oneHourAgo },
+        createdAt: { gte: quotaWindowAgo },
       },
       select: { id: true },
     });

@@ -5,8 +5,14 @@ export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
 
-/** The two paths that must stay reachable without a session. */
-const PUBLIC_ADMIN_PATHS = new Set(['/admin/login', '/api/admin/login']);
+/**
+ * Paths that must stay reachable without a valid session: the login page and
+ * its POST endpoint, plus logout — signing out with an already-expired
+ * cookie must land the operator on the login page, not a raw 401 JSON body.
+ * The route only clears the cookie and redirects, so making it public grants
+ * nothing.
+ */
+const PUBLIC_ADMIN_PATHS = new Set(['/admin/login', '/api/admin/login', '/api/admin/logout']);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

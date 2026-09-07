@@ -1,7 +1,10 @@
 import type { UsageDay } from '@/lib/admin-queries';
 
 export function UsageChart({ days }: { days: UsageDay[] }) {
-  const peak = Math.max(1, ...days.map((d) => d.tokens));
+  // Guarded value is only for the SVG division below — displaying it instead
+  // of the true max would read "peak 1 tokens/day" for a user with no usage.
+  const maxTokens = Math.max(...days.map((d) => d.tokens));
+  const peak = Math.max(1, maxTokens);
   const barWidth = 100 / days.length;
 
   return (
@@ -24,7 +27,7 @@ export function UsageChart({ days }: { days: UsageDay[] }) {
       </svg>
       <div className="mt-1 flex justify-between font-mono text-xs text-ink-3">
         <span>{days[0]?.day}</span>
-        <span>peak {peak.toLocaleString()} tokens/day</span>
+        <span>peak {maxTokens.toLocaleString()} tokens/day</span>
         <span>{days[days.length - 1]?.day}</span>
       </div>
     </div>

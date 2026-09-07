@@ -28,9 +28,15 @@ const envSchema = z.object({
   S3_BUCKET_DOCUMENTS: z.string().optional(),
   AWS_S3_REGION: z.string().optional(),
   // Token ceilings applied per user when User.dailyTokenCap / weeklyTokenCap
-  // are null. Coerced because process.env values are always strings.
-  DEFAULT_DAILY_TOKEN_CAP: z.coerce.number().int().positive().default(150_000),
-  DEFAULT_WEEKLY_TOKEN_CAP: z.coerce.number().int().positive().default(700_000),
+  // are null. Coerced because process.env values are always strings. These
+  // are the only two vars in this schema that can actually fail validation —
+  // every other entry is an optional string — and the operator hand-types
+  // them into the Vercel dashboard, so a stray comma or typo (e.g. "150,000")
+  // coerces to NaN. `.catch()` degrades that to the default instead of
+  // throwing, which in production would take down the whole site, not just
+  // quotas.
+  DEFAULT_DAILY_TOKEN_CAP: z.coerce.number().int().positive().default(150_000).catch(150_000),
+  DEFAULT_WEEKLY_TOKEN_CAP: z.coerce.number().int().positive().default(700_000).catch(700_000),
   // Admin dashboard. Both must be set or every /admin route returns 404.
   // Read directly from process.env by src/lib/admin-auth.ts — these entries
   // exist so a missing value is visible in the startup validation output.
@@ -39,6 +45,15 @@ const envSchema = z.object({
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+// Guards the dev-fallback object below: a negative, zero, or non-finite cap
+// there would make `used >= cap` always true in src/lib/usage.ts and
+// permanently quota-block every user, so anything that isn't a positive
+// integer falls back to the same default the schema above uses.
+function positiveIntOr(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 // Validates all env vars at startup — throws with a clear message if anything is missing.
 const _parsed = envSchema.safeParse(process.env);
@@ -73,8 +88,8 @@ export const env: Env = _parsed.success
       SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
       S3_BUCKET_DOCUMENTS: process.env.S3_BUCKET_DOCUMENTS,
       AWS_S3_REGION: process.env.AWS_S3_REGION,
-      DEFAULT_DAILY_TOKEN_CAP: Number(process.env.DEFAULT_DAILY_TOKEN_CAP) || 150_000,
-      DEFAULT_WEEKLY_TOKEN_CAP: Number(process.env.DEFAULT_WEEKLY_TOKEN_CAP) || 700_000,
+      DEFAULT_DAILY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_DAILY_TOKEN_CAP, 150_000),
+      DEFAULT_WEEKLY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_WEEKLY_TOKEN_CAP, 700_000),
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
       ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
     };

@@ -92,7 +92,13 @@ export async function passwordMatches(submitted: string): Promise<boolean> {
   return constantTimeEqual(a, b);
 }
 
-/** Both arguments are fixed-length hex digests by construction. */
+/**
+ * At the `passwordMatches` call site both arguments are fixed-length hex
+ * digests by construction. At `verifySessionToken` the signature comes from
+ * an attacker-supplied cookie and can be any length — the length check below
+ * rejects that case before comparing any characters, so it never leaks
+ * digest content one byte at a time.
+ */
 function constantTimeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
