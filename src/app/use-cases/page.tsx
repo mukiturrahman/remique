@@ -65,7 +65,9 @@ const PERSONAS: Persona[] = [
 
 export default function UseCasesPage() {
   return (
-    <main className="bg-ground">
+    <main className="page-gradient relative min-h-screen text-ink selection:bg-ink/10">
+      <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.6] mix-blend-overlay" style={{ backgroundImage: "url('/noise.svg')", backgroundSize: "256px" }} />
+      <div className="relative z-10">
       <Navbar />
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
@@ -87,7 +89,7 @@ export default function UseCasesPage() {
         return (
           <section
             key={p.name}
-            className={`${even ? "bg-ground" : "border-y border-line bg-ground-2"}`}
+            className={`${i >= 2 ? "text-white" : "text-ink"}`}
           >
             <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-24">
               <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
@@ -121,10 +123,10 @@ export default function UseCasesPage() {
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
+        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
           Whatever your life looks like, Remique fits in.
         </h2>
-        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
+        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
           Start texting. Remique adapts to you.
         </p>
         <div className="mt-10">
@@ -139,6 +141,7 @@ export default function UseCasesPage() {
       </section>
 
       <SiteFooter />
+    </div>
     </main>
   );
 }
@@ -147,17 +150,17 @@ function PersonaInfo({ persona }: { persona: Persona }) {
   return (
     <div>
       <div className="flex items-center gap-3">
-        <span className="inline-grid h-12 w-12 place-items-center rounded-full bg-brand-tint font-display text-[18px] font-semibold text-brand">
+        <span className="inline-grid h-12 w-12 place-items-center rounded-full border border-current/20 bg-current/5 font-display text-[18px] font-semibold text-current opacity-80">
           {persona.name[0]}
         </span>
         <div>
-          <p lang="bn" className="font-bn font-display text-[17px] font-semibold tracking-tight text-ink">
+          <p lang="bn" className="font-bn font-display text-[17px] font-semibold tracking-tight text-current">
             {persona.name}
           </p>
-          <p className="text-[14px] text-ink-3">{persona.role}</p>
+          <p className="text-[14px] text-current opacity-60">{persona.role}</p>
         </div>
       </div>
-      <p className="mt-5 max-w-[44ch] text-[16px] leading-relaxed text-ink-2">
+      <p className="mt-5 max-w-[44ch] text-[16px] leading-relaxed text-current opacity-80">
         {persona.desc}
       </p>
     </div>

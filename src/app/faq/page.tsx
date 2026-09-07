@@ -46,7 +46,9 @@ const FAQ_ITEMS = [
 
 export default function FaqPage() {
   return (
-    <main className="bg-ground">
+    <main className="page-gradient relative min-h-screen text-ink selection:bg-ink/10">
+      <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.6] mix-blend-overlay" style={{ backgroundImage: "url('/noise.svg')", backgroundSize: "256px" }} />
+      <div className="relative z-10">
       <Navbar />
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
@@ -68,12 +70,12 @@ export default function FaqPage() {
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
-      <section className="border-t border-line bg-ground-2">
+      <section className="">
         <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-          <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
+          <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
             Still have questions?
           </h2>
-          <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
+          <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
             Text Remique on WhatsApp. It answers those too.
           </p>
           <div className="mt-10">
@@ -89,6 +91,7 @@ export default function FaqPage() {
       </section>
 
       <SiteFooter />
+    </div>
     </main>
   );
 }
