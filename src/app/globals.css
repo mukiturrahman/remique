@@ -16,6 +16,7 @@
   --line-strong: #c4d2cb;
 
   /* continuous gradient palette */
+  --hero-bottom: #94C59F;
   --celadon: #7EBEA5;
   --young-bamboo: #68BE8D;
   --pale-green: #D6E9CA;
@@ -36,10 +37,11 @@
 .page-gradient {
   background: linear-gradient(
     to bottom,
-    var(--evergreen) 0%,
-    var(--celadon) 25%,
-    var(--young-bamboo) 55%,
-    var(--pale-green) 100%
+    var(--hero-bottom) 0%,
+    var(--pale-green) 15%,
+    var(--celadon) 40%,
+    var(--young-bamboo) 70%,
+    var(--evergreen) 100%
   );
 }
 
@@ -47,10 +49,11 @@
   .page-gradient {
     background: linear-gradient(
       to bottom in oklab,
-      var(--evergreen) 0%,
-      var(--celadon) 30%,
-      var(--young-bamboo) 65%,
-      var(--pale-green) 100%
+      var(--hero-bottom) 0%,
+      var(--pale-green) 15%,
+      var(--celadon) 40%,
+      var(--young-bamboo) 70%,
+      var(--evergreen) 100%
     );
   }
 }

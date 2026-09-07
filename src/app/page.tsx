@@ -53,7 +53,7 @@ function CtaLink({
     light:
       "bg-white text-brand-deep shadow-lift hover: hover:shadow-panel active:shadow-press",
     outline:
-      "border border-white/40  text-ink shadow-lift hover:shadow-panel",
+      "border border-white/40 text-white shadow-lift hover:shadow-panel hover:bg-white/10",
   } as const;
 
   return (
@@ -72,17 +72,17 @@ function CtaLink({
 export default function HomePage() {
   return (
         <main className="page-gradient relative">
-      <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.14] mix-blend-overlay" style={{ backgroundImage: "url('/noise.svg')", backgroundSize: "256px" }} />
+      <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.6] mix-blend-overlay" style={{ backgroundImage: "url('/noise.svg')", backgroundSize: "256px" }} />
       <div className="relative z-10">
       <Navbar />
 
       {/* ── 1. HERO ──────────────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden pt-32 pb-24 lg:pt-48 lg:pb-36">
-        <div className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)]">
+        <div className="absolute inset-0 -z-10" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}>
           <HeroVideo />
+          {/* Soft overlay to ensure legibility while keeping the gradient colors vibrant */}
+          <div className="absolute inset-0 bg-white/30 backdrop-blur-[4px]" />
         </div>
-        {/* Soft overlay to ensure legibility while keeping the gradient colors vibrant */}
-        <div className="absolute inset-0 -z-10 bg-white/30 backdrop-blur-[4px]" />
 
         <div className="mx-auto grid max-w-6xl gap-16 px-5 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:gap-12 lg:items-center">
           
@@ -156,22 +156,22 @@ export default function HomePage() {
       {/* ── 2. LANGUAGE STRIP ────────────────────────────────────────── */}
       <section className=" ">
         <div className="mx-auto max-w-6xl px-5 py-16 text-center sm:px-8">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
             Celebrating Bangladesh
           </p>
-          <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-white">
+          <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
             Say it the way it comes to you. Any language.
           </h2>
-          <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-white/80">
+          <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
             Remique understands Bengali script, Banglish transliteration, and plain English — or all three mixed in one sentence.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             {LANGUAGE_EXAMPLES.map((ex) => (
-              <div key={ex.lang} className="rounded-2xl border border-white/20 bg-white/10 shadow-xl backdrop-blur-md px-5 py-4 text-left shadow-lift">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-white/60">{ex.lang}</p>
+              <div key={ex.lang} className="rounded-2xl border border-white/40 bg-white/10 shadow-xl backdrop-blur-md px-5 py-4 text-left shadow-lift">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-brand">{ex.lang}</p>
                 <p
                   lang={ex.script === "bn" ? "bn" : undefined}
-                  className={`mt-2 text-[15px] leading-snug text-white ${ex.script === "bn" ? "font-bn" : ""}`}
+                  className={`mt-2 text-[15px] leading-snug text-ink ${ex.script === "bn" ? "font-bn" : ""}`}
                 >
                   {ex.text}
                 </p>
@@ -313,7 +313,7 @@ export default function HomePage() {
       {/* ── 7. FEATURE GRID ─────────────────────────────────────────── */}
       <section className=" ">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
+          <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-white">
             Everything you get, in full.
           </h2>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -323,8 +323,8 @@ export default function HomePage() {
                   {f.num}
                 </span>
                 <div>
-                  <h3 className="font-display text-[15px] font-semibold tracking-tight text-ink">{f.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">{f.desc}</p>
+                  <h3 className="font-display text-[15px] font-semibold tracking-tight text-white">{f.title}</h3>
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-white/80">{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -340,15 +340,15 @@ export default function HomePage() {
             className="pointer-events-none absolute inset-0 opacity-70 mix-blend-soft-light bg-[radial-gradient(120%_120%_at_50%_-10%,rgba(255,255,255,0.5)_0%,transparent_55%)]"
           />
           <div className="relative">
-            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.1rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-ink">
+            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.1rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-white">
               Your memory has a backup now.
             </h2>
-            <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
+            <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
               Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.
             </p>
             <div className="mt-10 flex flex-col items-center gap-5">
               <CtaLink href="/pricing" tone="light">See plan</CtaLink>
-              <p className="tabular text-[14.5px] text-ink-2">
+              <p className="tabular text-[14.5px] text-white/80">
                 Starts at ৳49/week
                 <span className="mx-2 opacity-50">·</span>
                 No card needed
@@ -359,16 +359,16 @@ export default function HomePage() {
       </section>
 
       {/* ── 9. FAQ ──────────────────────────────────────────────────── */}
-      <section className=" ">
+      <section className="text-white">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
           <div className="text-center">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">FAQ</p>
-            <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
+            <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
               Fair questions, straight answers.
             </h2>
           </div>
           <div className="mx-auto mt-14 max-w-3xl">
-            <HomeFaq />
+            <HomeFaq tone="dark" />
           </div>
           <div className="mt-10 text-center">
             <CtaLink href="/faq" tone="outline">See all questions</CtaLink>

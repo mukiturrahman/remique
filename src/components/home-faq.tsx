@@ -10,6 +10,6 @@ const TOP_FAQS = [
   { q: "Can I try it for free?", a: "Yes. The Free plan gives you 5 reminders per month with full language support." },
 ];
 
-export function HomeFaq() {
-  return <FaqAccordion items={TOP_FAQS} />;
+export function HomeFaq({ tone = "light" }: { tone?: "light" | "dark" }) {
+  return <FaqAccordion items={TOP_FAQS} tone={tone} />;
 }

@@ -4,17 +4,22 @@ import { useState } from "react";
 
 type FaqItem = { q: string; a: string };
 
-function Item({ item }: { item: FaqItem }) {
+function Item({ item, tone = "light" }: { item: FaqItem; tone?: "light" | "dark" }) {
   const [open, setOpen] = useState(false);
+  
+  const textTitle = tone === "dark" ? "text-white" : "text-ink";
+  const textBody = tone === "dark" ? "text-white/80" : "text-ink-2";
+  const textIcon = tone === "dark" ? "text-white/60" : "text-ink-3";
+  const border = tone === "dark" ? "border-white/20" : "border-line";
 
   return (
-    <div className="border-b border-line">
+    <div>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-4 py-5 text-left"
       >
-        <span className="font-display text-[17px] font-semibold tracking-tight text-ink">
+        <span className={`font-display text-[17px] font-semibold tracking-tight ${textTitle}`}>
           {item.q}
         </span>
         <svg
@@ -23,7 +28,7 @@ function Item({ item }: { item: FaqItem }) {
           stroke="currentColor"
           strokeWidth={1.5}
           strokeLinecap="round"
-          className={`h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 ${
+          className={`h-5 w-5 shrink-0 transition-transform duration-300 ${textIcon} ${
             open ? "rotate-45" : ""
           }`}
         >
@@ -36,7 +41,7 @@ function Item({ item }: { item: FaqItem }) {
         }`}
       >
         <div className="overflow-hidden">
-          <p className="pb-5 text-[15.5px] leading-relaxed text-ink-2">
+          <p className={`pb-5 text-[15.5px] leading-relaxed ${textBody}`}>
             {item.a}
           </p>
         </div>
@@ -45,11 +50,11 @@ function Item({ item }: { item: FaqItem }) {
   );
 }
 
-export function FaqAccordion({ items }: { items: FaqItem[] }) {
+export function FaqAccordion({ items, tone = "light" }: { items: FaqItem[]; tone?: "light" | "dark" }) {
   return (
     <div className="divide-y-0">
       {items.map((item, i) => (
-        <Item key={i} item={item} />
+        <Item key={i} item={item} tone={tone} />
       ))}
     </div>
   );
