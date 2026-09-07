@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono, Anek_Bangla } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono, Anek_Bangla, Caveat } from "next/font/google";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -27,6 +27,12 @@ const mono = Geist_Mono({
 const bangla = Anek_Bangla({
   subsets: ["bengali"],
   variable: "--font-bn",
+  display: "swap",
+});
+
+const cursive = Caveat({
+  subsets: ["latin"],
+  variable: "--font-cursive",
   display: "swap",
 });
 
@@ -75,7 +81,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} ${mono.variable} ${bangla.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable} ${bangla.variable} ${cursive.variable}`}
     >
       <body className="antialiased min-h-screen bg-ground font-sans text-ink">
         <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
