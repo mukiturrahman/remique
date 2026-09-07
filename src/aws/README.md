@@ -6,14 +6,14 @@ This directory contains the AWS Lambda handlers for the new WhatsApp webhook ing
 
 1. **`remique-webhook`**: An AWS Lambda function triggered by a Function URL (Auth: NONE). This receives the webhook from Meta, verifies the signature using `WHATSAPP_APP_SECRET`, and enqueues the raw payload to an SQS FIFO queue. It then returns HTTP 200 immediately, ensuring Meta receives a response within milliseconds.
 2. **`Amazon SQS FIFO`**: Ensures messages from the same WhatsApp sender (`MessageGroupId = senderNumber`) are processed in order, and provides content-based deduplication using Meta's globally unique message ID (`MessageDeduplicationId = whatsappMessageId`).
-3. **`remique-worker`**: An AWS Lambda function triggered by the SQS queue. It consumes the messages, claims them in the Neon PostgreSQL database, and executes the `runMessagePipeline` function (which calls OpenAI, handles reminders, and sends WhatsApp replies). If the pipeline encounters a transient failure (e.g. rate limit from OpenAI, API timeout), it throws an error and SQS automatically retries the message.
+3. **`remique-worker`**: An AWS Lambda function triggered by the SQS queue. It consumes the messages, claims them in the Supabase PostgreSQL database, and executes the `runMessagePipeline` function (which calls OpenAI, handles reminders, and sends WhatsApp replies). If the pipeline encounters a transient failure (e.g. rate limit from OpenAI, API timeout), it throws an error and SQS automatically retries the message.
 
 ## Deployment Instructions
 
 Since you are managing the deployment, here is the sequence of steps to configure the AWS resources manually or via your preferred IaC tool (Terraform/CDK/SAM).
 
 ### 1. Create SQS Queues
-Create these in the **`ap-southeast-1` (Singapore)** region to minimize latency to the Neon database.
+Create these in the **`ap-southeast-1` (Singapore)** region to minimize latency to the Supabase database (ap-south-1).
 
 1. **Dead-Letter Queue (DLQ)**
    - Type: **FIFO**
@@ -57,7 +57,7 @@ Create these in the **`ap-southeast-1` (Singapore)** region to minimize latency 
    - Give the Lambda execution role `sqs:ReceiveMessage`, `sqs:DeleteMessage`, and `sqs:GetQueueAttributes` permissions on `remique-inbound.fifo`.
 5. **Environment Variables**:
    - Include **all** production variables currently used by Next.js (e.g., `DATABASE_URL`, `OPENAI_API_KEY`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `QSTASH_TOKEN`).
-   - **Crucial**: Ensure `DATABASE_URL` is using your Neon **connection pooling** URL (the one that usually ends in `?sslmode=require` and points to the `pooler` endpoint), not the direct URL, as Lambda can open many concurrent connections.
+   - **Crucial**: Ensure `DATABASE_URL` is using the Supabase **transaction-mode pooler** URL (port 6543, with `?pgbouncer=true&connection_limit=1`), not the direct URL, as Lambda can open many concurrent connections.
 
 ### 4. Reconfigure Meta Webhook
 1. Go to your Meta App Dashboard -> WhatsApp -> Configuration.

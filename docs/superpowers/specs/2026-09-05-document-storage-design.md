@@ -19,7 +19,7 @@ Three forks were settled before design:
    matches against the label the user supplied at save time. Cheapest path;
    the tradeoff is that a mislabeled document is unfindable.
 2. **Bytes live in S3** (`ap-southeast-1`, private bucket). Not Postgres — the
-   Neon project is free tier with a 512 MB logical branch limit. Not Meta media
+   Supabase project is free tier. Not Meta media
    IDs — those expire after roughly 30 days, so documents would silently rot.
 3. **Retrieval lists before it sends.** A query replies with a numbered list;
    the user then asks for specific items. Prevents a broad query from firing a
