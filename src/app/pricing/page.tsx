@@ -83,21 +83,21 @@ export default function PricingPage() {
       <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <div className="mx-auto max-w-[400px]">
           <div className="relative flex flex-col rounded-[32px] border border-white/40 bg-white/20 p-6 shadow-2xl backdrop-blur-xl transition-shadow duration-200">
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/60">
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3">
               Pro
             </p>
-            <h3 className="mt-2 font-display text-[24px] font-semibold tracking-tight text-white">
+            <h3 className="mt-2 font-display text-[24px] font-semibold tracking-tight text-ink">
               Remique Pro
             </h3>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-white/80">
+            <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">
               Unlimited reminders in any language.
             </p>
 
             <div className="mt-5 flex items-baseline gap-1.5">
-              <span className="font-display text-[36px] font-semibold tracking-tight text-white">
+              <span className="font-display text-[36px] font-semibold tracking-tight text-ink">
                 ৳{price.toLocaleString("en-BD")}
               </span>
-              <span className="text-[14.5px] text-white/60">{periodLabel}</span>
+              <span className="text-[14.5px] text-ink-3">{periodLabel}</span>
             </div>
 
             <a
@@ -113,9 +113,9 @@ export default function PricingPage() {
               {FEATURES.map((f) => (
                 <li
                   key={f}
-                  className="flex items-start gap-2.5 text-[14.5px] leading-snug text-white/80"
+                  className="flex items-start gap-2.5 text-[14.5px] leading-snug text-ink-2"
                 >
-                  <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-white/60" />
+                  <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                   <span
                     lang={f.includes("বাংলা") ? "bn" : undefined}
                     className={f.includes("বাংলা") ? "font-bn" : undefined}
@@ -128,7 +128,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <p className="mt-8 flex items-center justify-center gap-2.5 text-[14px] text-white/60">
+        <p className="mt-8 flex items-center justify-center gap-2.5 text-[14px] text-ink-3">
           <img src="/bKash-Logo.png" alt="bKash" className="h-5 w-5 rounded-[4px]" />
           All payments processed securely through bKash
         </p>
@@ -137,20 +137,20 @@ export default function PricingPage() {
       {/* ── FEATURE GRID ──────────────────────────────────────────────── */}
       <section className="">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-white">
+          <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
             Everything you get, in full.
           </h2>
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {ALL_FEATURES.map((f) => (
               <div key={f.num} className="flex gap-4 rounded-2xl border border-white/40 bg-white/20 p-5 shadow-xl backdrop-blur-md">
-                <span className="inline-grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/10 font-mono text-[13px] font-semibold text-white/60">
+                <span className="inline-grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/10 font-mono text-[13px] font-semibold text-ink-3">
                   {f.num}
                 </span>
                 <div>
-                  <h3 className="font-display text-[15px] font-semibold tracking-tight text-white">
+                  <h3 className="font-display text-[15px] font-semibold tracking-tight text-ink">
                     {f.title}
                   </h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-white/80">
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">
                     {f.desc}
                   </p>
                 </div>

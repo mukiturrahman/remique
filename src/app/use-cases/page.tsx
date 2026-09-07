@@ -89,7 +89,7 @@ export default function UseCasesPage() {
         return (
           <section
             key={p.name}
-            className={`${i >= 2 ? "text-white" : "text-ink"}`}
+            className={`${i >= 2 ? "text-ink" : "text-ink"}`}
           >
             <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-24">
               <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
@@ -123,10 +123,10 @@ export default function UseCasesPage() {
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
+        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
           Whatever your life looks like, Remique fits in.
         </h2>
-        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
+        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
           Start texting. Remique adapts to you.
         </p>
         <div className="mt-10">

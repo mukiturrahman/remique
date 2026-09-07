@@ -95,22 +95,22 @@ export default function HowItWorksPage() {
       {/* ── FEATURE: CHASE MODE ───────────────────────────────────────── */}
       <section className="">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">
             Relentless
           </p>
-          <h2 className="mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-white">
+          <h2 className="mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
             Whatever you need to remember, we make sure you don't forget.
           </h2>
-          <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-white/80">
+          <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
             Recurring tasks, follow-up nudges — Remique handles the stuff that slips through the cracks.
           </p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {CHASE_FEATURES.map((f) => (
               <div key={f.title} className="rounded-2xl border border-white/40 bg-white/20 p-6 shadow-xl backdrop-blur-md">
-                <h3 className="font-display text-[17px] font-semibold tracking-tight text-white">
+                <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">
                   {f.title}
                 </h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-white/80">
+                <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
                   {f.desc}
                 </p>
               </div>
@@ -121,10 +121,10 @@ export default function HowItWorksPage() {
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
+        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
           Ready to stop forgetting?
         </h2>
-        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
+        <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
           Pick a plan, open WhatsApp, and start texting. That is the whole onboarding.
         </p>
         <div className="mt-10">

@@ -72,10 +72,10 @@ export default function FaqPage() {
       {/* ── CTA ───────────────────────────────────────────────────────── */}
       <section className="">
         <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-          <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
+          <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
             Still have questions?
           </h2>
-          <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
+          <p className="mx-auto mt-5 max-w-[44ch] text-[17px] leading-relaxed text-ink-2">
             Text Remique on WhatsApp. It answers those too.
           </p>
           <div className="mt-10">
