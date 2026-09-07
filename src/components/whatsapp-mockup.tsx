@@ -1,4 +1,4 @@
-import { MarkRemique } from "./icons";
+import Image from "next/image";
 
 export type ChatMessage = {
   text: string;
@@ -51,8 +51,8 @@ export function WhatsAppMockup({
       <div className="overflow-hidden rounded-[20px] shadow-panel">
         {/* header */}
         <div className="flex items-center gap-3 bg-[#075E54] px-4 py-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#25D366]">
-            <MarkRemique className="h-6 w-6 text-white" />
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ground overflow-hidden">
+            <Image src="/logo.png" alt="Remique Logo" width={44} height={34} className="h-8 w-auto object-contain" />
           </div>
           <div className="min-w-0">
             <p className="text-[15px] font-semibold leading-none text-white">

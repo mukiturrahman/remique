@@ -167,7 +167,7 @@ export function PricingSection() {
                   href="#pricing"
                   className={`group mt-6 inline-flex items-center justify-center gap-2.5 rounded-full px-6 py-3.5 font-display text-[15px] font-semibold tracking-tight transition-all duration-200 active:translate-y-px ${
                     tier.popular
-                      ? "bg-brand text-white shadow-lift hover:bg-brand-deep hover:shadow-panel active:shadow-press"
+                      ? "bg-brand text-white shadow-lift hover:bg-brand-bamboo hover:shadow-panel active:shadow-press"
                       : "bg-ground-2 text-ink shadow-lift hover:bg-ground-3 hover:shadow-panel active:shadow-press"
                   }`}
                 >

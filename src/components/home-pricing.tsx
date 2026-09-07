@@ -25,7 +25,7 @@ export function HomePricing() {
   return (
     <>
       <div className="mt-8 flex justify-center">
-        <div className="inline-flex items-center gap-3 rounded-full border border-line bg-ground-2 p-1.5">
+        <div className="inline-flex items-center gap-3 rounded-full border border-white/40 bg-white/20 p-1.5 shadow-sm backdrop-blur-md">
           <button
             type="button"
             onClick={() => setBilling("weekly")}
@@ -44,7 +44,7 @@ export function HomePricing() {
       </div>
 
       <div className="mt-10 mx-auto max-w-[400px]">
-        <div className="relative flex flex-col rounded-2xl border border-brand bg-ground p-6 shadow-panel transition-shadow duration-200">
+        <div className="relative flex flex-col rounded-[32px] border border-white/40 bg-white/20 p-6 shadow-2xl backdrop-blur-xl transition-shadow duration-200">
           <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3">Pro</p>
           <h3 className="mt-2 font-display text-[24px] font-semibold tracking-tight text-ink">Remique Pro</h3>
           <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">Unlimited reminders in any language.</p>
@@ -63,7 +63,7 @@ export function HomePricing() {
             <IconArrow className="h-[17px] w-[17px] transition-transform duration-300 ease-out group-hover:translate-x-1" />
           </a>
           
-          <ul className="mt-6 flex-1 space-y-3 border-t border-line pt-6">
+          <ul className="mt-6 flex-1 space-y-3 border-t border-white/30 pt-6">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-[14.5px] leading-snug text-ink-2">
                 <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand" />

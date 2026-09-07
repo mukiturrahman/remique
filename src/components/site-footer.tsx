@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MarkRemique, MarkWhatsApp } from "./icons";
+import Image from "next/image";
+import { MarkWhatsApp } from "./icons";
 
 export function SiteFooter() {
   return (
@@ -9,7 +10,7 @@ export function SiteFooter() {
           {/* brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <MarkRemique className="h-[28px] w-[28px] text-brand" />
+              <Image src="/logo.png" alt="Remique Logo" width={48} height={38} className="h-8 w-auto object-contain" />
               <span className="font-display text-[17px] font-semibold tracking-tight text-white">
                 Remique
               </span>

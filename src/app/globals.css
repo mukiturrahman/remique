@@ -15,16 +15,44 @@
   --line: #dde5e0;
   --line-strong: #c4d2cb;
 
-  /* brand */
-  --brand: #0f6b52;
-  --brand-deep: #08402f;
-  --brand-tint: #e4efe9;
+  /* continuous gradient palette */
+  --celadon: #7EBEA5;
+  --young-bamboo: #68BE8D;
+  --pale-green: #D6E9CA;
+  --evergreen: #007B43;
+
+  /* brand (mapped to the palette) */
+  --brand: var(--evergreen);
+  --brand-deep: #005c32;
+  --brand-tint: var(--pale-green);
 
   /* the fired moment: the one hour a reminder lands on, nothing else */
   --signal-ink: #a32b12;
 
   --background: var(--ground);
   --foreground: var(--ink);
+}
+
+.page-gradient {
+  background: linear-gradient(
+    to bottom,
+    var(--evergreen) 0%,
+    var(--celadon) 25%,
+    var(--young-bamboo) 55%,
+    var(--pale-green) 100%
+  );
+}
+
+@supports (background: linear-gradient(in oklab, red, blue)) {
+  .page-gradient {
+    background: linear-gradient(
+      to bottom in oklab,
+      var(--evergreen) 0%,
+      var(--celadon) 30%,
+      var(--young-bamboo) 65%,
+      var(--pale-green) 100%
+    );
+  }
 }
 
 * {

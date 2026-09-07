@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MarkRemique } from "./icons";
+import Image from "next/image";
 
 const NAV_LINKS = [
   { href: "/how-it-works", label: "How it works" },
@@ -17,10 +17,10 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/70 bg-ground supports-[backdrop-filter]:bg-ground/95 backdrop-blur-xl">
-      <nav className="mx-auto flex h-[68px] max-w-6xl items-center gap-4 px-5 sm:px-8">
+    <header className="fixed inset-x-0 top-4 z-50 mx-auto w-full max-w-5xl px-4 sm:top-6">
+      <nav className="mx-auto flex h-[64px] items-center gap-4 rounded-full border border-white/40 bg-ground/60 px-5 shadow-lg backdrop-blur-xl sm:px-8">
         <Link href="/" className="flex items-center gap-2.5 rounded-md">
-          <MarkRemique className="h-[30px] w-[30px] text-brand" />
+          <Image src="/logo.png" alt="Remique Logo" width={56} height={44} className="h-10 w-auto object-contain" />
           <span className="font-display text-[19px] font-semibold tracking-tight text-ink">
             Remique
           </span>
@@ -69,7 +69,7 @@ export function Navbar() {
 
       {/* mobile menu */}
       {open && (
-        <div className="border-t border-line bg-ground px-5 pb-6 pt-4 lg:hidden">
+        <div className="absolute inset-x-4 top-[calc(100%+12px)] rounded-2xl border border-white/40 bg-ground/80 p-4 shadow-xl backdrop-blur-xl lg:hidden">
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MarkRemique } from "./icons";
+import Image from "next/image";
 
 /**
  * The page's one authored motion moment: Remique reading a real sentence and
@@ -181,7 +181,7 @@ export function LiveThread() {
     <div className="rounded-[26px] border border-line bg-ground shadow-panel">
       {/* thread header */}
       <div className="flex items-center gap-3 border-b border-line px-5 py-4">
-        <MarkRemique className="h-9 w-9 shrink-0 text-brand" />
+        <Image src="/logo.png" alt="Remique Logo" width={56} height={44} className="h-11 w-auto shrink-0 object-contain" />
         <div className="min-w-0">
           <p className="font-display text-[15px] font-semibold leading-none tracking-tight text-ink">
             Remique
@@ -249,7 +249,7 @@ export function LiveThread() {
 
         {showParse && (
           <div key={`${shown.id}-parse`} className="rise flex justify-start">
-            <div className="w-full max-w-[92%] rounded-2xl border border-brand/25 bg-brand-tint p-3">
+            <div className="w-full max-w-[92%] rounded-2xl border border-brand-celadon/50 bg-brand-tint p-3">
               <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.13em] text-brand">
                 what Remique read
               </p>
