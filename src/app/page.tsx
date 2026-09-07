@@ -87,7 +87,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-16 px-5 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:gap-12 lg:items-center">
           
           {/* LEFT COLUMN */}
-          <div className="flex flex-col items-start text-left">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             {/* Social proof pill */}
             <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-white/40 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-md">
               <div className="flex -space-x-2">
@@ -113,7 +113,7 @@ export default function HomePage() {
               It confirms, schedules, and reminds. You move on.
             </p>
 
-            <div className="mt-8 flex items-center gap-3 text-[14.5px] font-medium text-ink-3">
+            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 text-[14.5px] font-medium text-ink-3">
               <span className="inline-flex items-center gap-1.5">
                 <MarkWhatsApp className="h-4 w-4 text-brand" />
                 Works on WhatsApp
@@ -122,7 +122,7 @@ export default function HomePage() {
               <span>No app to install</span>
             </div>
 
-            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
               <CtaLink href="/pricing">Get started</CtaLink>
               <CtaLink href="/how-it-works" tone="light">Meet Remique</CtaLink>
             </div>
