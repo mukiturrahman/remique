@@ -5,12 +5,17 @@ import {
   formatRevenue,
   formatTokens,
   getDashboardTotals,
+  isPeriod,
   listUsers,
+  PERIOD_LABELS,
+  type Period,
   type UserSort,
 } from '@/lib/admin-queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const PERIODS: Period[] = ['all', 'today', 'month', '30d'];
 
 const SORTS: Array<{ key: UserSort; label: string }> = [
   { key: 'cost', label: 'Cost' },
@@ -44,18 +49,50 @@ function SummaryTile({
   );
 }
 
+/**
+ * What plan a user is on, and whether it is still live.
+ *
+ * `planTier` alone is not enough: a gateway may or may not reset the tier when
+ * a period lapses, so the expiry date is what decides whether to show this as
+ * active or lapsed.
+ */
+function PlanBadge({ tier, expiresAt }: { tier: string; expiresAt: Date | null }) {
+  const lapsed = expiresAt !== null && expiresAt.getTime() < Date.now();
+
+  if (tier === 'free' && !lapsed) {
+    return <span className="text-xs text-ink-3">Free</span>;
+  }
+
+  if (lapsed) {
+    return (
+      <span className="rounded bg-ground-3 px-2 py-0.5 text-xs text-ink-2">
+        Lapsed
+      </span>
+    );
+  }
+
+  return (
+    <span className="rounded bg-brand-tint px-2 py-0.5 text-xs capitalize text-brand-deep">
+      {tier}
+    </span>
+  );
+}
+
 export default async function AdminUsersPage({
   searchParams,
 }: {
   // In Next 15 searchParams is a Promise, like params.
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string; period?: string }>;
 }) {
-  const { sort: rawSort } = await searchParams;
+  const { sort: rawSort, period: rawPeriod } = await searchParams;
   const sort: UserSort = isSort(rawSort) ? rawSort : 'cost';
+  // Both values reach a database query, so both are narrowed to their union
+  // before they get there rather than trusted from the URL.
+  const period: Period = isPeriod(rawPeriod) ? rawPeriod : 'all';
 
   const [users, totals] = await Promise.all([
     listUsers({ sort, limit: 100 }),
-    getDashboardTotals(),
+    getDashboardTotals(period),
   ]);
 
   // Zero PAID payments means no gateway has ever written a row, which is a
@@ -68,15 +105,33 @@ export default async function AdminUsersPage({
         <div>
           <h1 className="font-display text-2xl tracking-display">Overview</h1>
           <p className="mt-1 text-sm text-ink-3">
-            Every figure below covers all {totals.users} users, not the {users.length} rows shown.
+            {period === 'all'
+              ? `All ${totals.users} users, all time.`
+              : `Revenue, tokens and cost cover ${PERIOD_LABELS[period].toLowerCase()}. Headcount is always current.`}
           </p>
         </div>
+
+        <nav className="flex gap-1 text-sm">
+          {PERIODS.map((key) => (
+            <Link
+              key={key}
+              href={key === 'all' ? `/admin?sort=${sort}` : `/admin?sort=${sort}&period=${key}`}
+              className={
+                key === period
+                  ? 'rounded-md bg-brand-tint px-3 py-1.5 text-brand-deep'
+                  : 'rounded-md px-3 py-1.5 text-ink-3 hover:text-ink'
+              }
+            >
+              {PERIOD_LABELS[key]}
+            </Link>
+          ))}
+        </nav>
 
         <nav className="flex gap-1 text-sm">
           {SORTS.map(({ key, label }) => (
             <Link
               key={key}
-              href={`/admin?sort=${key}`}
+              href={period === 'all' ? `/admin?sort=${key}` : `/admin?sort=${key}&period=${period}`}
               className={
                 key === sort
                   ? 'rounded-md bg-brand-tint px-3 py-1.5 text-brand-deep'
@@ -93,7 +148,14 @@ export default async function AdminUsersPage({
         <SummaryTile
           label="Total users"
           value={totals.users.toLocaleString()}
-          note={totals.blocked > 0 ? `${totals.blocked} blocked` : undefined}
+          note={
+            [
+              period !== 'all' ? `+${totals.newUsers} new` : null,
+              totals.blocked > 0 ? `${totals.blocked} blocked` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
         />
         <SummaryTile
           label="Revenue collected"
@@ -116,7 +178,13 @@ export default async function AdminUsersPage({
         <SummaryTile
           label="Unsubscribed"
           value={totals.unsubscribed.toLocaleString()}
-          note={noPaymentsYet ? 'No subscriptions yet' : 'Paid period ended'}
+          note={
+            noPaymentsYet
+              ? 'No subscriptions yet'
+              : period === 'all'
+                ? 'Paid period ended'
+                : `Lapsed ${PERIOD_LABELS[period].toLowerCase()}`
+          }
           muted={noPaymentsYet}
         />
       </div>
@@ -129,8 +197,8 @@ export default async function AdminUsersPage({
             <tr className="border-b border-line-strong text-left text-xs uppercase tracking-wide text-ink-3">
               <th className="py-2 pr-4 font-medium">User</th>
               <th className="py-2 pr-4 font-medium">Joined</th>
+              <th className="py-2 pr-4 font-medium">Plan</th>
               <th className="py-2 pr-4 text-right font-medium">Messages</th>
-              <th className="py-2 pr-4 text-right font-medium">Calls</th>
               <th className="py-2 pr-4 text-right font-medium">Tokens</th>
               <th className="py-2 pr-4 text-right font-medium">Cost</th>
               <th className="py-2 pr-4 text-right font-medium">Files</th>
@@ -150,8 +218,10 @@ export default async function AdminUsersPage({
                 <td className="py-3 pr-4 font-mono text-xs text-ink-3">
                   {u.createdAt.toISOString().slice(0, 10)}
                 </td>
+                <td className="py-3 pr-4">
+                  <PlanBadge tier={u.planTier} expiresAt={u.planExpiresAt} />
+                </td>
                 <td className="py-3 pr-4 text-right font-mono">{u._count.messages}</td>
-                <td className="py-3 pr-4 text-right font-mono">{u.totalLlmCalls}</td>
                 <td className="py-3 pr-4 text-right font-mono">
                   {formatTokens(u.totalInputTokens + u.totalOutputTokens)}
                 </td>

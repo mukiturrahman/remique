@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 import { prisma } from './db';
 import { env } from './env';
 
@@ -39,6 +41,7 @@ export async function listUsers(options: { sort?: UserSort; limit?: number; offs
       dailyTokenCap: true,
       weeklyTokenCap: true,
       planTier: true,
+      planExpiresAt: true,
       _count: {
         select: { messages: true, documents: true, reminders: true, facts: true },
       },
@@ -48,11 +51,49 @@ export async function listUsers(options: { sort?: UserSort; limit?: number; offs
 
 export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
 
+/**
+ * The window the overview is scoped to.
+ *
+ * Boundaries are computed in Asia/Dhaka, not UTC. "This month" has to mean the
+ * month the operator is living in, or the figure is wrong for the first and
+ * last six hours of every month.
+ */
+export type Period = 'all' | 'today' | 'month' | '30d';
+
+export const ADMIN_TIMEZONE = 'Asia/Dhaka';
+
+export const PERIOD_LABELS: Record<Period, string> = {
+  all: 'All time',
+  today: 'Today',
+  month: 'This month',
+  '30d': 'Last 30 days',
+};
+
+export function isPeriod(value: string | undefined): value is Period {
+  return value === 'all' || value === 'today' || value === 'month' || value === '30d';
+}
+
+/** Null for 'all' — an unbounded window, which Prisma expresses by omitting the filter. */
+export function periodStart(period: Period): Date | null {
+  if (period === 'all') return null;
+
+  const now = DateTime.now().setZone(ADMIN_TIMEZONE);
+  if (period === 'today') return now.startOf('day').toJSDate();
+  if (period === 'month') return now.startOf('month').toJSDate();
+  return now.minus({ days: 30 }).toJSDate();
+}
+
 export interface DashboardTotals {
+  period: Period;
+  /** Every user, always — a headcount is a stock, not something a date window changes. */
   users: number;
+  /** Users who joined inside the window. Equals `users` when the period is 'all'. */
+  newUsers: number;
   blocked: number;
-  /** Users whose paid period has already ended. See getDashboardTotals(). */
+  /** Paid periods that ended inside the window. See getDashboardTotals(). */
   unsubscribed: number;
+
+  // ── Flows: these DO scope to the window ────────────────────────
   tokens: number;
   /** What we paid OpenAI, in USD micros. */
   tokenCostMicros: number;
@@ -70,31 +111,44 @@ export interface DashboardTotals {
 /**
  * The figures across the whole table, not the page being shown.
  *
- * Every count here is a database aggregate. Deriving them from the 100 rows
- * `listUsers` returns would silently under-report the moment there are 101
- * users.
+ * Split deliberately into stocks and flows. Headcount and block count are
+ * stocks — "how many users did I have in March" is not a question this answers,
+ * and pretending otherwise would need daily snapshots we do not keep. Revenue,
+ * tokens and cost are flows and scope to the window.
+ *
+ * The flow figures come from `usage_events` and `payments` rather than the
+ * denormalised counters on `users`, because those counters are lifetime totals
+ * and cannot be sliced by date at all.
  */
-export async function getDashboardTotals(): Promise<DashboardTotals> {
+export async function getDashboardTotals(period: Period = 'all'): Promise<DashboardTotals> {
   const now = new Date();
+  const start = periodStart(period);
 
-  const [users, blocked, unsubscribed, tokenAgg, revenueByCurrency] = await Promise.all([
+  // Every window ends at "now", so the upper bound is implicit everywhere.
+  const inWindow = start ? { gte: start } : undefined;
+
+  const [users, newUsers, blocked, unsubscribed, usageAgg, revenueByCurrency] = await Promise.all([
     prisma.user.count(),
+    start ? prisma.user.count({ where: { createdAt: inWindow } }) : prisma.user.count(),
     prisma.user.count({ where: { blockedAt: { not: null } } }),
 
     // "Unsubscribed" = a paid period that has already ended. Keyed on
     // planExpiresAt rather than planTier so it still counts correctly if a
     // future gateway resets the tier to "free" on lapse.
-    prisma.user.count({ where: { planExpiresAt: { not: null, lt: now } } }),
+    prisma.user.count({
+      where: { planExpiresAt: { not: null, lt: now, ...(start ? { gte: start } : {}) } },
+    }),
 
-    prisma.user.aggregate({
-      _sum: { totalInputTokens: true, totalOutputTokens: true, totalCostMicros: true },
+    prisma.usageEvent.aggregate({
+      where: start ? { createdAt: inWindow } : undefined,
+      _sum: { inputTokens: true, outputTokens: true, costMicros: true },
     }),
 
     // Grouped, because adding up two currencies produces a number that means
     // nothing. Only PAID counts — a PENDING or FAILED row is not revenue.
     prisma.payment.groupBy({
       by: ['currency'],
-      where: { status: 'PAID' },
+      where: { status: 'PAID', ...(start ? { createdAt: inWindow } : {}) },
       _sum: { amount: true },
     }),
   ]);
@@ -107,11 +161,13 @@ export async function getDashboardTotals(): Promise<DashboardTotals> {
     .sort((a, b) => b.amount - a.amount);
 
   return {
+    period,
     users,
+    newUsers,
     blocked,
     unsubscribed,
-    tokens: (tokenAgg._sum.totalInputTokens ?? 0) + (tokenAgg._sum.totalOutputTokens ?? 0),
-    tokenCostMicros: tokenAgg._sum.totalCostMicros ?? 0,
+    tokens: (usageAgg._sum.inputTokens ?? 0) + (usageAgg._sum.outputTokens ?? 0),
+    tokenCostMicros: usageAgg._sum.costMicros ?? 0,
     revenue: ranked[0]?.amount ?? 0,
     revenueCurrency: ranked[0]?.currency ?? 'BDT',
     revenueMixedCurrency: ranked.length > 1,
