@@ -48,6 +48,84 @@ export async function listUsers(options: { sort?: UserSort; limit?: number; offs
 
 export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
 
+export interface DashboardTotals {
+  users: number;
+  blocked: number;
+  /** Users whose paid period has already ended. See getDashboardTotals(). */
+  unsubscribed: number;
+  tokens: number;
+  /** What we paid OpenAI, in USD micros. */
+  tokenCostMicros: number;
+  /** What customers paid us, in `revenueCurrency`. Zero until a gateway lands. */
+  revenue: number;
+  revenueCurrency: string;
+  /**
+   * True when PAID payments exist in more than one currency. The revenue
+   * figure then covers only `revenueCurrency` and understates the rest, so the
+   * UI has to say so rather than quietly showing a wrong total.
+   */
+  revenueMixedCurrency: boolean;
+}
+
+/**
+ * The figures across the whole table, not the page being shown.
+ *
+ * Every count here is a database aggregate. Deriving them from the 100 rows
+ * `listUsers` returns would silently under-report the moment there are 101
+ * users.
+ */
+export async function getDashboardTotals(): Promise<DashboardTotals> {
+  const now = new Date();
+
+  const [users, blocked, unsubscribed, tokenAgg, revenueByCurrency] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { blockedAt: { not: null } } }),
+
+    // "Unsubscribed" = a paid period that has already ended. Keyed on
+    // planExpiresAt rather than planTier so it still counts correctly if a
+    // future gateway resets the tier to "free" on lapse.
+    prisma.user.count({ where: { planExpiresAt: { not: null, lt: now } } }),
+
+    prisma.user.aggregate({
+      _sum: { totalInputTokens: true, totalOutputTokens: true, totalCostMicros: true },
+    }),
+
+    // Grouped, because adding up two currencies produces a number that means
+    // nothing. Only PAID counts — a PENDING or FAILED row is not revenue.
+    prisma.payment.groupBy({
+      by: ['currency'],
+      where: { status: 'PAID' },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  // The largest single-currency total is the headline. With one currency —
+  // which is the case today and for the foreseeable future — this is simply
+  // the total.
+  const ranked = revenueByCurrency
+    .map((row) => ({ currency: row.currency, amount: Number(row._sum.amount ?? 0) }))
+    .sort((a, b) => b.amount - a.amount);
+
+  return {
+    users,
+    blocked,
+    unsubscribed,
+    tokens: (tokenAgg._sum.totalInputTokens ?? 0) + (tokenAgg._sum.totalOutputTokens ?? 0),
+    tokenCostMicros: tokenAgg._sum.totalCostMicros ?? 0,
+    revenue: ranked[0]?.amount ?? 0,
+    revenueCurrency: ranked[0]?.currency ?? 'BDT',
+    revenueMixedCurrency: ranked.length > 1,
+  };
+}
+
+/** `1250` + `"BDT"` -> `"BDT 1,250.00"`. Money we were paid, not token cost. */
+export function formatRevenue(amount: number, currency: string): string {
+  return `${currency} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export function countUsers(): Promise<number> {
   return prisma.user.count();
 }

@@ -1,6 +1,13 @@
 import Link from 'next/link';
 
-import { countUsers, formatCost, formatTokens, listUsers, type UserSort } from '@/lib/admin-queries';
+import {
+  formatCost,
+  formatRevenue,
+  formatTokens,
+  getDashboardTotals,
+  listUsers,
+  type UserSort,
+} from '@/lib/admin-queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +22,28 @@ function isSort(value: string | undefined): value is UserSort {
   return value === 'cost' || value === 'recent' || value === 'joined';
 }
 
+function SummaryTile({
+  label,
+  value,
+  note,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  /** Dims the figure when it has no real source yet, so a zero does not read
+   *  as a measurement. */
+  muted?: boolean;
+}) {
+  return (
+    <div className="border-l border-line pl-4 first:border-l-0 first:pl-0">
+      <div className="text-xs uppercase tracking-wide text-ink-3">{label}</div>
+      <div className={`mt-1 font-mono text-xl ${muted ? 'text-ink-3' : 'text-ink'}`}>{value}</div>
+      {note ? <div className="mt-0.5 text-xs text-ink-3">{note}</div> : null}
+    </div>
+  );
+}
+
 export default async function AdminUsersPage({
   searchParams,
 }: {
@@ -24,17 +53,22 @@ export default async function AdminUsersPage({
   const { sort: rawSort } = await searchParams;
   const sort: UserSort = isSort(rawSort) ? rawSort : 'cost';
 
-  const [users, total] = await Promise.all([listUsers({ sort, limit: 100 }), countUsers()]);
+  const [users, totals] = await Promise.all([
+    listUsers({ sort, limit: 100 }),
+    getDashboardTotals(),
+  ]);
 
-  const totalCost = users.reduce((sum, u) => sum + u.totalCostMicros, 0);
+  // Zero PAID payments means no gateway has ever written a row, which is a
+  // different statement from "we earned nothing". The tiles say so.
+  const noPaymentsYet = totals.revenue === 0;
 
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl tracking-display">Users</h1>
+          <h1 className="font-display text-2xl tracking-display">Overview</h1>
           <p className="mt-1 text-sm text-ink-3">
-            {total} total · {formatCost(totalCost)} across the {users.length} shown
+            Every figure below covers all {totals.users} users, not the {users.length} rows shown.
           </p>
         </div>
 
@@ -55,7 +89,41 @@ export default async function AdminUsersPage({
         </nav>
       </div>
 
-      <div className="mt-8 overflow-x-auto">
+      <div className="mt-8 grid grid-cols-2 gap-6 border-y border-line py-6 md:grid-cols-5">
+        <SummaryTile
+          label="Total users"
+          value={totals.users.toLocaleString()}
+          note={totals.blocked > 0 ? `${totals.blocked} blocked` : undefined}
+        />
+        <SummaryTile
+          label="Revenue collected"
+          value={formatRevenue(totals.revenue, totals.revenueCurrency)}
+          note={
+            noPaymentsYet
+              ? 'No payment gateway yet'
+              : totals.revenueMixedCurrency
+                ? `${totals.revenueCurrency} only — other currencies not included`
+                : undefined
+          }
+          muted={noPaymentsYet}
+        />
+        <SummaryTile label="Tokens used" value={formatTokens(totals.tokens)} />
+        <SummaryTile
+          label="Token cost"
+          value={formatCost(totals.tokenCostMicros)}
+          note="What we paid OpenAI"
+        />
+        <SummaryTile
+          label="Unsubscribed"
+          value={totals.unsubscribed.toLocaleString()}
+          note={noPaymentsYet ? 'No subscriptions yet' : 'Paid period ended'}
+          muted={noPaymentsYet}
+        />
+      </div>
+
+      <h2 className="mt-8 font-display text-lg tracking-tight">Users</h2>
+
+      <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[64rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-line-strong text-left text-xs uppercase tracking-wide text-ink-3">
