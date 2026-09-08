@@ -1066,9 +1066,9 @@ export async function processIncomingUserMessage(
     const listName = firstName(user);
     await replyToUser(
       user,
-      `Here are your upcoming ${noun}${listName ? `, ${listName}` : ''}:\n\n` +
+      `Here's a look at your upcoming ${noun}${listName ? `, ${listName}` : ''} 📋:\n\n` +
         `${buildGroupedList(upcoming, user.timezone)}\n\n` +
-        `That's everything on your plate right now.`
+        `And that's everything on your plate right now! ✨`
     );
     return;
   }
@@ -1353,10 +1353,9 @@ export async function processIncomingUserMessage(
 
     const head =
       targets.length === 1
-        ? `Cancelled ${targets[0].title} at ` +
-          `${DateTime.fromJSDate(targets[0].scheduledAt).setZone(user.timezone).toFormat('h:mm a')}.` +
-          `${survivors.length ? '' : ' Nothing else touched.'}`
-        : `Cancelled ${targets.length} of them${name ? `, ${name}` : ''}:\n${lines}`;
+        ? `Got it! 🗑️ I've cancelled *${targets[0].title}* at ` +
+          `${DateTime.fromJSDate(targets[0].scheduledAt).setZone(user.timezone).toFormat('h:mm a')}.`
+        : `Done${name ? `, ${name}` : ''}! 🧹 Cancelled ${targets.length} reminders for you:\n${lines}`;
 
     const rest = survivors
       .map((sib) => {
@@ -1366,7 +1365,7 @@ export async function processIncomingUserMessage(
       })
       .join(', and ');
 
-    await replyToUser(user, survivors.length ? `${head}\n\nYou'll still get ${rest}.` : head);
+    await replyToUser(user, survivors.length ? `${head}\n\nDon't worry, you'll still get ${rest}.` : head);
     return;
   }
 
@@ -1422,9 +1421,9 @@ function buildRescheduleConfirmation(
 
   const head =
     oldLabel && newLabel && oldLabel !== newLabel
-      ? `Done${name ? `, ${name}` : ''}! The ${oldLabel} heads-up for *${target.title}* is now ` +
-        `${newLabel} — you'll get it at ${when.toFormat('h:mm a')}.`
-      : `Done${name ? `, ${name}` : ''}. Moved ${target.title} to ` +
+      ? `Got it${name ? `, ${name}` : ''}! 🔄 The ${oldLabel} heads-up for *${target.title}* is now ` +
+        `${newLabel} — I'll remind you at ${when.toFormat('h:mm a')}.`
+      : `All set${name ? `, ${name}` : ''}! 🗓️ Moved *${target.title}* to ` +
         `${friendlyWhen(newScheduledAt, user.timezone)}.`;
 
   if (siblings.length === 0) return head;
@@ -1437,7 +1436,7 @@ function buildRescheduleConfirmation(
     })
     .join(', and ');
 
-  return `${head}\nYou'll still get ${rest}.`;
+  return `${head}\n\nDon't worry, you'll still get ${rest}.`;
 }
 
 /**
@@ -1457,12 +1456,12 @@ function buildCreationConfirmation(
 ): string {
   const name = firstName(user);
   const tz = user.timezone;
-  const askName = name ? '' : '\n\nBy the way, what should I call you?';
+  const askName = name ? '' : '\n\nBy the way, what should I call you? 🤔';
   const tail = (rejected.length > 0 ? `\n\n⚠️ ${rejected[0]}` : '') + askName;
 
   if (created.length === 1 && !anchorAt) {
     const only = created[0];
-    return `Done. I'll ping you ${friendlyWhen(only.scheduledAt, tz)} about ${only.title}.${tail}`;
+    return `Got it${name ? `, ${name}` : ''}! 👍 I'll ping you ${friendlyWhen(only.scheduledAt, tz)} about *${only.title}*.${tail}`;
   }
 
   if (anchorAt) {
@@ -1479,13 +1478,13 @@ function buildCreationConfirmation(
       created.length === 1 ? 'a heads-up' : `${created.length} heads-ups`;
 
     return (
-      `Done${name ? `, ${name}` : ''}. ${anchorTitle || created[0].title} is ` +
+      `All set${name ? `, ${name}` : ''}! 📅 *${anchorTitle || created[0].title}* is ` +
       `${friendlyWhen(anchorAt, tz)}, and I'll give you ${heading}:\n${lines}${tail}`
     );
   }
 
   const lines = created.map((c) => `• ${formatReminderLine(c, tz)}`).join('\n');
-  return `Done. That's ${created.length} set:\n${lines}${tail}`;
+  return `Done${name ? `, ${name}` : ''}! ✅ That's ${created.length} reminders set up for you:\n${lines}${tail}`;
 }
 
 /**
