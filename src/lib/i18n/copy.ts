@@ -1,0 +1,531 @@
+/**
+ * Every string on the landing page, in both languages.
+ *
+ * `bn` is typed as `Copy`, so a missing or misspelled Bangla key fails the
+ * build. Array lengths are not checked by the type system — tests/i18n-copy
+ * covers those, plus untranslated values left as their English source.
+ *
+ * Strings that wrap inline markup are split at the markup boundary rather than
+ * carrying HTML: see `heroSubBefore` / `heroSubAfter`.
+ */
+
+export type Lang = "en" | "bn";
+
+export const LANGS: Lang[] = ["bn", "en"];
+
+export function isLang(value: unknown): value is Lang {
+    return value === "en" || value === "bn";
+}
+
+const en = {
+    nav: {
+        howItWorks: "How it works",
+        useCases: "Use cases",
+        pricing: "Pricing",
+        faq: "FAQ",
+        getStarted: "Get started",
+        openMenu: "Open menu",
+        closeMenu: "Close menu",
+        logoAlt: "Remique Logo",
+    },
+
+    lang: {
+        groupLabel: "Language",
+        en: "EN",
+        bn: "বাং",
+        enFull: "English",
+        bnFull: "Bangla",
+    },
+
+    hero: {
+        socialProof: "Trusted by 250k+ people",
+        avatarAlt: "User avatar",
+        headlinePrefix: "Never forget",
+        headlineSuffix: "again.",
+        rotator: [
+            "the electricity bill",
+            "school fees",
+            "your 3pm meeting",
+            "Ma's birthday",
+            "the tax deadline",
+        ],
+        // Sits either side of an inline <span lang="bn">বাংলা</span>.
+        subBefore:
+            "Remique is a WhatsApp AI assistant that remembers for you. Text it naturally — in English, Banglish, or ",
+        subAfter: ". It confirms, schedules, and reminds. You move on.",
+        worksOnWhatsApp: "Works on WhatsApp",
+        noApp: "No app to install",
+        ctaPrimary: "Get started",
+        ctaSecondary: "Meet Remique",
+        botAlt: "Remique Bot",
+    },
+
+    buried: {
+        title: "You keep it all on your phone. It just never comes back to you.",
+        body: "Screenshots, notes, pinned messages, calendar events — it is all saved. Storing it was never the problem. Nothing brings it back at the moment you needed it.",
+        problemAlt: "Someone buried under scattered notes, screenshots and papers",
+        solutionAlt: "Remique holding the same papers, sorted and ready",
+        kicker: "Remique works the other way round. You never go looking — the reminder comes to you.",
+    },
+
+    overload: {
+        title: "Forgetting is what an overloaded brain does.",
+        body: "Science is clear: when your brain tries to hold more than its capacity, forgetting is the normal result. You are not lazy. Your memory is not bad. Your brain is simply overloaded.",
+        fix: "The fix is not complicated. Give your brain some room, and let Remique hold the small things. Just say it on WhatsApp.",
+        imageAlt: "An overloaded brain trying to hold everything at once",
+    },
+
+    languages: {
+        title: "As easy as texting a friend.",
+        // Each one is a thing the reader does not have to do. Short enough to
+        // read as a single line inside its pill.
+        points: [
+            "No new apps to learn",
+            "No commands or formats",
+            "Right where you already write",
+            "No folders to maintain",
+        ],
+    },
+
+    howItWorks: {
+        eyebrow: "How it works",
+        title: "Three steps. The third one is doing nothing.",
+        sub: "No signup, no tutorial, no learning curve. Text Remique like a friend.",
+        steps: [
+            {
+                step: "Step 1",
+                title: "Send it like a text",
+                desc: "Open WhatsApp. Type your reminder the way you actually think. No format, no slash command, no date picker.",
+            },
+            {
+                step: "Step 2",
+                title: "Bot already read between the lines",
+                desc: "Remique reads your Bangla, Banglish, or English and extracts task + time. Confirms back in your language.",
+            },
+            {
+                step: "Step 3",
+                title: "Forget it. Completely.",
+                desc: "Remique delivers your reminder at the exact time, right inside WhatsApp. You do not need to remember anything.",
+            },
+        ],
+        cta: "Learn more",
+    },
+
+    problem: {
+        title: "Every reminder app fails the same way: you stop opening it.",
+        body: "Notification-based reminders depend on you opening another app, checking another list, clearing another badge. Remique lives where you already are — WhatsApp.",
+        cards: [
+            {
+                title: "Other apps need you to open them.",
+                body: "Calendar alerts, to-do lists, phone alarms — they all assume you will switch apps. You won't.",
+            },
+            {
+                title: "Notifications get swiped away.",
+                body: "A push notification competes with fifty others. A WhatsApp message sits in the chat you already check thirty times a day.",
+            },
+            {
+                title: "You already text yourself reminders.",
+                body: "Pinned chats, starred messages, notes in WhatsApp — you are already using it as a to-do list. Remique just makes it work.",
+            },
+        ],
+    },
+
+    loop: {
+        title: "Whatever you need to remember, we make sure you don’t forget.",
+        sub: "Recurring reminders and follow-up nudges — Remique handles the stuff that slips through the cracks.",
+        // The sample message is Banglish demo input in both languages.
+        sample: "protidin bikal 5 tay medicine",
+        repeats: "repeats",
+        daily: "daily",
+        at: "at",
+        time: "5:00 pm",
+        timezone: "asia/dhaka",
+        rows: [
+            {
+                title: "The chain lays itself.",
+                body: "Every delivery schedules the next one before it goes out. Nothing to renew, nothing to re-enter.",
+            },
+            {
+                title: "A gap never stacks.",
+                body: "If delivery is down for three days, your daily reminder resumes tomorrow — it does not fire three times catching up.",
+            },
+            {
+                title: "Missed one? Say so.",
+                body: "Every reminder ends with “Done or need more time?” Tell Remique when, and it comes back then.",
+            },
+        ],
+        cta: "See all features",
+    },
+
+    pricing: {
+        eyebrow: "Pricing",
+        title: "Cheaper than the late fee it saves you.",
+        sub: "No card, no hassle. Subscribe with bKash and start using Remique in under a minute.",
+        weekly: "Weekly",
+        monthly: "Monthly",
+        tier: "Pro",
+        planName: "Remique Pro",
+        planDesc: "Unlimited reminders in any language.",
+        perWeek: "/week",
+        perMonth: "/month",
+        subscribeWith: "Subscribe with",
+        features: [
+            "Unlimited reminders",
+            "Banglish, English and বাংলা",
+            "Exact time resolution",
+            "Confirmation in your language",
+            "Recurring reminders",
+            "Follow-up nudges",
+        ],
+    },
+
+    featuresIndex: {
+        title: "Everything you get, in full.",
+        body: "The whole feature list on one page. No tiers hiding pieces of it, no settings to turn any of it on.",
+        items: [
+            {
+                title: "Instant confirmation",
+                desc: "Reply comes back in seconds, in your language.",
+            },
+            {
+                title: "Exact time resolution",
+                desc: '"kalke shokal 10 tay" becomes one timestamp.',
+            },
+            {
+                title: "Recurring reminders",
+                desc: "Daily, weekly, monthly — describe it in words.",
+            },
+            { title: "Follow-up nudges", desc: "Missed one? Remique sends it again." },
+            { title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
+            {
+                title: "Signature verification",
+                desc: "Every message verified via Meta HMAC.",
+            },
+            {
+                title: "Priority delivery",
+                desc: "Reminders fire through a priority queue.",
+            },
+        ],
+    },
+
+    banner: {
+        title: "Your memory has a backup now.",
+        body: "Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.",
+        cta: "See plan",
+        priceNote: "Starts at ৳49/week",
+        cardNote: "No card needed",
+    },
+
+    faq: {
+        eyebrow: "FAQ",
+        title: "Fair questions, straight answers.",
+        items: [
+            {
+                q: "What is Remique?",
+                a: "Remique is a WhatsApp AI assistant that sets reminders, saves notes, and manages your to-do list. You text it naturally — in English, Banglish, or Bangla — and it handles the rest.",
+            },
+            {
+                q: "Do I need to install an app?",
+                a: "No. Remique runs entirely inside WhatsApp. You add it as a contact and start texting. There is nothing to download.",
+            },
+            {
+                q: "What languages does it understand?",
+                a: "English, Banglish (Bangla written in English letters), and Bengali script. You can mix all three in one sentence.",
+            },
+            {
+                q: "How does payment work?",
+                a: "You pay with bKash. Pick a plan, scan the QR or enter the payment number, and your subscription starts immediately. No card needed.",
+            },
+            {
+                q: "How many reminders can I set?",
+                a: "With Remique Pro, you can set unlimited reminders.",
+            },
+            {
+                q: "What if I miss a reminder?",
+                a: "Remique sends follow-up nudges. Every reminder asks if you are done or need more time, so nothing slips through the cracks.",
+            },
+            {
+                q: "Can I use it on my computer?",
+                a: "Yes. Since Remique runs on WhatsApp, you can use it on your phone, tablet, or WhatsApp Web on your computer.",
+            },
+            {
+                q: "Is my data secure?",
+                a: "Yes. Your reminders and notes are stored securely. We only use your data to send you reminders and never share it with third parties.",
+            },
+        ],
+        cta: "See all questions",
+    },
+
+    footer: {
+        tagline: "WhatsApp Ai assistant. Built with care in Bangladesh.",
+        product: "Product",
+        support: "Support",
+        connect: "Connect",
+        howItWorks: "How it works",
+        useCases: "Use cases",
+        pricing: "Pricing",
+        faq: "FAQ",
+        contact: "Contact Us",
+        chatOnWhatsApp: "Chat on WhatsApp",
+        rights: "All rights reserved.",
+        privacy: "Privacy",
+        terms: "Terms",
+        logoAlt: "Remique Logo",
+    },
+};
+
+export type Copy = typeof en;
+
+const bn: Copy = {
+    nav: {
+        howItWorks: "কীভাবে কাজ করে",
+        useCases: "কী কাজে লাগে",
+        pricing: "প্রাইসিং",
+        faq: "সাধারণ প্রশ্ন",
+        getStarted: "শুরু করুন",
+        openMenu: "মেনু খুলুন",
+        closeMenu: "মেনু বন্ধ করুন",
+        logoAlt: "Remique লোগো",
+    },
+
+    lang: {
+        groupLabel: "ভাষা",
+        en: "EN",
+        bn: "বাং",
+        enFull: "ইংরেজি",
+        bnFull: "বাংলা",
+    },
+
+    hero: {
+        socialProof: "আড়াই লাখ+ মানুষের ভরসা",
+        avatarAlt: "ইউজার অ্যাভাটার",
+        // Bangla puts the whole verb phrase after the rotating noun, so the
+        // prefix is empty here by design and the layout skips its line break.
+        headlinePrefix: "",
+        headlineSuffix: "আর কখনো ভুলবেন না।",
+        rotator: ["বিদ্যুৎ বিল", "স্কুলের ফি", "৩টার মিটিং", "মায়ের জন্মদিন", "ট্যাক্সের ডেডলাইন"],
+        subBefore:
+            "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা ",
+        subAfter:
+            "য়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। আপনি নিশ্চিন্ত।",
+        worksOnWhatsApp: "WhatsApp-এই চলে",
+        noApp: "কোনো অ্যাপ লাগবে না",
+        ctaPrimary: "শুরু করুন",
+        ctaSecondary: "Remique-কে চিনুন",
+        botAlt: "Remique বট",
+    },
+
+    buried: {
+        title: "আপনার ফোনেই সব রাখেন, কিন্তু সময় মত খুঁজে পান না...",
+        body: "ডাক্তারের প্রেসক্রিপশন, বাইকের কাগজ, এন আই ডি, বিদ্যুৎ বিলের কপি সব তো জমা আছেই। সমস্যা রেখে দেওয়ায় না। সমস্যা হলো, যে মুহূর্তে দরকার ছিল, তখন কিছুই সামনে আসে না।",
+        problemAlt: "ছড়ানো নোট, স্ক্রিনশট আর কাগজের নিচে চাপা পড়া একজন",
+        solutionAlt: "Remique সেই কাগজগুলোই গুছিয়ে হাতে ধরে আছে",
+        kicker: "আপনার কাজ শুধু বলা। মনে করিয়ে দেওয়ার কাজ Remique-এর।",
+    },
+
+    overload: {
+        // The hyphen in "reaction‑ই" is U+2011, a non-breaking hyphen: a plain
+        // "-" lets the line break between it and the ই.
+        title: "ওভারলোড হওয়া ব্রেইনের স্বাভাবিক reaction‑ই হচ্ছে ভুলে যাওয়া",
+        body: "Science বলে, ব্রেইন যখন capacity-র বেশি জিনিস ধরে রাখার চেষ্টা করে, তখন ভুলে যাওয়াটাই স্বাভাবিক। আপনি অলস না, আপনার memory খারাপ না, আপনার ব্রেইন শুধু ওভারলোডেড।",
+        fix: "সমাধান জটিল কিছু না। ব্রেইনরে একটু জায়গা দিন, আর ছোট ছোট জিনিসগুলা Remique-কে মনে রাখতে দিন। WhatsApp-এই বলে দিলেই হবে।",
+        imageAlt: "ওভারলোডেড ব্রেইন একসাথে সবকিছু ধরে রাখার চেষ্টা করছে",
+    },
+
+    languages: {
+        title: "বন্ধুকে মেসেজ দেওয়ার মতই সহজ",
+        points: [
+            "নতুন কোনো অ্যাপ শেখা লাগবে না",
+            "কোনো কমান্ড বা ফরম্যাট নেই",
+            "যেখানে এমনিতেই লেখেন, সেখানেই",
+            "ফোল্ডার গোছানোর ঝামেলা নেই",
+        ],
+    },
+
+    howItWorks: {
+        eyebrow: "কীভাবে কাজ করে",
+        title: "তিনটা ধাপ। তৃতীয়টায় আপনার কিছুই করতে হয় না।",
+        sub: "সাইনআপ নেই, টিউটোরিয়াল নেই, শেখার ঝামেলা নেই। বন্ধুকে যেভাবে মেসেজ দেন, Remique-কেও সেভাবেই দিন।",
+        steps: [
+            {
+                step: "ধাপ ১",
+                title: "মেসেজের মতো করেই পাঠান",
+                desc: "WhatsApp খুলুন। মাথায় যেভাবে আসে সেভাবেই রিমাইন্ডারটা লিখুন। কোনো ফরম্যাট নেই, স্ল্যাশ কমান্ড নেই, ডেট পিকার নেই।",
+            },
+            {
+                step: "ধাপ ২",
+                title: "বট আগেই বুঝে ফেলেছে",
+                desc: "Remique আপনার বাংলা, বাংলিশ বা ইংরেজি পড়ে কাজ আর সময় দুটোই বের করে নেয়। তারপর আপনার ভাষাতেই কনফার্ম করে।",
+            },
+            {
+                step: "ধাপ ৩",
+                title: "এবার নিশ্চিন্তে ভুলে যান।",
+                desc: "ঠিক সময়ে, WhatsApp-এর ভেতরেই রিমাইন্ডার পৌঁছে যাবে। আপনাকে আর কিছুই মনে রাখতে হবে না।",
+            },
+        ],
+        cta: "আরও জানুন",
+    },
+
+    problem: {
+        title: "সব রিমাইন্ডার অ্যাপ একইভাবে ব্যর্থ হয়: একসময় আপনি আর অ্যাপটাই খোলেন না।",
+        body: "নোটিফিকেশনভিত্তিক রিমাইন্ডার মানে আরেকটা অ্যাপ খোলা, আরেকটা লিস্ট দেখা, আরেকটা ব্যাজ ক্লিয়ার করা। Remique থাকে যেখানে আপনি এমনিতেই আছেন — WhatsApp-এ।",
+        cards: [
+            {
+                title: "অন্য অ্যাপগুলো খুলতে হয়।",
+                body: "ক্যালেন্ডার অ্যালার্ট, টু-ডু লিস্ট, ফোনের অ্যালার্ম — সবগুলোই ধরে নেয় আপনি অ্যাপ বদলাবেন। আপনি বদলাবেন না।",
+            },
+            {
+                title: "নোটিফিকেশন সরে যায়।",
+                body: "একটা পুশ নোটিফিকেশনকে আরও পঞ্চাশটার সঙ্গে লড়তে হয়। আর WhatsApp মেসেজ বসে থাকে সেই চ্যাটে, যেটা আপনি দিনে ত্রিশবার খোলেন।",
+            },
+            {
+                title: "আপনি এমনিতেই নিজেকে মেসেজ দেন।",
+                body: "পিন করা চ্যাট, স্টার দেওয়া মেসেজ, WhatsApp-এ লেখা নোট — এটাকে টু-ডু লিস্ট বানিয়ে ফেলেছেন আগেই। Remique শুধু সেটাকে কাজের করে তোলে।",
+            },
+        ],
+    },
+
+    loop: {
+        title: "যা-ই মনে রাখা দরকার, আমরা নিশ্চিত করি আপনি সেটা ভুলবেন না।",
+        sub: "রিকারিং রিমাইন্ডার আর ফলো-আপ নাজ — যেসব জিনিস ফাঁক গলে বেরিয়ে যায়, Remique সেগুলোই সামলায়।",
+        sample: "protidin bikal 5 tay medicine",
+        repeats: "রিপিট",
+        daily: "প্রতিদিন",
+        at: "সময়",
+        time: "5:00 pm",
+        timezone: "asia/dhaka",
+        rows: [
+            {
+                title: "চেইনটা নিজেই তৈরি হয়।",
+                body: "প্রতিটা ডেলিভারি বেরোনোর আগেই পরেরটার সময় ঠিক করে রাখে। নতুন করে কিছু দিতে হয় না।",
+            },
+            {
+                title: "ফাঁক কখনো জমে না।",
+                body: "তিন দিন ডেলিভারি বন্ধ থাকলে আপনার প্রতিদিনের রিমাইন্ডার কাল থেকে আবার চালু হবে — জমে থাকা তিনটা একসঙ্গে আসবে না।",
+            },
+            {
+                title: "একটা মিস হয়েছে? বলে দিন।",
+                body: "প্রতিটা রিমাইন্ডার শেষ হয় “হয়ে গেছে, নাকি আরেকটু সময় লাগবে?” দিয়ে। কখন লাগবে বলে দিন, Remique তখনই ফিরে আসবে।",
+            },
+        ],
+        cta: "সব ফিচার দেখুন",
+    },
+
+    pricing: {
+        eyebrow: "প্রাইসিং",
+        title: "যে লেট ফি বাঁচায়, দাম তার চেয়েও কম।",
+        sub: "কার্ড লাগবে না, ঝামেলাও নেই। bKash দিয়ে সাবস্ক্রাইব করে এক মিনিটের মধ্যেই Remique চালু করুন।",
+        weekly: "সাপ্তাহিক",
+        monthly: "মাসিক",
+        tier: "Pro",
+        planName: "Remique Pro",
+        planDesc: "যেকোনো ভাষায় আনলিমিটেড রিমাইন্ডার।",
+        perWeek: "/সপ্তাহ",
+        perMonth: "/মাস",
+        subscribeWith: "সাবস্ক্রাইব করুন",
+        features: [
+            "আনলিমিটেড রিমাইন্ডার",
+            "বাংলিশ, ইংরেজি আর বাংলা",
+            "সময় হুবহু ধরে",
+            "আপনার ভাষায় কনফার্মেশন",
+            "রিকারিং রিমাইন্ডার",
+            "ফলো-আপ নাজ",
+        ],
+    },
+
+    featuresIndex: {
+        title: "যা যা পাবেন, পুরোটা।",
+        body: "পুরো ফিচার লিস্ট এক পাতায়। কোনো টিয়ারে কিছু লুকানো নেই, কিছু চালু করতে সেটিংসেও যেতে হবে না।",
+        items: [
+            {
+                title: "সঙ্গে সঙ্গে কনফার্মেশন",
+                desc: "কয়েক সেকেন্ডেই উত্তর আসে, আপনার ভাষায়।",
+            },
+            {
+                title: "সময় হুবহু ধরে",
+                desc: "“kalke shokal 10 tay” একটা নির্দিষ্ট সময় হয়ে যায়।",
+            },
+            {
+                title: "রিকারিং রিমাইন্ডার",
+                desc: "প্রতিদিন, প্রতি সপ্তাহে, প্রতি মাসে — কথায় বলে দিলেই হলো।",
+            },
+            { title: "ফলো-আপ নাজ", desc: "একটা মিস হয়েছে? Remique আবার পাঠায়।" },
+            { title: "একাধিক ভাষা", desc: "বাংলা, বাংলিশ, ইংরেজি — বা সব মিলিয়ে।" },
+            {
+                title: "সিগনেচার ভেরিফিকেশন",
+                desc: "প্রতিটা মেসেজ Meta HMAC দিয়ে যাচাই করা।",
+            },
+            {
+                title: "প্রায়োরিটি ডেলিভারি",
+                desc: "রিমাইন্ডার যায় প্রায়োরিটি কিউ দিয়ে।",
+            },
+        ],
+    },
+
+    banner: {
+        title: "আপনার মেমোরির এখন একটা ব্যাকআপ আছে।",
+        body: "একটা প্ল্যান বাছুন, bKash-এ পে করুন, আর Remique-কে মেসেজ দেওয়া শুরু করুন। সেটআপ বলতে এটুকুই।",
+        cta: "প্ল্যান দেখুন",
+        priceNote: "শুরু ৳49/সপ্তাহ থেকে",
+        cardNote: "কার্ড লাগবে না",
+    },
+
+    faq: {
+        eyebrow: "সাধারণ প্রশ্ন",
+        title: "যৌক্তিক প্রশ্ন, সোজা উত্তর।",
+        items: [
+            {
+                q: "Remique জিনিসটা কী?",
+                a: "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে রিমাইন্ডার সেট করে, নোট রাখে আর আপনার টু-ডু লিস্ট সামলায়। আপনি স্বাভাবিকভাবেই মেসেজ দেবেন — ইংরেজি, বাংলিশ বা বাংলায় — বাকিটা ও দেখবে।",
+            },
+            {
+                q: "কোনো অ্যাপ ইনস্টল করতে হবে?",
+                a: "না। Remique পুরোপুরি WhatsApp-এর ভেতরেই চলে। কনট্যাক্টে যোগ করে মেসেজ দেওয়া শুরু করলেই হলো। ডাউনলোড করার কিছু নেই।",
+            },
+            {
+                q: "কোন কোন ভাষা বোঝে?",
+                a: "ইংরেজি, বাংলিশ (ইংরেজি হরফে লেখা বাংলা) আর বাংলা হরফ। এক বাক্যেই তিনটা মিশিয়ে লিখতে পারেন।",
+            },
+            {
+                q: "পেমেন্ট কীভাবে হয়?",
+                a: "bKash দিয়ে পে করবেন। প্ল্যান বেছে QR স্ক্যান করুন বা পেমেন্ট নম্বরটা দিন — সাবস্ক্রিপশন সঙ্গে সঙ্গেই চালু হয়ে যাবে। কার্ড লাগবে না।",
+            },
+            {
+                q: "আমি কয়টা রিমাইন্ডার সেট করতে পারব?",
+                a: "Remique Pro-তে আপনি আনলিমিটেড রিমাইন্ডার সেট করতে পারবেন।",
+            },
+            {
+                q: "আমি যদি কোনো রিমাইন্ডার মিস করি?",
+                a: "Remique ফলো-আপ নাজ পাঠায়। প্রতিটা রিমাইন্ডারের শেষে জানতে চাওয়া হয় আপনার কাজটা হয়েছে কিনা, নাকি আরও সময় লাগবে। তাই কোনো কিছুই বাদ পড়ে না।",
+            },
+            {
+                q: "আমি কি কম্পিউটারে ব্যবহার করতে পারব?",
+                a: "হ্যাঁ। যেহেতু Remique WhatsApp-এ চলে, তাই ফোন, ট্যাবলেট বা কম্পিউটারে WhatsApp Web-এর মাধ্যমেও ব্যবহার করতে পারবেন।",
+            },
+            {
+                q: "আমার তথ্য কি নিরাপদ?",
+                a: "হ্যাঁ। আপনার রিমাইন্ডার এবং নোটগুলো নিরাপদে সেভ করা থাকে। আমরা শুধু আপনাকে মনে করিয়ে দেওয়ার জন্যই তথ্যগুলো ব্যবহার করি, অন্য কারও সাথে শেয়ার করি না।",
+            },
+        ],
+        cta: "সব প্রশ্ন দেখুন",
+    },
+
+    footer: {
+        tagline: "WhatsApp AI অ্যাসিস্ট্যান্ট। বাংলাদেশে যত্ন নিয়ে বানানো।",
+        product: "প্রোডাক্ট",
+        support: "সাপোর্ট",
+        connect: "যোগাযোগ",
+        howItWorks: "কীভাবে কাজ করে",
+        useCases: "কী কাজে লাগে",
+        pricing: "প্রাইসিং",
+        faq: "সাধারণ প্রশ্ন",
+        contact: "যোগাযোগ করুন",
+        chatOnWhatsApp: "WhatsApp-এ চ্যাট করুন",
+        rights: "সর্বস্বত্ব সংরক্ষিত।",
+        privacy: "প্রাইভেসি",
+        terms: "টার্মস",
+        logoAlt: "Remique লোগো",
+    },
+};
+
+export const COPY: Record<Lang, Copy> = { en, bn };

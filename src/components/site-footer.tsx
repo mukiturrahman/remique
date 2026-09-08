@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { MarkWhatsApp } from "./icons";
+import { useCopy } from "./lang-provider";
 
 export function SiteFooter() {
+    const c = useCopy();
+
     return (
         <footer className="px-5 pb-10 sm:px-8">
             <div className="mx-auto max-w-6xl rounded-[32px] border border-white/20 bg-white/10 px-8 py-14 shadow-2xl backdrop-blur-xl sm:px-12">
@@ -15,7 +20,7 @@ export function SiteFooter() {
                         >
                             <Image
                                 src="/logo.png"
-                                alt="Remique Logo"
+                                alt={c.footer.logoAlt}
                                 width={48}
                                 height={38}
                                 className="h-8 w-auto object-contain"
@@ -25,20 +30,20 @@ export function SiteFooter() {
                             </span>
                         </Link>
                         <p className="mt-5 max-w-[28ch] text-[15px] leading-relaxed text-white/70">
-                            WhatsApp Ai assistant. Built with care in Bangladesh.
+                            {c.footer.tagline}
                         </p>
                     </div>
 
                     {/* product */}
                     <div>
                         <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-white/50">
-                            Product
+                            {c.footer.product}
                         </p>
                         <ul className="mt-5 space-y-3">
                             {[
-                                { href: "/how-it-works", label: "How it works" },
-                                { href: "/use-cases", label: "Use cases" },
-                                { href: "/pricing", label: "Pricing" },
+                                { href: "/how-it-works", label: c.footer.howItWorks },
+                                { href: "/use-cases", label: c.footer.useCases },
+                                { href: "/pricing", label: c.footer.pricing },
                             ].map((l) => (
                                 <li key={l.href}>
                                     <Link
@@ -55,12 +60,12 @@ export function SiteFooter() {
                     {/* support */}
                     <div>
                         <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-white/50">
-                            Support
+                            {c.footer.support}
                         </p>
                         <ul className="mt-5 space-y-3">
                             {[
-                                { href: "/faq", label: "FAQ" },
-                                { href: "mailto:support@remique.com", label: "Contact Us" },
+                                { href: "/faq", label: c.footer.faq },
+                                { href: "mailto:support@remique.com", label: c.footer.contact },
                             ].map((l) => (
                                 <li key={l.href}>
                                     <Link
@@ -77,25 +82,25 @@ export function SiteFooter() {
                     {/* connect */}
                     <div>
                         <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-white/50">
-                            Connect
+                            {c.footer.connect}
                         </p>
                         <div className="mt-5 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-[14px] font-medium text-white shadow-sm transition-colors hover:bg-white/20">
                             <MarkWhatsApp className="h-4 w-4" />
-                            <span>Chat on WhatsApp</span>
+                            <span>{c.footer.chatOnWhatsApp}</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
                     <p className="text-[14px] text-white/60">
-                        &copy; {new Date().getFullYear()} Remique. All rights reserved.
+                        &copy; {new Date().getFullYear()} Remique. {c.footer.rights}
                     </p>
                     <div className="flex items-center gap-6 text-[14px] text-white/60">
                         <Link href="/privacy" className="transition-colors hover:text-white">
-                            Privacy
+                            {c.footer.privacy}
                         </Link>
                         <Link href="/terms" className="transition-colors hover:text-white">
-                            Terms
+                            {c.footer.terms}
                         </Link>
                     </div>
                 </div>

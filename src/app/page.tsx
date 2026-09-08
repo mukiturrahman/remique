@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/navbar";
@@ -5,8 +7,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { HeroRotator } from "@/components/hero-rotator";
 import { HeroVideo } from "@/components/hero-video";
 import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
+import { PhoneFrame } from "@/components/phone-frame";
 import { HomeFaq } from "@/components/home-faq";
 import { HomePricing } from "@/components/home-pricing";
+import { LangProvider, useCopy, useLang } from "@/components/lang-provider";
 import {
     IconArrow,
     MarkWhatsApp,
@@ -17,10 +21,15 @@ import {
     IconScripts,
     IconVerified,
     IconPriority,
+    IconCheckCircle,
 } from "@/components/icons";
 
 /* ── DATA ──────────────────────────────────────────────────────────── */
 
+/**
+ * Deliberately mixed English and Bangla in both languages: the mixing is what
+ * the demo is demonstrating, so it is not translated.
+ */
 const HERO_CHAT: ChatMessage[] = [
     {
         text: "Remind me to pay the electricity bill tomorrow at 10 AM",
@@ -34,7 +43,7 @@ const HERO_CHAT: ChatMessage[] = [
     },
     { text: "Actually make it 11 AM", from: "user", time: "9:15 AM" },
     { text: "✏️ Updated. I'll remind you at 11:00 AM instead.", from: "bot", time: "9:15 AM" },
-    { text: "আর বিকালে ৫ টায় মাকে কল দিতে মনে করিয়ে দিও", from: "user", time: "9:16 AM" },
+    { text: "আর বিকালে ৫ টায় মাকে কল দিতে মনে করিয়ে দিও", from: "user", time: "9:16 AM" },
     {
         text: "✅ ঠিক আছে, আজ বিকাল ৫:০০ টায় **মাকে কল দেওয়ার** কথা মনে করিয়ে দিবো।",
         from: "bot",
@@ -42,40 +51,76 @@ const HERO_CHAT: ChatMessage[] = [
     },
 ];
 
-const LANGUAGE_EXAMPLES = [
-    { lang: "Bangla", script: "bn" as const, text: "কালকে সকালে ওষুধ খেতে মনে করিয়ে দিও" },
-    { lang: "Banglish", script: "en" as const, text: "kalke shokal e medicine khete bolo" },
-    { lang: "English", script: "en" as const, text: "remind me tomorrow morning to take medicine" },
+/**
+ * The language section's own thread: Banglish first, then a sentence that mixes
+ * scripts mid-way. Untranslated for the same reason as HERO_CHAT.
+ */
+const LANGUAGE_CHAT: ChatMessage[] = [
+    { text: "kalke shokal e medicine khete bolo", from: "user", time: "9:02 AM" },
+    {
+        text: "✅ Noted. কাল সকাল ৮:০০ টায় **ওষুধ খাওয়ার** কথা মনে করিয়ে দিবো।",
+        from: "bot",
+        time: "9:02 AM",
+    },
+    { text: "আর friday তে gas bill এর কথা মনে করাইও", from: "user", time: "9:03 AM" },
+    {
+        text: "✅ ঠিক আছে। শুক্রবার সকাল ১০:০০ টায় **গ্যাস বিলের** রিমাইন্ডার সেট করা হলো।",
+        from: "bot",
+        time: "9:03 AM",
+    },
 ];
 
-const ALL_FEATURES = [
-    {
-        icon: IconInstant,
-        title: "Instant confirmation",
-        desc: "Reply comes back in seconds, in your language.",
-    },
-    {
-        icon: IconExactTime,
-        title: "Exact time resolution",
-        desc: '"kalke shokal 10 tay" becomes one timestamp.',
-    },
-    {
-        icon: IconRepeat,
-        title: "Recurring reminders",
-        desc: "Daily, weekly, monthly — describe it in words.",
-    },
-    { icon: IconNudge, title: "Follow-up nudges", desc: "Missed one? Remique sends it again." },
-    { icon: IconScripts, title: "Multi-language", desc: "Bangla, Banglish, English — or mixed." },
-    {
-        icon: IconVerified,
-        title: "Signature verification",
-        desc: "Every message verified via Meta HMAC.",
-    },
-    {
-        icon: IconPriority,
-        title: "Priority delivery",
-        desc: "Reminders fire through a priority queue.",
-    },
+/** Icons stay here; their titles and descriptions come from the dictionary. */
+const FEATURE_ICONS = [
+    IconInstant,
+    IconExactTime,
+    IconRepeat,
+    IconNudge,
+    IconScripts,
+    IconVerified,
+    IconPriority,
+];
+
+const STEP_ICONS = [
+    <svg
+        key="write"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-6 w-6 text-brand"
+    >
+        <path d="M4.75 19.25V4.75a2 2 0 0 1 2-2h10.5a2 2 0 0 1 2 2v14.5l-3.75-2.5-3.5 2.5-3.5-2.5-3.75 2.5Z" />
+        <path d="M9 8.75h6M9 12.25h4" />
+    </svg>,
+    <svg
+        key="parse"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-6 w-6 text-brand"
+    >
+        <circle cx="12" cy="12" r="9.25" />
+        <path d="m8.5 12.5 2.5 2.5 5-5" />
+    </svg>,
+    <svg
+        key="ring"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-6 w-6 text-brand"
+    >
+        <path d="M6.5 10.25a5.5 5.5 0 0 1 11 0c0 3.6.9 5.1 1.75 6.1H4.75c.85-1 1.75-2.5 1.75-6.1Z" />
+        <path d="M10 19.25a2.25 2.25 0 0 0 4 0" />
+    </svg>,
 ];
 
 /* ── HELPERS ────────────────────────────────────────────────────────── */
@@ -107,9 +152,64 @@ function CtaLink({
     );
 }
 
+/**
+ * The hand-drawn arc over the buried section's headline, sweeping from the
+ * problem on the left to Remique on the right. Decorative, and desktop only —
+ * once the columns stack, a left-to-right arc points at nothing.
+ */
+function ArrowArc() {
+    return (
+        <svg
+            viewBox="0 0 400 96"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+            className="pointer-events-none absolute left-1/2 top-0 hidden w-[min(112%,460px)] -translate-x-1/2 text-brand-deep/45 lg:block"
+        >
+            <path d="M 8 78 Q 200 -6 372 52" />
+            {/* Rotated to sit on the curve's tangent where it ends. */}
+            <path d="M -15 -8 L 0 0 L -15 10" transform="translate(372 52) rotate(18.6)" />
+        </svg>
+    );
+}
+
+/**
+ * One side of the buried section's before/after. Both illustrations are 2:3, so
+ * the frame is too and the artwork fills it edge to edge — no letterboxing, and
+ * the two panels still match each other exactly.
+ */
+function BuriedPanel({ src, alt }: { src: string; alt: string }) {
+    return (
+        <div className="relative mx-auto aspect-[2/3] w-full max-w-[380px] overflow-hidden rounded-[28px] border border-white/40 shadow-xl">
+            <Image
+                src={src}
+                alt={alt}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 90vw, 32vw"
+            />
+        </div>
+    );
+}
+
 /* ── PAGE ───────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
+    return (
+        <LangProvider>
+            <HomeContent />
+        </LangProvider>
+    );
+}
+
+function HomeContent() {
+    const c = useCopy();
+    const { lang } = useLang();
+
     return (
         <main className="page-gradient relative">
             <div
@@ -144,56 +244,65 @@ export default function HomePage() {
                                     <img
                                         src="https://i.pravatar.cc/100?img=33"
                                         className="h-[26px] w-[26px] rounded-full border-2 border-ground"
-                                        alt="User avatar"
+                                        alt={c.hero.avatarAlt}
                                     />
                                     <img
                                         src="https://i.pravatar.cc/100?img=47"
                                         className="h-[26px] w-[26px] rounded-full border-2 border-ground"
-                                        alt="User avatar"
+                                        alt={c.hero.avatarAlt}
                                     />
                                     <img
                                         src="https://i.pravatar.cc/100?img=12"
                                         className="h-[26px] w-[26px] rounded-full border-2 border-ground"
-                                        alt="User avatar"
+                                        alt={c.hero.avatarAlt}
                                     />
                                 </div>
-                                <span className="pr-1 text-[13px] font-medium text-ink-2">
-                                    +250k people trust Remique to never forget again
+                                <span className="whitespace-nowrap pr-1 text-[13px] font-medium text-ink-2">
+                                    {c.hero.socialProof}
                                 </span>
                             </div>
 
                             <h1 className="text-balance font-display text-[clamp(2.5rem,5.2vw,4.2rem)] font-semibold leading-[1.05] tracking-display text-ink drop-shadow-sm">
-                                Never forget <br className="hidden lg:block" />
-                                <span className="-ml-1 inline-block">
+                                {c.hero.headlinePrefix && (
+                                    <>
+                                        {c.hero.headlinePrefix} <br className="hidden lg:block" />
+                                    </>
+                                )}
+                                <span
+                                    className={`inline-block ${c.hero.headlinePrefix ? "-ml-1" : ""}`}
+                                >
                                     <HeroRotator />
                                 </span>{" "}
                                 <br className="hidden lg:block" />
-                                again.
+                                {c.hero.headlineSuffix}
                             </h1>
 
                             <p className="mt-7 max-w-[48ch] text-[clamp(1.05rem,1.5vw,1.2rem)] leading-relaxed text-ink-2 drop-shadow-sm">
-                                Remique is a WhatsApp AI assistant that remembers for you. Text it
-                                naturally — in English, Banglish, or{" "}
-                                <span lang="bn" className="font-bn font-medium text-ink">
-                                    বাংলা
-                                </span>
-                                . It confirms, schedules, and reminds. You move on.
+                                {c.hero.subBefore}
+                                {/* In English this one Bengali word is the point of the
+                                    sentence and gets its own face. In Bangla it is just a
+                                    word in a Bangla sentence. */}
+                                {lang === "en" ? (
+                                    <span lang="bn" className="font-bn font-medium text-ink">
+                                        বাংলা
+                                    </span>
+                                ) : (
+                                    "বাংলা"
+                                )}
+                                {c.hero.subAfter}
                             </p>
 
                             <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 text-[14.5px] font-medium text-ink-3">
                                 <span className="inline-flex items-center gap-1.5">
                                     <MarkWhatsApp className="h-4 w-4 text-brand" />
-                                    Works on WhatsApp
+                                    {c.hero.worksOnWhatsApp}
                                 </span>
                                 <span className="text-line-strong">·</span>
-                                <span>No app to install</span>
+                                <span>{c.hero.noApp}</span>
                             </div>
 
                             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
-                                <CtaLink href="/pricing">Get started</CtaLink>
-                                <CtaLink href="/how-it-works" tone="light">
-                                    Meet Remique
-                                </CtaLink>
+                                <CtaLink href="/pricing">{c.hero.ctaPrimary}</CtaLink>
                             </div>
                         </div>
 
@@ -203,7 +312,7 @@ export default function HomePage() {
                             <div className="absolute -left-6 -top-10 z-10 lg:-left-12 lg:-top-16 drop-shadow-2xl">
                                 <Image
                                     src="/logo.png"
-                                    alt="Remique Bot"
+                                    alt={c.hero.botAlt}
                                     width={120}
                                     height={120}
                                     className="w-24 h-auto -rotate-12 lg:w-32"
@@ -218,163 +327,120 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* ── 2. LANGUAGE STRIP ────────────────────────────────────────── */}
-                <section className=" ">
-                    <div className="mx-auto max-w-6xl px-5 py-16 text-center sm:px-8">
-                        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-                            Celebrating Bangladesh
-                        </p>
-                        <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                            Say it the way it comes to you. Any language.
-                        </h2>
-                        <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-ink-2">
-                            Remique understands Bengali script, Banglish transliteration, and plain
-                            English — or all three mixed in one sentence.
-                        </p>
-                        <div className="mt-10 flex flex-wrap justify-center gap-4">
-                            {LANGUAGE_EXAMPLES.map((ex) => (
-                                <div
-                                    key={ex.lang}
-                                    className="rounded-2xl border border-white/40 bg-white/10 shadow-xl backdrop-blur-md px-5 py-4 text-left shadow-lift"
-                                >
-                                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-brand">
-                                        {ex.lang}
-                                    </p>
-                                    <p
-                                        lang={ex.script === "bn" ? "bn" : undefined}
-                                        className={`mt-2 text-[15px] leading-snug text-ink ${ex.script === "bn" ? "font-bn" : ""}`}
-                                    >
-                                        {ex.text}
-                                    </p>
-                                </div>
-                            ))}
+                {/* ── 2. BURIED ────────────────────────────────────────────────── */}
+                <section>
+                    <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                        {/* The two illustrations flank the text; the arc carries the eye
+                            from the mess on the left to Remique on the right. */}
+                        <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr_1fr] lg:items-center lg:gap-8">
+                            <div className="order-2 lg:order-1">
+                                <BuriedPanel src="/buriedProblem.png" alt={c.buried.problemAlt} />
+                            </div>
+
+                            <div className="relative order-1 text-center lg:order-2 lg:pt-24">
+                                <ArrowArc />
+                                <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.8vw,3rem)] font-semibold leading-[1.05] tracking-display text-ink">
+                                    {c.buried.title}
+                                </h2>
+                                <p className="mx-auto mt-6 max-w-[42ch] text-[16.5px] leading-relaxed text-ink-2">
+                                    {c.buried.body}
+                                </p>
+                                <p className="mx-auto mt-7 max-w-[40ch] font-display text-[17px] font-semibold leading-snug tracking-tight text-ink">
+                                    {c.buried.kicker}
+                                </p>
+                            </div>
+
+                            {/* The arc does this job on desktop; on a stack it has to
+                                point down instead. */}
+                            <div className="order-3 mx-auto grid h-14 w-14 place-items-center rounded-full border border-white/40 bg-white/30 shadow-lift backdrop-blur-md lg:hidden">
+                                <IconArrow className="h-6 w-6 rotate-90 text-brand-deep" />
+                            </div>
+
+                            <div className="order-4 lg:order-3">
+                                <BuriedPanel src="/buriedSolution.png" alt={c.buried.solutionAlt} />
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ── 3. HOW IT WORKS ──────────────────────────────────────────── */}
-                <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-                    <div className="text-center">
-                        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-                            How it works
-                        </p>
-                        <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
-                            Three steps. The third one is doing nothing.
-                        </h2>
-                        <p className="mx-auto mt-5 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
-                            No signup, no tutorial, no learning curve. Text Remique like a friend.
-                        </p>
-                    </div>
-                    <div className="mt-14 grid gap-8 md:grid-cols-3">
-                        {[
-                            {
-                                step: "Step 1",
-                                title: "Send it like a text",
-                                desc: "Open WhatsApp. Type your reminder the way you actually think. No format, no slash command, no date picker.",
-                                icon: (
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth={1.5}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="h-6 w-6 text-brand"
-                                    >
-                                        <path d="M4.75 19.25V4.75a2 2 0 0 1 2-2h10.5a2 2 0 0 1 2 2v14.5l-3.75-2.5-3.5 2.5-3.5-2.5-3.75 2.5Z" />
-                                        <path d="M9 8.75h6M9 12.25h4" />
-                                    </svg>
-                                ),
-                            },
-                            {
-                                step: "Step 2",
-                                title: "Bot already read between the lines",
-                                desc: "Remique reads your Bangla, Banglish, or English and extracts task + time. Confirms back in your language.",
-                                icon: (
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth={1.5}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="h-6 w-6 text-brand"
-                                    >
-                                        <circle cx="12" cy="12" r="9.25" />
-                                        <path d="m8.5 12.5 2.5 2.5 5-5" />
-                                    </svg>
-                                ),
-                            },
-                            {
-                                step: "Step 3",
-                                title: "Forget it. Completely.",
-                                desc: "Remique delivers your reminder at the exact time, right inside WhatsApp. You do not need to remember anything.",
-                                icon: (
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth={1.5}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="h-6 w-6 text-brand"
-                                    >
-                                        <path d="M6.5 10.25a5.5 5.5 0 0 1 11 0c0 3.6.9 5.1 1.75 6.1H4.75c.85-1 1.75-2.5 1.75-6.1Z" />
-                                        <path d="M10 19.25a2.25 2.25 0 0 0 4 0" />
-                                    </svg>
-                                ),
-                            },
-                        ].map((s) => (
-                            <div
-                                key={s.step}
-                                className="rounded-2xl border border-white/40 bg-white/20 p-6 shadow-xl backdrop-blur-md"
-                            >
-                                <span className="inline-grid h-12 w-12 place-items-center rounded-2xl bg-brand-tint">
-                                    {s.icon}
-                                </span>
-                                <p className="mt-5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">
-                                    {s.step}
-                                </p>
-                                <h3 className="mt-2 font-display text-[20px] font-semibold tracking-tight text-ink">
-                                    {s.title}
-                                </h3>
-                                <p className="mt-3 text-[15.5px] leading-relaxed text-ink-2">
-                                    {s.desc}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-10 text-center">
-                        <CtaLink href="/how-it-works">Learn more</CtaLink>
+                {/* ── 3. OVERLOAD ──────────────────────────────────────────────── */}
+                <section>
+                    <div className="mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14 lg:py-32">
+                        {/* object-contain so the artwork is never cropped, whatever
+                            proportion it arrives in. */}
+                        {/* The source is square, so the frame is too — a 4:3 box just letterboxed it. */}
+                        <div className="relative mx-auto aspect-square w-full max-w-[520px] lg:max-w-none">
+                            <Image
+                                src="/overload.png"
+                                alt={c.overload.imageAlt}
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 1024px) 90vw, 46vw"
+                            />
+                        </div>
+
+                        <div className="text-center lg:text-left">
+                            <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.9rem,3.6vw,2.8rem)] font-semibold leading-[1.08] tracking-display text-ink lg:mx-0">
+                                {c.overload.title}
+                            </h2>
+
+                            <p className="mx-auto mt-7 max-w-[52ch] text-[16.5px] leading-relaxed text-ink-2 lg:mx-0">
+                                {c.overload.body}
+                            </p>
+
+                            {/* The turn from diagnosis to fix gets its own beat. */}
+                            <p className="mx-auto mt-9 max-w-[48ch] rounded-2xl border border-white/40 border-l-2 border-l-brand bg-white/25 px-6 py-5 text-left font-display text-[17px] font-semibold leading-snug tracking-tight text-ink shadow-lift backdrop-blur-md lg:mx-0">
+                                {c.overload.fix}
+                            </p>
+                        </div>
                     </div>
                 </section>
 
-                {/* ── 4. PROBLEM ───────────────────────────────────────────────── */}
+                {/* ── 4. LANGUAGE STRIP ────────────────────────────────────────── */}
+                <section className="overflow-hidden">
+                    <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[1fr_0.8fr] lg:gap-16 lg:py-28">
+                        {/* LEFT COLUMN */}
+                        <div className="text-center lg:text-left">
+                            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.2rem,4.4vw,3.4rem)] font-semibold leading-[1.04] tracking-display text-ink lg:mx-0">
+                                {c.languages.title}
+                            </h2>
+                            {/* Each point is a thing the reader does not have to do, so
+                                it gets a check rather than a card. */}
+                            <ul className="mt-9 flex flex-col items-center gap-3.5 lg:items-start">
+                                {c.languages.points.map((point) => (
+                                    <li
+                                        key={point}
+                                        className="inline-flex max-w-full items-center gap-3 rounded-full border border-white/40 bg-white/25 px-5 py-3 text-left shadow-lift backdrop-blur-md"
+                                    >
+                                        <IconCheckCircle className="h-[22px] w-[22px] shrink-0 text-brand-deep" />
+                                        <span className="text-[16px] leading-snug text-ink">
+                                            {point}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div className="lg:ml-auto lg:mr-0">
+                            <PhoneFrame>
+                                <WhatsAppMockup messages={LANGUAGE_CHAT} flush />
+                            </PhoneFrame>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ── 6. PROBLEM ───────────────────────────────────────────────── */}
                 <section className=" ">
                     <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
                         <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
-                            Every reminder app fails the same way: you stop opening it.
+                            {c.problem.title}
                         </h2>
                         <p className="mx-auto mt-6 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
-                            Notification-based reminders depend on you opening another app, checking
-                            another list, clearing another badge. Remique lives where you already
-                            are — WhatsApp.
+                            {c.problem.body}
                         </p>
                         <div className="mt-10 grid gap-6 text-left sm:grid-cols-3">
-                            {[
-                                {
-                                    title: "Other apps need you to open them.",
-                                    body: "Calendar alerts, to-do lists, phone alarms — they all assume you will switch apps. You won't.",
-                                },
-                                {
-                                    title: "Notifications get swiped away.",
-                                    body: "A push notification competes with fifty others. A WhatsApp message sits in the chat you already check thirty times a day.",
-                                },
-                                {
-                                    title: "You already text yourself reminders.",
-                                    body: "Pinned chats, starred messages, notes in WhatsApp — you are already using it as a to-do list. Remique just makes it work.",
-                                },
-                            ].map((p) => (
+                            {c.problem.cards.map((p) => (
                                 <div
                                     key={p.title}
                                     className="rounded-2xl border border-white/40 bg-white/20 p-6 shadow-xl backdrop-blur-md"
@@ -391,121 +457,92 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* ── 5. THE LOOP ─────────────────────────────────────────────── */}
+                {/* ── 7. THE LOOP ─────────────────────────────────────────────── */}
                 <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
                     <div className="text-center">
                         <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                            Whatever you need to remember, we make sure you don&apos;t forget.
+                            {c.loop.title}
                         </h2>
                         <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
-                            Recurring reminders and follow-up nudges — Remique handles the stuff
-                            that slips through the cracks.
+                            {c.loop.sub}
                         </p>
                     </div>
 
                     <div className="mt-14 text-center">
                         <p className="inline-block max-w-[32ch] rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-left text-[15px] leading-snug text-white shadow-lift">
-                            protidin bikal 5 tay medicine
+                            {c.loop.sample}
                         </p>
                         <div className="mt-5 flex flex-wrap items-baseline justify-center gap-x-2.5 gap-y-1 font-mono text-[13px] uppercase tracking-[0.09em]">
-                            <span className="text-[rgba(11,21,18,0.6)]">repeats</span>
-                            <span className="tabular text-ink">daily</span>
+                            <span className="text-[rgba(11,21,18,0.6)]">{c.loop.repeats}</span>
+                            <span className="tabular text-ink">{c.loop.daily}</span>
                             <span className="text-[rgba(11,21,18,0.3)]">·</span>
-                            <span className="text-[rgba(11,21,18,0.6)]">at</span>
-                            <span className="tabular font-semibold text-signal-deep">5:00 pm</span>
+                            <span className="text-[rgba(11,21,18,0.6)]">{c.loop.at}</span>
+                            <span className="tabular font-semibold text-signal-deep">
+                                {c.loop.time}
+                            </span>
                             <span className="text-[rgba(11,21,18,0.3)]">·</span>
-                            <span className="tabular text-[rgba(11,21,18,0.6)]">asia/dhaka</span>
+                            <span className="tabular text-[rgba(11,21,18,0.6)]">
+                                {c.loop.timezone}
+                            </span>
                         </div>
-                    </div>
-
-                    <ul className="mt-16 grid text-left md:grid-cols-3 md:gap-x-10">
-                        {[
-                            {
-                                title: "The chain lays itself.",
-                                body: "Every delivery schedules the next one before it goes out. Nothing to renew, nothing to re-enter.",
-                            },
-                            {
-                                title: "A gap never stacks.",
-                                body: "If delivery is down for three days, your daily reminder resumes tomorrow — it does not fire three times catching up.",
-                            },
-                            {
-                                title: "Missed one? Say so.",
-                                body: "Every reminder ends with \u201cDone or need more time?\u201d Tell Remique when, and it comes back then.",
-                            },
-                        ].map((row) => (
-                            <li
-                                key={row.title}
-                                className="border-t border-[rgba(11,21,18,0.14)] py-6 first:border-t-0 first:pt-0 md:first:border-t md:first:pt-6"
-                            >
-                                <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">
-                                    {row.title}
-                                </h3>
-                                <p className="mt-1.5 max-w-[38ch] text-[14.5px] leading-relaxed text-[rgba(11,21,18,0.72)]">
-                                    {row.body}
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
-
-                    <div className="mt-14 text-center">
-                        <CtaLink href="/how-it-works">See all features</CtaLink>
                     </div>
                 </section>
 
-                {/* ── 6. PRICING ───────────────────────────────────────────────── */}
+                {/* ── 8. PRICING ───────────────────────────────────────────────── */}
                 <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
                     <div className="text-center">
                         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-                            Pricing
+                            {c.pricing.eyebrow}
                         </p>
                         <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
-                            Cheaper than the late fee it saves you.
+                            {c.pricing.title}
                         </h2>
                         <p className="mx-auto mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
-                            No card, no hassle. Subscribe with bKash and start using Remique in
-                            under a minute.
+                            {c.pricing.sub}
                         </p>
                     </div>
                     <HomePricing />
                 </section>
 
-                {/* ── 7. FULL INDEX ───────────────────────────────────────────── */}
+                {/* ── 9. FULL INDEX ───────────────────────────────────────────── */}
                 <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
                     <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
                         <div className="lg:self-center">
                             <h2 className="max-w-[14ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                                Everything you get, in full.
+                                {c.featuresIndex.title}
                             </h2>
                             <p className="mt-5 max-w-[38ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
-                                The whole feature list on one page. No tiers hiding pieces of it, no
-                                settings to turn any of it on.
+                                {c.featuresIndex.body}
                             </p>
                         </div>
 
                         <ul className="grid sm:grid-cols-2 sm:gap-x-12">
-                            {ALL_FEATURES.map(({ icon: Icon, title, desc }, i) => (
-                                <li
-                                    key={title}
-                                    className={`flex gap-4 border-t border-[rgba(11,21,18,0.14)] py-6 first:border-t-0 first:pt-0 ${
-                                        i === 1 ? "sm:border-t-0 sm:pt-0" : ""
-                                    }`}
-                                >
-                                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-deep" />
-                                    <div>
-                                        <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">
-                                            {title}
-                                        </h3>
-                                        <p className="mt-1.5 max-w-[34ch] text-[14.5px] leading-relaxed text-[rgba(11,21,18,0.72)]">
-                                            {desc}
-                                        </p>
-                                    </div>
-                                </li>
-                            ))}
+                            {c.featuresIndex.items.map(({ title, desc }, i) => {
+                                const Icon = FEATURE_ICONS[i];
+                                return (
+                                    <li
+                                        key={title}
+                                        className={`flex gap-4 border-t border-[rgba(11,21,18,0.14)] py-6 first:border-t-0 first:pt-0 ${
+                                            i === 1 ? "sm:border-t-0 sm:pt-0" : ""
+                                        }`}
+                                    >
+                                        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-deep" />
+                                        <div>
+                                            <h3 className="font-display text-[17px] font-semibold tracking-tight text-ink">
+                                                {title}
+                                            </h3>
+                                            <p className="mt-1.5 max-w-[34ch] text-[14.5px] leading-relaxed text-[rgba(11,21,18,0.72)]">
+                                                {desc}
+                                            </p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
                 </section>
 
-                {/* ── 8. GREEN CTA BANNER ─────────────────────────────────────── */}
+                {/* ── 10. GREEN CTA BANNER ─────────────────────────────────────── */}
                 <section className="px-5 py-20 sm:px-8 lg:py-28">
                     <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-white/20 border border-white/40 shadow-2xl backdrop-blur-xl px-6 py-20 text-center sm:px-12 lg:py-28">
                         <div
@@ -514,35 +551,34 @@ export default function HomePage() {
                         />
                         <div className="relative">
                             <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.1rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-white">
-                                Your memory has a backup now.
+                                {c.banner.title}
                             </h2>
                             <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
-                                Pick a plan, pay with bKash, and start texting Remique. That is the
-                                whole setup.
+                                {c.banner.body}
                             </p>
                             <div className="mt-10 flex flex-col items-center gap-5">
                                 <CtaLink href="/pricing" tone="light">
-                                    See plan
+                                    {c.banner.cta}
                                 </CtaLink>
                                 <p className="tabular text-[14.5px] text-white/80">
-                                    Starts at ৳49/week
+                                    {c.banner.priceNote}
                                     <span className="mx-2 opacity-50">·</span>
-                                    No card needed
+                                    {c.banner.cardNote}
                                 </p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ── 9. FAQ ──────────────────────────────────────────────────── */}
+                {/* ── 11. FAQ ──────────────────────────────────────────────────── */}
                 <section className="text-white">
                     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
                         <div className="text-center">
                             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-                                FAQ
+                                {c.faq.eyebrow}
                             </p>
                             <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
-                                Fair questions, straight answers.
+                                {c.faq.title}
                             </h2>
                         </div>
                         <div className="mx-auto mt-14 max-w-3xl">
@@ -550,7 +586,7 @@ export default function HomePage() {
                         </div>
                         <div className="mt-10 text-center">
                             <CtaLink href="/faq" tone="outline">
-                                See all questions
+                                {c.faq.cta}
                             </CtaLink>
                         </div>
                     </div>

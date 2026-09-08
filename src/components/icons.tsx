@@ -156,6 +156,16 @@ export function IconCheck(props: IconProps) {
   );
 }
 
+/** The same checkmark, ringed, for claims stated as already-true. */
+export function IconCheckCircle(props: IconProps) {
+  return (
+    <Stroke {...props}>
+      <circle cx="12" cy="12" r="9.25" />
+      <path d="m8.25 12.25 2.5 2.5 5-5.5" />
+    </Stroke>
+  );
+}
+
 /** A locked feature. */
 export function IconLock(props: IconProps) {
   return (
