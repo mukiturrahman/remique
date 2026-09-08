@@ -35,8 +35,8 @@ const envSchema = z.object({
   // coerces to NaN. `.catch()` degrades that to the default instead of
   // throwing, which in production would take down the whole site, not just
   // quotas.
-  DEFAULT_DAILY_TOKEN_CAP: z.coerce.number().int().positive().default(150_000).catch(150_000),
-  DEFAULT_WEEKLY_TOKEN_CAP: z.coerce.number().int().positive().default(700_000).catch(700_000),
+  DEFAULT_DAILY_TOKEN_CAP: z.coerce.number().int().positive().default(500_000).catch(500_000),
+  DEFAULT_WEEKLY_TOKEN_CAP: z.coerce.number().int().positive().default(3_500_000).catch(3_500_000),
   // Admin dashboard. Both must be set or every /admin route returns 404.
   // Read directly from process.env by src/lib/admin-auth.ts — these entries
   // exist so a missing value is visible in the startup validation output.
@@ -93,8 +93,8 @@ export const env: Env = _parsed.success
       SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
       S3_BUCKET_DOCUMENTS: process.env.S3_BUCKET_DOCUMENTS,
       AWS_S3_REGION: process.env.AWS_S3_REGION,
-      DEFAULT_DAILY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_DAILY_TOKEN_CAP, 150_000),
-      DEFAULT_WEEKLY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_WEEKLY_TOKEN_CAP, 700_000),
+      DEFAULT_DAILY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_DAILY_TOKEN_CAP, 500_000),
+      DEFAULT_WEEKLY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_WEEKLY_TOKEN_CAP, 3_500_000),
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
       ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
       BDAPPS_API_KEY: process.env.BDAPPS_API_KEY,

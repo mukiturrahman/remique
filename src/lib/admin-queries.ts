@@ -5,55 +5,6 @@ import { env } from './env';
 
 export type UserSort = 'cost' | 'recent' | 'joined';
 
-/** Rows per page in the user list. */
-export const PAGE_SIZE = 50;
-
-const ORDER_BY: Record<UserSort, Record<string, 'asc' | 'desc'>> = {
-  cost: { totalCostMicros: 'desc' },
-  recent: { updatedAt: 'desc' },
-  joined: { createdAt: 'desc' },
-};
-
-/**
- * The user list.
- *
- * Reads the denormalised counters on `users` and never aggregates
- * `usage_events` — avoiding a groupBy over every event ever recorded is the
- * entire reason those counters exist.
- */
-export async function listUsers(options: { sort?: UserSort; limit?: number; offset?: number } = {}) {
-  const { sort = 'cost', limit = 50, offset = 0 } = options;
-
-  return prisma.user.findMany({
-    orderBy: ORDER_BY[sort] ?? ORDER_BY.cost,
-    take: limit,
-    skip: offset,
-    select: {
-      id: true,
-      name: true,
-      phoneNumber: true,
-      timezone: true,
-      createdAt: true,
-      updatedAt: true,
-      blockedAt: true,
-      blockedReason: true,
-      totalInputTokens: true,
-      totalOutputTokens: true,
-      totalCostMicros: true,
-      totalLlmCalls: true,
-      dailyTokenCap: true,
-      weeklyTokenCap: true,
-      planTier: true,
-      planExpiresAt: true,
-      _count: {
-        select: { messages: true, documents: true, reminders: true, facts: true },
-      },
-    },
-  });
-}
-
-export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
-
 /**
  * The window the overview is scoped to.
  *
@@ -85,6 +36,187 @@ export function periodStart(period: Period): Date | null {
   if (period === 'month') return now.startOf('month').toJSDate();
   return now.minus({ days: 30 }).toJSDate();
 }
+
+/** Rows per page in the user list. */
+export const PAGE_SIZE = 50;
+
+const ORDER_BY: Record<UserSort, Record<string, 'asc' | 'desc'>> = {
+  cost: { totalCostMicros: 'desc' },
+  recent: { updatedAt: 'desc' },
+  joined: { createdAt: 'desc' },
+};
+
+const USER_SELECT = {
+  id: true,
+  name: true,
+  phoneNumber: true,
+  timezone: true,
+  createdAt: true,
+  updatedAt: true,
+  blockedAt: true,
+  blockedReason: true,
+  totalInputTokens: true,
+  totalOutputTokens: true,
+  totalCostMicros: true,
+  totalLlmCalls: true,
+  dailyTokenCap: true,
+  weeklyTokenCap: true,
+  planTier: true,
+  planExpiresAt: true,
+  _count: {
+    select: { messages: true, documents: true, reminders: true, facts: true },
+  },
+} as const;
+
+export interface ListUsersOptions {
+  sort?: UserSort;
+  period?: Period;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * The user list.
+ *
+ * When period is 'all', reads the denormalised counters on `users` directly.
+ * When period is scoped ('today', 'month', '30d'), aggregates `usage_events`
+ * and `messages` for that time window and merges period metrics into each row.
+ */
+export async function listUsers(options: ListUsersOptions = {}) {
+  const { sort = 'cost', period = 'all', limit = PAGE_SIZE, offset = 0 } = options;
+  const start = periodStart(period);
+
+  if (!start || period === 'all') {
+    const users = await prisma.user.findMany({
+      orderBy: ORDER_BY[sort] ?? ORDER_BY.cost,
+      take: limit,
+      skip: offset,
+      select: USER_SELECT,
+    });
+
+    return users.map((u) => ({
+      ...u,
+      periodTokens: u.totalInputTokens + u.totalOutputTokens,
+      periodCostMicros: u.totalCostMicros,
+      periodMessages: u._count.messages,
+      periodLlmCalls: u.totalLlmCalls,
+    }));
+  }
+
+  type SelectedUser = Awaited<
+    ReturnType<typeof prisma.user.findMany<{ select: typeof USER_SELECT }>>
+  >[number];
+
+  let pageUsers: SelectedUser[] = [];
+
+  if (sort === 'cost') {
+    // 1. Group usage_events by user for the period to find top spenders in this window
+    const periodUsage = await prisma.usageEvent.groupBy({
+      by: ['userId'],
+      where: { createdAt: { gte: start } },
+      _sum: { costMicros: true },
+    });
+
+    // Sort active users by period cost descending
+    const sortedActive = periodUsage.sort(
+      (a, b) => (b._sum.costMicros ?? 0) - (a._sum.costMicros ?? 0)
+    );
+    const activeUserIds = sortedActive.map((u) => u.userId);
+
+    const pageUserIds: string[] = [];
+    if (offset < activeUserIds.length) {
+      pageUserIds.push(...activeUserIds.slice(offset, offset + limit));
+    }
+
+    const needed = limit - pageUserIds.length;
+    if (needed > 0) {
+      const inactiveOffset = Math.max(0, offset - activeUserIds.length);
+      const inactiveUsers = await prisma.user.findMany({
+        where: { id: { notIn: activeUserIds } },
+        orderBy: { totalCostMicros: 'desc' },
+        skip: inactiveOffset,
+        take: needed,
+        select: { id: true },
+      });
+      pageUserIds.push(...inactiveUsers.map((u) => u.id));
+    }
+
+    if (pageUserIds.length === 0) {
+      return [];
+    }
+
+    const fetchedUsers = await prisma.user.findMany({
+      where: { id: { in: pageUserIds } },
+      select: USER_SELECT,
+    });
+
+    const userMap = new Map(fetchedUsers.map((u) => [u.id, u]));
+    pageUsers = pageUserIds
+      .map((id) => userMap.get(id))
+      .filter((u): u is SelectedUser => Boolean(u));
+  } else {
+    pageUsers = await prisma.user.findMany({
+      orderBy: ORDER_BY[sort] ?? ORDER_BY.recent,
+      take: limit,
+      skip: offset,
+      select: USER_SELECT,
+    });
+  }
+
+  if (pageUsers.length === 0) {
+    return [];
+  }
+
+  const pageUserIds = pageUsers.map((u) => u.id);
+
+  // Fetch period usage & message counts for the users on this page
+  const [usageGroups, messageGroups] = await Promise.all([
+    prisma.usageEvent.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: pageUserIds },
+        createdAt: { gte: start },
+      },
+      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true, costMicros: true },
+      _count: { id: true },
+    }),
+    prisma.message.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: pageUserIds },
+        createdAt: { gte: start },
+      },
+      _count: { id: true },
+    }),
+  ]);
+
+  const usageMap = new Map(
+    usageGroups.map((g) => [
+      g.userId,
+      {
+        tokens: (g._sum.inputTokens ?? 0) - (g._sum.cachedTokens ?? 0) + (g._sum.outputTokens ?? 0),
+        costMicros: g._sum.costMicros ?? 0,
+        calls: g._count.id,
+      },
+    ])
+  );
+
+  const messagesMap = new Map(messageGroups.map((g) => [g.userId, g._count.id]));
+
+  return pageUsers.map((u) => {
+    const usage = usageMap.get(u.id);
+    return {
+      ...u,
+      periodTokens: usage?.tokens ?? 0,
+      periodCostMicros: usage?.costMicros ?? 0,
+      periodMessages: messagesMap.get(u.id) ?? 0,
+      periodLlmCalls: usage?.calls ?? 0,
+    };
+  });
+}
+
+export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
+
 
 export interface DashboardTotals {
   period: Period;
@@ -153,7 +285,7 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
 
     prisma.usageEvent.aggregate({
       where: start ? { createdAt: inWindow } : undefined,
-      _sum: { inputTokens: true, outputTokens: true, costMicros: true },
+      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true, costMicros: true },
     }),
 
     // Grouped, because adding up two currencies produces a number that means
@@ -176,6 +308,10 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     .map((row) => ({ currency: row.currency, amount: Number(row._sum.amount ?? 0) }))
     .sort((a, b) => b.amount - a.amount);
 
+  const inTokens = usageAgg._sum.inputTokens ?? 0;
+  const cachedTokens = usageAgg._sum.cachedTokens ?? 0;
+  const outTokens = usageAgg._sum.outputTokens ?? 0;
+
   return {
     period,
     hasEverBeenPaid: paidEver > 0,
@@ -183,7 +319,7 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     newUsers,
     blocked,
     unsubscribed,
-    tokens: (usageAgg._sum.inputTokens ?? 0) + (usageAgg._sum.outputTokens ?? 0),
+    tokens: inTokens - cachedTokens + outTokens,
     tokenCostMicros: usageAgg._sum.costMicros ?? 0,
     revenue: ranked[0]?.amount ?? 0,
     revenueCurrency: ranked[0]?.currency ?? 'BDT',
@@ -303,33 +439,35 @@ export async function getUserDetail(id: string) {
   const tokensIn = (a: typeof dailyAgg) =>
     (a._sum.inputTokens ?? 0) + (a._sum.outputTokens ?? 0);
 
-  return {
-    user,
-    messageCount,
-    messages,
-    documents,
-    facts,
-    activeReminders,
-    pastReminders,
-    usageByDay: bucketByDay(recentUsage),
-    // Not named `window`: destructuring that in a component shadows the DOM
-    // global and trips lint rules for no benefit.
-    usageWindow: {
-      dailyTokens: tokensIn(dailyAgg),
-      dailyCap: user.dailyTokenCap ?? env.DEFAULT_DAILY_TOKEN_CAP,
-      // The env defaults, separate from the effective caps above. The quota
-      // form's placeholder means "what you get if you leave this blank", so
-      // showing the user's own override there told them clearing the field
-      // would keep the override it was about to discard.
-      globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
-      globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
-      dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
-      weeklyTokens: tokensIn(weeklyAgg),
-      weeklyCap: user.weeklyTokenCap ?? env.DEFAULT_WEEKLY_TOKEN_CAP,
-      weeklyCostMicros: weeklyAgg._sum.costMicros ?? 0,
-    },
-  };
-}
+    const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+
+    return {
+      user,
+      messageCount,
+      messages,
+      documents,
+      facts,
+      activeReminders,
+      pastReminders,
+      usageByDay: bucketByDay(recentUsage),
+      // Not named `window`: destructuring that in a component shadows the DOM
+      // global and trips lint rules for no benefit.
+      usageWindow: {
+        dailyTokens: tokensIn(dailyAgg),
+        dailyCap: user.dailyTokenCap ?? (isUnlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP),
+        // The env defaults, separate from the effective caps above. The quota
+        // form's placeholder means "what you get if you leave this blank", so
+        // showing the user's own override there told them clearing the field
+        // would keep the override it was about to discard.
+        globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
+        globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
+        dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
+        weeklyTokens: tokensIn(weeklyAgg),
+        weeklyCap: user.weeklyTokenCap ?? (isUnlimited ? null : env.DEFAULT_WEEKLY_TOKEN_CAP),
+        weeklyCostMicros: weeklyAgg._sum.costMicros ?? 0,
+      },
+    };
+  }
 
 export type UserDetail = NonNullable<Awaited<ReturnType<typeof getUserDetail>>>;
 
@@ -378,8 +516,10 @@ export function formatCost(micros: number): string {
 }
 
 /** `1234567` → `"1.23M"`. Used by every page that shows token counts. */
-export function formatTokens(n: number): string {
+export function formatTokens(n: number | null | undefined): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return 'Unlimited';
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return String(n);
 }
+

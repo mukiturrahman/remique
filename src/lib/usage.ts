@@ -74,9 +74,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 export async function checkQuota(user: {
   id: string;
+  planTier?: string;
   dailyTokenCap: number | null;
   weeklyTokenCap: number | null;
 }): Promise<QuotaVerdict> {
+  const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+
+  // Unlimited tiers bypass token caps unless explicit custom numeric overrides are set.
+  // Skipping aggregations also avoids two queries on the critical inbound message path.
+  if (isUnlimited && user.dailyTokenCap === null && user.weeklyTokenCap === null) {
+    return { allowed: true, window: null, used: 0, cap: Infinity };
+  }
+
   const now = Date.now();
   const dayAgo = new Date(now - DAY_MS);
   const weekAgo = new Date(now - 7 * DAY_MS);
@@ -84,19 +93,25 @@ export async function checkQuota(user: {
   const [daily, weekly] = await Promise.all([
     prisma.usageEvent.aggregate({
       where: { userId: user.id, createdAt: { gte: dayAgo } },
-      _sum: { inputTokens: true, outputTokens: true },
+      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true },
     }),
     prisma.usageEvent.aggregate({
       where: { userId: user.id, createdAt: { gte: weekAgo } },
-      _sum: { inputTokens: true, outputTokens: true },
+      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true },
     }),
   ]);
 
-  const sum = (a: { _sum: { inputTokens: number | null; outputTokens: number | null } }) =>
-    (a._sum.inputTokens ?? 0) + (a._sum.outputTokens ?? 0);
+  const sum = (a: { _sum: { inputTokens: number | null; cachedTokens: number | null; outputTokens: number | null } }) =>
+    (a._sum.inputTokens ?? 0) - (a._sum.cachedTokens ?? 0) + (a._sum.outputTokens ?? 0);
+
+  // Circuit breakers since we don't have a free tier anymore. Limits are set incredibly high
+  // to prevent bugs/abuse from burning money, but legitimate users won't hit them.
+  const dailyCap = user.dailyTokenCap ?? (isUnlimited ? Infinity : env.DEFAULT_DAILY_TOKEN_CAP);
+  const weeklyCap = user.weeklyTokenCap ?? (isUnlimited ? Infinity : env.DEFAULT_WEEKLY_TOKEN_CAP);
 
   return quotaVerdict(
-    { used: sum(daily), cap: user.dailyTokenCap ?? env.DEFAULT_DAILY_TOKEN_CAP },
-    { used: sum(weekly), cap: user.weeklyTokenCap ?? env.DEFAULT_WEEKLY_TOKEN_CAP }
+    { used: sum(daily), cap: dailyCap },
+    { used: sum(weekly), cap: weeklyCap }
   );
 }
+

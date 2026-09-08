@@ -110,8 +110,10 @@ export default async function AdminUserDetailPage({
           weeklyTokenCap={user.weeklyTokenCap}
           defaultDaily={usageWindow.globalDailyCap}
           defaultWeekly={usageWindow.globalWeeklyCap}
+          isUnlimited={user.planTier === 'permanent' || user.planTier === 'pro'}
         />
       </Section>
+
 
       <Section title={`Active reminders (${activeReminders.length})`}>
         {activeReminders.length === 0 ? (

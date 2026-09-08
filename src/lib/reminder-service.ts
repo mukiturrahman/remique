@@ -28,7 +28,7 @@ import {
  * single message. If someone ever stores more than this, the oldest fall out of
  * reach and this needs to become a real search rather than a bigger number.
  */
-const DOCUMENT_CANDIDATE_LIMIT = 100;
+const DOCUMENT_CANDIDATE_LIMIT = 20;
 
 /** Most files we will push into one thread in response to one request. */
 const MAX_DOCUMENTS_PER_SEND = 5;
@@ -42,8 +42,8 @@ const MAX_DOCUMENTS_PER_SEND = 5;
  * message. Most recent wins; beyond this it needs real retrieval, not a
  * bigger number.
  */
-const FACT_LIMIT = 60;
-const NOTE_LIMIT = 40;
+const FACT_LIMIT = 30;
+const NOTE_LIMIT = 20;
 
 /**
  * How many earlier messages are replayed to the model as conversation context.
@@ -57,12 +57,12 @@ export const RECENT_TURNS_LIMIT = 8;
 /**
  * Max age of conversation turns replayed to the model.
  *
- * Messages older than 30 minutes belong to an earlier interaction. Dropping
+ * Messages older than 15 minutes belong to an earlier interaction. Dropping
  * them stops stale context from leaking into fresh tasks, avoids ambiguous
  * referents ("cancel that" acting on a task settled hours ago), and saves
  * hundreds of tokens on every fresh session.
  */
-export const RECENT_TURNS_MAX_AGE_MS = 30 * 60 * 1000;
+export const RECENT_TURNS_MAX_AGE_MS = 15 * 60 * 1000;
 
 /** How many future reminders beyond today the model is shown. */
 const UPCOMING_CONTEXT_LIMIT = 10;

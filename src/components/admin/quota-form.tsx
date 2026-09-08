@@ -9,12 +9,14 @@ export function QuotaForm({
   weeklyTokenCap,
   defaultDaily,
   defaultWeekly,
+  isUnlimited = false,
 }: {
   userId: string;
   dailyTokenCap: number | null;
   weeklyTokenCap: number | null;
   defaultDaily: number;
   defaultWeekly: number;
+  isUnlimited?: boolean;
 }) {
   const router = useRouter();
   const [daily, setDaily] = useState(dailyTokenCap === null ? '' : String(dailyTokenCap));
@@ -55,7 +57,7 @@ export function QuotaForm({
             step={1}
             value={daily}
             onChange={(e) => setDaily(e.target.value)}
-            placeholder={`${defaultDaily} (default)`}
+            placeholder={isUnlimited ? 'Unlimited (default)' : `${defaultDaily} (default)`}
             className="mt-1 w-full rounded-md border border-line bg-ground px-3 py-2 font-mono text-sm outline-none focus:border-brand"
           />
         </label>
@@ -67,7 +69,7 @@ export function QuotaForm({
             step={1}
             value={weekly}
             onChange={(e) => setWeekly(e.target.value)}
-            placeholder={`${defaultWeekly} (default)`}
+            placeholder={isUnlimited ? 'Unlimited (default)' : `${defaultWeekly} (default)`}
             className="mt-1 w-full rounded-md border border-line bg-ground px-3 py-2 font-mono text-sm outline-none focus:border-brand"
           />
         </label>

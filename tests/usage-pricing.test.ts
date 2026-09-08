@@ -105,4 +105,11 @@ describe('quotaVerdict', () => {
     assert.equal(v.allowed, false);
     assert.equal(v.window, 'daily');
   });
+
+  test('an infinite cap allows arbitrary token spend without blocking', () => {
+    const v = quotaVerdict({ used: 500_000, cap: Infinity }, { used: 2_000_000, cap: Infinity });
+    assert.equal(v.allowed, true);
+    assert.equal(v.window, null);
+  });
 });
+

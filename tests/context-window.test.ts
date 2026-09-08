@@ -9,8 +9,8 @@ test('RECENT_TURNS constants', async (t) => {
     assert.equal(RECENT_TURNS_LIMIT, 8);
   });
 
-  await t.test('limits conversation session age to 30 minutes', () => {
-    assert.equal(RECENT_TURNS_MAX_AGE_MS, 30 * 60 * 1000);
+  await t.test('limits conversation session age to 15 minutes', () => {
+    assert.strictEqual(RECENT_TURNS_MAX_AGE_MS, 15 * 60 * 1000);
   });
 });
 

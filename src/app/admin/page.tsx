@@ -98,7 +98,7 @@ export default async function AdminUsersPage({
   const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   const [users, totals] = await Promise.all([
-    listUsers({ sort, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    listUsers({ sort, period, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
     getDashboardTotals(period),
   ]);
 
@@ -207,7 +207,16 @@ export default async function AdminUsersPage({
         />
       </div>
 
-      <h2 className="mt-8 font-display text-lg tracking-tight">Users</h2>
+      <div className="mt-8 flex items-baseline justify-between">
+        <div>
+          <h2 className="font-display text-lg tracking-tight">Users</h2>
+          <p className="mt-0.5 text-xs text-ink-3">
+            {period === 'all'
+              ? 'Showing lifetime activity and spend across all users.'
+              : `Usage columns show metrics for ${PERIOD_LABELS[period].toLowerCase()}, with all-time figures underneath.`}
+          </p>
+        </div>
+      </div>
 
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[64rem] border-collapse text-sm">
@@ -215,50 +224,120 @@ export default async function AdminUsersPage({
             <tr className="border-b border-line-strong text-left text-xs uppercase tracking-wide text-ink-3">
               <th className="py-2 pr-4 font-medium">User</th>
               <th className="py-2 pr-4 font-medium">Joined</th>
-              <th className="py-2 pr-4 font-medium">Plan</th>
-              <th className="py-2 pr-4 text-right font-medium">Messages</th>
-              <th className="py-2 pr-4 text-right font-medium">Tokens</th>
-              <th className="py-2 pr-4 text-right font-medium">Cost</th>
+              <th className="py-2 pr-4 font-medium">Plan & Quota</th>
+              <th className="py-2 pr-4 text-right font-medium">
+                Messages {period !== 'all' ? `(${PERIOD_LABELS[period]})` : ''}
+              </th>
+              <th className="py-2 pr-4 text-right font-medium">
+                Tokens {period !== 'all' ? `(${PERIOD_LABELS[period]})` : ''}
+              </th>
+              <th className="py-2 pr-4 text-right font-medium">
+                Cost {period !== 'all' ? `(${PERIOD_LABELS[period]})` : ''}
+              </th>
               <th className="py-2 pr-4 text-right font-medium">Files</th>
               <th className="py-2 pr-4 text-right font-medium">Reminders</th>
               <th className="py-2 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-line hover:bg-ground-2">
-                <td className="py-3 pr-4">
-                  <Link href={`/admin/users/${u.id}`} className="hover:text-brand-deep">
-                    <span className="block">{u.name ?? 'Unnamed'}</span>
-                    <span className="block font-mono text-xs text-ink-3">{u.phoneNumber}</span>
-                  </Link>
-                </td>
-                <td className="py-3 pr-4 font-mono text-xs text-ink-3">
-                  {formatDate(u.createdAt)}
-                </td>
-                <td className="py-3 pr-4">
-                  <PlanBadge tier={u.planTier} expiresAt={u.planExpiresAt} />
-                </td>
-                <td className="py-3 pr-4 text-right font-mono">{u._count.messages}</td>
-                <td className="py-3 pr-4 text-right font-mono">
-                  {formatTokens(u.totalInputTokens + u.totalOutputTokens)}
-                </td>
-                <td className="py-3 pr-4 text-right font-mono">{formatCost(u.totalCostMicros)}</td>
-                <td className="py-3 pr-4 text-right font-mono">{u._count.documents}</td>
-                <td className="py-3 pr-4 text-right font-mono">{u._count.reminders}</td>
-                <td className="py-3">
-                  {u.blockedAt ? (
-                    <span className="rounded bg-signal-ink px-2 py-0.5 text-xs text-white">
-                      Blocked
-                    </span>
-                  ) : (
-                    <span className="text-xs text-ink-3">Active</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {users.map((u) => {
+              const isUnlimited = u.planTier === 'permanent' || u.planTier === 'pro';
+              const effectiveDailyCap = u.dailyTokenCap ?? (isUnlimited ? null : 150_000);
+
+              return (
+                <tr key={u.id} className="border-b border-line hover:bg-ground-2">
+                  <td className="py-3 pr-4">
+                    <Link href={`/admin/users/${u.id}`} className="hover:text-brand-deep">
+                      <span className="block font-medium text-ink">{u.name ?? 'Unnamed'}</span>
+                      <span className="block font-mono text-xs text-ink-3">{u.phoneNumber}</span>
+                    </Link>
+                  </td>
+                  <td className="py-3 pr-4 font-mono text-xs text-ink-3">
+                    <div>{formatDate(u.createdAt)}</div>
+                    <div className="text-[10px] text-ink-4">Active: {formatDate(u.updatedAt)}</div>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="flex flex-col items-start gap-1">
+                      <PlanBadge tier={u.planTier} expiresAt={u.planExpiresAt} />
+                      {isUnlimited ? (
+                        <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+                          Unlimited quota
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-mono text-ink-3">
+                          Cap: {formatTokens(effectiveDailyCap)}/d
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    <div
+                      className={
+                        period !== 'all' && u.periodMessages === 0
+                          ? 'text-ink-3'
+                          : 'text-ink font-medium'
+                      }
+                    >
+                      {u.periodMessages.toLocaleString()}
+                    </div>
+                    {period !== 'all' ? (
+                      <div className="text-[11px] text-ink-3" title="Lifetime messages">
+                        All-time: {u._count.messages.toLocaleString()}
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    <div
+                      className={
+                        period !== 'all' && u.periodTokens === 0
+                          ? 'text-ink-3'
+                          : 'text-ink font-medium'
+                      }
+                    >
+                      {formatTokens(u.periodTokens)}
+                    </div>
+                    {period !== 'all' ? (
+                      <div className="text-[11px] text-ink-3" title="Lifetime tokens">
+                        All-time: {formatTokens(u.totalInputTokens + u.totalOutputTokens)}
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    <div
+                      className={
+                        period !== 'all' && u.periodCostMicros === 0
+                          ? 'text-ink-3'
+                          : 'text-ink font-medium'
+                      }
+                    >
+                      {formatCost(u.periodCostMicros)}
+                    </div>
+                    {period !== 'all' ? (
+                      <div className="text-[11px] text-ink-3" title="Lifetime cost">
+                        All-time: {formatCost(u.totalCostMicros)}
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">{u._count.documents}</td>
+                  <td className="py-3 pr-4 text-right font-mono">{u._count.reminders}</td>
+                  <td className="py-3">
+                    {u.blockedAt ? (
+                      <span className="rounded bg-signal-ink px-2 py-0.5 text-xs text-white">
+                        Blocked
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-ink-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Active
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+
 
         {users.length === 0 ? (
           <p className="py-12 text-center text-sm text-ink-3">
