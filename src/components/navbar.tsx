@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useCopy } from "./lang-provider";
-import { LangToggle } from "./lang-toggle";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -19,11 +18,8 @@ export function Navbar() {
     { href: "/faq", label: c.nav.faq },
   ];
 
-  // Only the landing page is translated, so the toggle would do nothing anywhere else.
-  const showLangToggle = pathname === "/";
-
   return (
-    <header className="fixed inset-x-0 top-4 z-50 mx-auto w-full max-w-5xl px-4 sm:top-6">
+    <header className="fixed inset-x-0 top-4 z-40 mx-auto w-full max-w-5xl px-4 sm:top-6 max-xl:pr-28 max-sm:pr-24">
       <nav className="mx-auto flex h-[64px] items-center gap-4 rounded-full border border-white/40 bg-ground/60 px-5 shadow-lg backdrop-blur-xl sm:px-8">
         <Link href="/" className="flex items-center gap-2.5 rounded-md">
           <Image src="/logo.png" alt={c.nav.logoAlt} width={56} height={44} className="bob h-10 w-auto object-contain" />
@@ -49,13 +45,9 @@ export function Navbar() {
           ))}
         </div>
 
-        {showLangToggle && <LangToggle className="ml-auto lg:ml-4" />}
-
         <Link
           href="/pricing"
-          className={`inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[14.5px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep lg:ml-1 ${
-            showLangToggle ? "ml-2 max-lg:hidden" : "ml-auto lg:ml-4"
-          }`}
+          className="ml-auto hidden items-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[14.5px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep lg:inline-flex lg:ml-4"
         >
           {c.nav.getStarted}
         </Link>
@@ -64,7 +56,7 @@ export function Navbar() {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="relative grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line text-ink-2 lg:hidden"
+          className="relative ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line text-ink-2 lg:hidden"
           aria-label={open ? c.nav.closeMenu : c.nav.openMenu}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" className="h-5 w-5">
@@ -95,15 +87,13 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {showLangToggle && (
-              <Link
-                href="/pricing"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[15px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep"
-              >
-                {c.nav.getStarted}
-              </Link>
-            )}
+            <Link
+              href="/pricing"
+              onClick={() => setOpen(false)}
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[15px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep"
+            >
+              {c.nav.getStarted}
+            </Link>
           </div>
         </div>
       )}

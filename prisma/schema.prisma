@@ -38,6 +38,14 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
 enum MessageDirection {
   INBOUND
   OUTBOUND
@@ -92,6 +100,7 @@ model User {
   facts             Fact[]
   usageEvents       UsageEvent[]
   payments          Payment[]
+  subscription      Subscription?
 
   @@map("users")
 }
@@ -201,9 +210,42 @@ model Payment {
   updatedAt DateTime @updatedAt @map("updated_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([subscriptionId])
   @@map("payments")
+}
+
+// User's recurring billing subscription via bdApps bKash SDK.
+model Subscription {
+  id                 String             @id @default(uuid())
+  userId             String             @unique @map("user_id")
+  planTier           String             @default("pro") @map("plan_tier")
+  planPeriod         String             @default("monthly") @map("plan_period")
+  amount             Decimal            @db.Decimal(12, 2)
+  currency           String             @default("BDT")
+  status             SubscriptionStatus @default(ACTIVE)
+
+  // bdApps subscription identifiers
+  requestId          String?            @unique @map("request_id")
+  subscriberId       String?            @map("subscriber_id")
+
+  // Billing cycle timestamps
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments           Payment[]
+
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
 }
 
 // A single durable thing the bot knows about the user, e.g.

@@ -426,6 +426,56 @@ export async function processIncomingUserMessage(
     return;
   }
 
+  // ── Quick billing commands (handled without an LLM call) ────────
+  const normalized = userMessage.trim().toLowerCase();
+  if (/^(upgrade|subscribe|pricing|plans?|pro|প্রো|প্ল্যান)\b/i.test(normalized)) {
+    const appUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
+    const cleanPhone = user.phoneNumber.replace(/^\+/, '');
+    const checkoutUrl = `${appUrl}/pricing?phone=${cleanPhone}`;
+
+    await replyToUser(
+      user,
+      `🌟 *Remique Pro Plans* 🌟\n\n` +
+        `• *Weekly:* ৳49 / week\n` +
+        `• *Monthly:* ৳190 / month\n\n` +
+        `Unlimited reminders, zero token caps, and priority queue.\n\n` +
+        `Subscribe securely with bKash Auto-Pay:\n${checkoutUrl}`
+    );
+    return;
+  }
+
+  if (/^(cancel subscription|stop subscription|cancel pro)\b/i.test(normalized)) {
+    const { cancelSubscription } = await import('./bdapps/subscription-service');
+    const res = await cancelSubscription(user.id);
+    if (!res.success) {
+      await replyToUser(user, "You don't have an active subscription right now. You are on the Free tier.");
+    } else {
+      await replyToUser(
+        user,
+        "Your Pro subscription has been cancelled. You can resubscribe anytime by messaging *pro*."
+      );
+    }
+    return;
+  }
+
+  if (/^(subscription status|my plan|billing status|account status)\b/i.test(normalized)) {
+    const isPro = user.planTier === 'pro';
+    const expires = user.planExpiresAt
+      ? user.planExpiresAt.toLocaleDateString('en-GB')
+      : 'N/A';
+
+    await replyToUser(
+      user,
+      `📋 *Your Account Status*\n\n` +
+        `• Plan: *${isPro ? 'Pro' : 'Free'}*\n` +
+        (isPro ? `• Active until: ${expires}\n` : '') +
+        (isPro
+          ? `• Features: Unlimited reminders\n\nTo cancel anytime, reply "cancel subscription".`
+          : `• Features: Standard daily allowance\n\nTo upgrade to Pro, reply "upgrade".`)
+    );
+    return;
+  }
+
   const activeState =
     prefetchedState !== undefined
       ? prefetchedState

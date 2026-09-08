@@ -42,6 +42,11 @@ const envSchema = z.object({
   // exist so a missing value is visible in the startup validation output.
   ADMIN_PASSWORD: z.string().optional(),
   ADMIN_SESSION_SECRET: z.string().optional(),
+  // bdApps bKash SDK credentials
+  BDAPPS_API_KEY: z.string().optional(),
+  BDAPPS_API_SECRET: z.string().optional(),
+  BDAPPS_AUTH_URL: z.string().url().default('https://user.bdapps.com/sdk/subscription/authorize'),
+  BDAPPS_APP_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -92,4 +97,8 @@ export const env: Env = _parsed.success
       DEFAULT_WEEKLY_TOKEN_CAP: positiveIntOr(process.env.DEFAULT_WEEKLY_TOKEN_CAP, 700_000),
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
       ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+      BDAPPS_API_KEY: process.env.BDAPPS_API_KEY,
+      BDAPPS_API_SECRET: process.env.BDAPPS_API_SECRET,
+      BDAPPS_AUTH_URL: process.env.BDAPPS_AUTH_URL || 'https://user.bdapps.com/sdk/subscription/authorize',
+      BDAPPS_APP_ID: process.env.BDAPPS_APP_ID,
     };

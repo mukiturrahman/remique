@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono, Anek_Bangla, Caveat } from "next/font/google";
+import { LangProvider } from "@/components/lang-provider";
+import { FloatingLangToggle } from "@/components/lang-toggle";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -85,7 +87,10 @@ export default function RootLayout({
     >
       <body className="antialiased min-h-screen bg-ground font-sans text-ink">
         <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
-        {children}
+        <LangProvider>
+          <FloatingLangToggle />
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

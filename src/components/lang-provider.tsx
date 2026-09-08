@@ -41,6 +41,14 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
+    useEffect(() => {
+        try {
+            document.documentElement.lang = lang;
+        } catch {
+            // Document not available
+        }
+    }, [lang]);
+
     return (
         <LangContext.Provider value={{ lang, setLang }}>
             <div lang={lang}>{children}</div>

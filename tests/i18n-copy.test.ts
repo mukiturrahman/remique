@@ -16,6 +16,9 @@ const SHARED_PATHS = new Set([
   'loop.timezone',
   'pricing.tier',
   'pricing.planName',
+  'pricingPage.tier',
+  'pricingPage.planName',
+  'pricingPage.modal.phonePlaceholder',
 ]);
 
 type Node = unknown;

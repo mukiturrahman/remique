@@ -10,7 +10,7 @@ import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
 import { PhoneFrame } from "@/components/phone-frame";
 import { HomeFaq } from "@/components/home-faq";
 import { HomePricing } from "@/components/home-pricing";
-import { LangProvider, useCopy, useLang } from "@/components/lang-provider";
+import { useCopy, useLang } from "@/components/lang-provider";
 import {
     IconArrow,
     MarkWhatsApp,
@@ -199,11 +199,7 @@ function BuriedPanel({ src, alt }: { src: string; alt: string }) {
 /* ── PAGE ───────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
-    return (
-        <LangProvider>
-            <HomeContent />
-        </LangProvider>
-    );
+    return <HomeContent />;
 }
 
 function HomeContent() {
@@ -238,8 +234,8 @@ function HomeContent() {
                         {/* LEFT COLUMN */}
                         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
                             {/* Social proof pill */}
-                            <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-white/40 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-md">
-                                <div className="flex -space-x-2">
+                            <div className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-2xl border border-white/40 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-md sm:rounded-full">
+                                <div className="flex -space-x-2 shrink-0">
                                     {/* Note: In production you would use next/image here, but img works for standard external avatars */}
                                     <img
                                         src="https://i.pravatar.cc/100?img=33"
@@ -257,7 +253,7 @@ function HomeContent() {
                                         alt={c.hero.avatarAlt}
                                     />
                                 </div>
-                                <span className="whitespace-nowrap pr-1 text-[13px] font-medium text-ink-2">
+                                <span className="text-left text-[12px] font-medium leading-snug text-ink-2 sm:text-[13.5px] sm:whitespace-nowrap pr-1">
                                     {c.hero.socialProof}
                                 </span>
                             </div>

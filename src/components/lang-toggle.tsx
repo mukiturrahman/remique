@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useCopy, useLang } from "./lang-provider";
 import type { Lang } from "@/lib/i18n/copy";
 
@@ -41,5 +42,27 @@ export function LangToggle({ className = "" }: { className?: string }) {
                 );
             })}
         </div>
+    );
+}
+
+/**
+ * Floating language toggle anchored in the top-right corner of the page.
+ * Stays fixed and visible while scrolling on every public page.
+ * Has z-[60] so it sits above the header, with responsive spacing.
+ */
+export function FloatingLangToggle() {
+    const pathname = usePathname();
+
+    if (pathname?.startsWith("/admin")) {
+        return null;
+    }
+
+    return (
+        <aside
+            aria-label="Language selector"
+            className="fixed top-4 right-4 sm:top-6 sm:right-6 lg:right-8 z-[60] flex items-center"
+        >
+            <LangToggle />
+        </aside>
     );
 }
