@@ -131,3 +131,61 @@ export function snoozeMessage(userName: string | null, whenPhrase: string): stri
   const name = shortName(userName);
   return pickRandom(SNOOZE_LINES)(name ? `, ${name}` : '', whenPhrase);
 }
+
+const CONFLICT_WARNING_LINES = [
+  (n: string, exist: string, fresh: string, w: string) =>
+    `Wait a sec${n}! 😮 You already have *"${exist}"* scheduled for ${w}.\n\nDid you still want me to set *"${fresh}"* at the exact same time, or should we pick another time? ⏰`,
+  (n: string, exist: string, fresh: string, w: string) =>
+    `Heads up${n}! 😅 Looks like you've already got *"${exist}"* on your plate for ${w}.\n\nWant me to double-book it with *"${fresh}"* anyway, or would you like to nudge it a bit? 🗓️`,
+  (n: string, exist: string, fresh: string, w: string) =>
+    `Hold on${n}! 👀 You already have a reminder for *"${exist}"* at ${w}.\n\nShould I go ahead and add *"${fresh}"* for the same time, or pick a different time? ✨`,
+];
+
+export function conflictWarningMessage(
+  userName: string | null,
+  existingTitle: string,
+  newTitle: string,
+  whenPhrase: string
+): string {
+  const name = shortName(userName);
+  const suffix = name ? `, ${name}` : '';
+  return pickRandom(CONFLICT_WARNING_LINES)(suffix, existingTitle, newTitle, whenPhrase);
+}
+
+const CONFLICT_CONFIRMED_LINES = [
+  (n: string, fresh: string, exist: string, w: string) =>
+    `You got it${n}! 🎯 Doubled up — I've set *"${fresh}"* for ${w} alongside *"${exist}"*.`,
+  (n: string, fresh: string, exist: string, w: string) =>
+    `Done${n}! 👍 Both *"${exist}"* and *"${fresh}"* are locked in for ${w}. I'll ping you about both!`,
+  (n: string, fresh: string, exist: string, w: string) =>
+    `All set${n}! ⚡ Added *"${fresh}"* at ${w} right with *"${exist}"*.`,
+];
+
+export function conflictConfirmedMessage(
+  userName: string | null,
+  existingTitle: string,
+  newTitle: string,
+  whenPhrase: string
+): string {
+  const name = shortName(userName);
+  const suffix = name ? `, ${name}` : '';
+  return pickRandom(CONFLICT_CONFIRMED_LINES)(suffix, newTitle, existingTitle, whenPhrase);
+}
+
+const CONFLICT_DECLINED_LINES = [
+  (n: string, exist: string, w: string) =>
+    `No problem at all${n}! 👍 Kept ${w} clear just for *"${exist}"*. Let me know when you need me!`,
+  (n: string, exist: string, w: string) =>
+    `Got it${n}! 😊 Skipped that one — only *"${exist}"* remains set for ${w}.`,
+];
+
+export function conflictDeclinedMessage(
+  userName: string | null,
+  existingTitle: string,
+  whenPhrase: string
+): string {
+  const name = shortName(userName);
+  const suffix = name ? `, ${name}` : '';
+  return pickRandom(CONFLICT_DECLINED_LINES)(suffix, existingTitle, whenPhrase);
+}
+

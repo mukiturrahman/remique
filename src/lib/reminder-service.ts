@@ -12,7 +12,14 @@ import type { PipelineMessage } from './message-pipeline';
 import type { ParsedAssistantResponse } from '../types/llm.types';
 import { DateTime } from 'luxon';
 import { randomUUID } from 'crypto';
-import { doneMessage, shortName, snoozeMessage } from './reminder-voice';
+import {
+  conflictConfirmedMessage,
+  conflictDeclinedMessage,
+  conflictWarningMessage,
+  doneMessage,
+  shortName,
+  snoozeMessage,
+} from './reminder-voice';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -45,7 +52,17 @@ const NOTE_LIMIT = 40;
  * or "make it 9pm" against what was actually said; short enough that it does
  * not crowd out KNOWN FACTS or the document list.
  */
-const RECENT_TURNS_LIMIT = 8;
+export const RECENT_TURNS_LIMIT = 8;
+
+/**
+ * Max age of conversation turns replayed to the model.
+ *
+ * Messages older than 30 minutes belong to an earlier interaction. Dropping
+ * them stops stale context from leaking into fresh tasks, avoids ambiguous
+ * referents ("cancel that" acting on a task settled hours ago), and saves
+ * hundreds of tokens on every fresh session.
+ */
+export const RECENT_TURNS_MAX_AGE_MS = 30 * 60 * 1000;
 
 /** How many future reminders beyond today the model is shown. */
 const UPCOMING_CONTEXT_LIMIT = 10;
@@ -59,6 +76,9 @@ const UPCOMING_CONTEXT_LIMIT = 10;
  */
 const AFFIRMATIVE =
   /^(y|ya|yes|yeah|yep|yup|sure|ok|okay|please|send|send it|send them|do it|ha|haa|hae|hyan|hmm|accha|acha|thik|জি|হ্যাঁ|হ্যা|পাঠাও)\b/i;
+
+const NEGATIVE =
+  /^(n|no|nope|nah|never|nevermind|never mind|leave it|cancel|skip|stop|dont|don't|not now|na|thak|lagbe na|দরকার নাই|না)\b/i;
 
 /** Upper bound on one "what's coming up?" answer. */
 const REMINDER_LIST_LIMIT = 10;
@@ -490,6 +510,7 @@ export async function processIncomingUserMessage(
   // together — this is on the user's critical path.
   const dayStart = DateTime.now().setZone(user.timezone).startOf('day').toJSDate();
   const dayEnd = DateTime.now().setZone(user.timezone).endOf('day').toJSDate();
+  const sessionCutoff = new Date(Date.now() - RECENT_TURNS_MAX_AGE_MS);
 
   const [userNotes, userFacts, recentMessages, todayReminders, upcomingContext, userDocuments] =
     await Promise.all([
@@ -505,9 +526,15 @@ export async function processIncomingUserMessage(
     }),
     // The message being answered is already persisted, so it is excluded here —
     // otherwise the model sees the current question twice and treats its own
-    // input as prior context.
+    // input as prior context. Messages older than the session cutoff are
+    // dropped so settled conversations from hours ago do not burn tokens or
+    // confuse referents in fresh tasks.
     prisma.message.findMany({
-      where: { userId: user.id, id: { not: message.id } },
+      where: {
+        userId: user.id,
+        id: { not: message.id },
+        createdAt: { gte: sessionCutoff },
+      },
       orderBy: { createdAt: 'desc' },
       take: RECENT_TURNS_LIMIT,
       select: { direction: true, messageText: true },
@@ -655,6 +682,85 @@ export async function processIncomingUserMessage(
     }
   }
 
+  // ─── Flow K: "Yes, add both" or "No, keep clear" for same-time conflict ──
+  if (activeState?.pendingIntent === 'confirm_conflict') {
+    const pending = activeState.pendingData as {
+      pendingReminder?: {
+        title: string;
+        originalMessage: string;
+        scheduledAt: string;
+        category: string;
+        recurrenceRule: string | null;
+        anchorAt: string | null;
+        anchorTitle: string | null;
+        offsetMinutes: number | null;
+        groupId: string | null;
+      };
+      conflictingTitle?: string;
+      whenPhrase?: string;
+    } | null;
+
+    if (pending?.pendingReminder) {
+      const trimmed = userMessage.trim();
+      const isAffirmative =
+        AFFIRMATIVE.test(trimmed) ||
+        /\b(both|keep both|add it|yes|same time|double|do it|save it|proceed|hae|thik|thik ache)\b/i.test(trimmed);
+      const isNegative =
+        NEGATIVE.test(trimmed) ||
+        /\b(don't|dont|never mind|nevermind|leave it|cancel|skip|no|na|lagbe na)\b/i.test(trimmed);
+
+      if (isAffirmative) {
+        const item = pending.pendingReminder;
+        const reminder = await prisma.reminder.create({
+          data: {
+            userId: user.id,
+            title: item.title,
+            originalMessage: item.originalMessage,
+            scheduledAt: new Date(item.scheduledAt),
+            timezone: user.timezone,
+            category: normalizeCategory(item.category),
+            recurrenceRule: item.recurrenceRule,
+            anchorAt: item.anchorAt ? new Date(item.anchorAt) : null,
+            anchorTitle: item.anchorTitle,
+            offsetMinutes: item.offsetMinutes,
+            groupId: item.groupId,
+            status: 'SCHEDULED',
+          },
+        });
+
+        await Promise.all([
+          scheduleReminderDelivery(reminder.id, reminder.scheduledAt),
+          prisma.conversationState.deleteMany({ where: { userId: user.id } }),
+        ]);
+
+        const when = friendlyWhen(reminder.scheduledAt, user.timezone);
+        await replyToUser(
+          user,
+          conflictConfirmedMessage(
+            user.name,
+            pending.conflictingTitle || 'your existing reminder',
+            item.title,
+            when
+          )
+        );
+        return;
+      }
+
+      if (isNegative) {
+        await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+        await replyToUser(
+          user,
+          conflictDeclinedMessage(
+            user.name,
+            pending.conflictingTitle || 'your existing reminder',
+            pending.whenPhrase || 'that time'
+          )
+        );
+        return;
+      }
+    }
+  }
+
   // ─── Flow I: Documents — list, then send ────────────────────────────
   if (parsed.intent === 'list_documents') {
     await handleListDocuments(user, userDocuments, parsed.document_indices ?? []);
@@ -743,6 +849,82 @@ export async function processIncomingUserMessage(
       // A group is only meaningful when several alerts share an event, or when
       // one alert has an anchor a later message might add siblings to.
       const groupId = requested.length > 1 || anchorAt ? randomUUID() : null;
+
+      // Check for same-time conflict with an existing scheduled reminder
+      if (requested.length === 1 && activeState?.pendingIntent !== 'confirm_conflict') {
+        const first = requested[0];
+        const validated = validateAndNormalizeDate(first.scheduled_iso, user.timezone);
+        if (validated.isValid && validated.scheduledAtUtc) {
+          const conflicting = await prisma.reminder.findFirst({
+            where: {
+              userId: user.id,
+              status: 'SCHEDULED',
+              scheduledAt: validated.scheduledAtUtc,
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+
+          if (conflicting) {
+            const newTitle = first.title?.trim() || anchorTitle || 'Reminder';
+            const when = friendlyWhen(validated.scheduledAtUtc, user.timezone);
+
+            await prisma.conversationState.upsert({
+              where: { userId: user.id },
+              update: {
+                pendingIntent: 'confirm_conflict',
+                pendingData: {
+                  pendingReminder: {
+                    title: newTitle,
+                    originalMessage: userMessage,
+                    scheduledAt: validated.scheduledAtUtc.toISOString(),
+                    category: normalizeCategory(first.category ?? parsed.category),
+                    recurrenceRule: normalizeRecurrence(first.recurrence ?? parsed.recurrence),
+                    anchorAt: anchorAt ? anchorAt.toISOString() : null,
+                    anchorTitle,
+                    offsetMinutes:
+                      typeof first.offset_minutes === 'number' && first.offset_minutes > 0
+                        ? first.offset_minutes
+                        : null,
+                    groupId,
+                  },
+                  conflictingTitle: conflicting.title,
+                  whenPhrase: when,
+                },
+                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
+              },
+              create: {
+                userId: user.id,
+                pendingIntent: 'confirm_conflict',
+                pendingData: {
+                  pendingReminder: {
+                    title: newTitle,
+                    originalMessage: userMessage,
+                    scheduledAt: validated.scheduledAtUtc.toISOString(),
+                    category: normalizeCategory(first.category ?? parsed.category),
+                    recurrenceRule: normalizeRecurrence(first.recurrence ?? parsed.recurrence),
+                    anchorAt: anchorAt ? anchorAt.toISOString() : null,
+                    anchorTitle,
+                    offsetMinutes:
+                      typeof first.offset_minutes === 'number' && first.offset_minutes > 0
+                        ? first.offset_minutes
+                        : null,
+                    groupId,
+                  },
+                  conflictingTitle: conflicting.title,
+                  whenPhrase: when,
+                },
+                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
+              },
+            });
+
+            await replyToUser(
+              user,
+              conflictWarningMessage(user.name, conflicting.title, newTitle, when)
+            );
+            return;
+          }
+        }
+      }
 
       const created: Array<{
         id: string;

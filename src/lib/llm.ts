@@ -24,6 +24,7 @@ HOW TO TALK — this governs every reply_text you write:
 - Lead with the answer. Then the useful extra. Then offer the next step if one obviously exists, phrased as a question.
 - NEVER answer a lookup with a bare yes or no. If nothing is scheduled, say so AND say what they do have, or that the day is clear. Use REMINDERS TODAY and UPCOMING REMINDERS below — that is their real schedule.
 - Sound like a person texting. Short sentences. Contractions. Under about 40 words unless they asked for a full list.
+- Express genuine human emotion, warmth, and care. You are not a cold robot. React with natural feeling: excitement for milestones, helpful attentiveness when schedules get tight or overlapping, empathy when someone is overloaded, and friendly warmth. Use emojis naturally (e.g. 😅, 😮, ⏰, 🎂, 👍).
 - Use their name naturally, roughly once every few messages, not in every reply.
 - No bullet lists unless they asked to see a list of many reminders.
 - At most ONE question per message.
@@ -111,6 +112,8 @@ BANGLADESH / BANGLISH TEMPORAL MAPPINGS:
 - "bikal" / "bikale" / "late afternoon" / "বিকাল" -> Default to 17:00:00 local time
 - "shondha" / "shondhay" / "evening" / "সন্ধ্যা" -> Default to 19:30:00 local time
 - "raat" / "raate" / "night" / "tonight" / "রাত" -> Default to 21:00:00 local time
+- "12 in the morning" / "12 dupure" / "12ta dupure" / "12 shokale" -> 12:00:00 (noon / midday), NOT midnight, and NEVER the 12th day of the month
+- "12 at night" / "12ta raate" / "midnight" -> 00:00:00
 - "X min por" / "X ghonta por" -> Current time + X minutes/hours
 
 EXTRACTION RULES:
@@ -137,6 +140,15 @@ EXTRACTION RULES:
 2. Date & Time Parsing (for create_reminder):
    - Normalize to an absolute ISO-8601 string (YYYY-MM-DDTHH:mm:ss).
    - If only a date is provided, set needs_clarification: true and ask a natural question.
+   - BARE NUMBERS WITH TIME-OF-DAY ARE CLOCK HOURS, NEVER CALENDAR DAYS:
+     Phrases like "12 in the morning", "11 in the morning", "5 in the evening", "8 at night", "7 shokale", "12 dupure" ALWAYS indicate clock hours (e.g. 12:00, 11:00, 17:00, 20:00).
+     NEVER interpret a bare number in these phrases as a calendar day of the month (e.g. NEVER treat "12 in the morning" as the 12th day of the month, or Saturday!).
+     A number is only a calendar date if accompanied by explicit date terms (e.g. "12th", "September 12", "12 tarik", "tarikh 12").
+   - DEFAULT DAY WHEN NO DAY IS SPECIFIED:
+     When the user gives only a time (e.g. "at 5pm", "12 in the morning", "11 shokale"):
+     - If that time is in the future today: use TODAY.
+     - If that time has already passed today: use TOMORROW.
+     - NEVER pick an arbitrary day in the future (like Saturday) when no day was mentioned.
 
 3. Title Extraction (for create_reminder):
    - Extract the core task.
@@ -412,11 +424,25 @@ export interface ParseResult {
     usage: TokenUsage | null;
 }
 
-export async function parseUserMessage(
+/**
+ * Assembles the input text for OpenAI model extraction.
+ *
+ * Ordered carefully for OpenAI Prompt Caching:
+ * 1. Stable prefix: USER NAME, KNOWN FACTS, USER'S SAVED NOTES, SAVED DOCUMENTS,
+ *    and SCHEDULE (REMINDERS TODAY, UPCOMING REMINDERS). These remain identical
+ *    across consecutive messages from the same user, allowing OpenAI's prompt cache
+ *    to hit (discounting input tokens by ~50% and improving time-to-first-token).
+ * 2. Dynamic suffix: RECENT CONVERSATION, ATTACHED FILE, PENDING CONTEXT,
+ *    SYSTEM TEMPORAL CONTEXT (which has millisecond/second timestamps), and
+ *    USER MESSAGE. Placing temporal context directly alongside the user message
+ *    also optimizes recency bias for temporal reasoning.
+ */
+export function buildInputText(
     userMessage: string,
-    userTimezone: string = "Asia/Dhaka",
+    userTimezone: string,
+    nowUser: DateTime,
     options: ParseOptions = {},
-): Promise<ParseResult> {
+): string {
     const {
         pendingContext,
         savedNotes = [],
@@ -428,11 +454,48 @@ export async function parseUserMessage(
         savedDocuments = [],
         attachedFile,
     } = options;
-    const nowUser = DateTime.now().setZone(userTimezone);
+
+    const identitySection = [
+        `USER NAME: ${userName?.trim() ? userName.trim() : "(unknown - brand new user)"}`,
+        "",
+    ];
+
+    const factsSection =
+        knownFacts.length > 0
+            ? [
+                  "KNOWN FACTS:",
+                  ...knownFacts.map((f) => {
+                      const date = f.valueDate
+                          ? DateTime.fromJSDate(f.valueDate)
+                                .setZone(userTimezone)
+                                .toFormat("LLL d, yyyy")
+                          : null;
+                      return (
+                          `- ${f.subject} / ${f.predicate}: ${f.value}` +
+                          (date ? ` (date: ${date}${f.recurring ? ", yearly" : ""})` : "")
+                      );
+                  }),
+                  "",
+              ]
+            : [];
 
     const notesSection =
         savedNotes.length > 0
             ? ["USER'S SAVED NOTES:", ...savedNotes.map((n) => `- ${n}`), ""]
+            : [];
+
+    const documentsSection =
+        savedDocuments.length > 0
+            ? [
+                  "SAVED DOCUMENTS:",
+                  ...savedDocuments.map((doc, i) => {
+                      const when = DateTime.fromJSDate(doc.createdAt)
+                          .setZone(userTimezone)
+                          .toFormat("LLL d, yyyy");
+                      return `[${i + 1}] ${doc.label} (${doc.mediaType}, saved ${when})`;
+                  }),
+                  "",
+              ]
             : [];
 
     const renderEntry = (e: ScheduleEntry) => {
@@ -465,49 +528,11 @@ export async function parseUserMessage(
         "",
     ];
 
-    const identitySection = [
-        `USER NAME: ${userName?.trim() ? userName.trim() : "(unknown - brand new user)"}`,
-        "",
-    ];
-
     const historySection =
         recentTurns.length > 0
             ? [
                   "RECENT CONVERSATION (oldest first):",
                   ...recentTurns.map((t) => `${t.role === "user" ? "User" : "You"}: ${t.text}`),
-                  "",
-              ]
-            : [];
-
-    const factsSection =
-        knownFacts.length > 0
-            ? [
-                  "KNOWN FACTS:",
-                  ...knownFacts.map((f) => {
-                      const date = f.valueDate
-                          ? DateTime.fromJSDate(f.valueDate)
-                                .setZone(userTimezone)
-                                .toFormat("LLL d, yyyy")
-                          : null;
-                      return (
-                          `- ${f.subject} / ${f.predicate}: ${f.value}` +
-                          (date ? ` (date: ${date}${f.recurring ? ", yearly" : ""})` : "")
-                      );
-                  }),
-                  "",
-              ]
-            : [];
-
-    const documentsSection =
-        savedDocuments.length > 0
-            ? [
-                  "SAVED DOCUMENTS:",
-                  ...savedDocuments.map((doc, i) => {
-                      const when = DateTime.fromJSDate(doc.createdAt)
-                          .setZone(userTimezone)
-                          .toFormat("LLL d, yyyy");
-                      return `[${i + 1}] ${doc.label} (${doc.mediaType}, saved ${when})`;
-                  }),
                   "",
               ]
             : [];
@@ -521,24 +546,37 @@ export async function parseUserMessage(
           ]
         : [];
 
-    const inputText = [
+    const temporalSection = [
         "SYSTEM TEMPORAL CONTEXT:",
         `- Current Local Time: ${nowUser.toISO()} (${userTimezone})`,
         `- Current Day of Week: ${nowUser.toFormat("cccc")}`,
         `- Timezone: ${userTimezone}`,
         "",
+    ];
+
+    return [
         ...identitySection,
-        ...scheduleSection,
-        ...notesSection,
-        ...historySection,
         ...factsSection,
+        ...notesSection,
         ...documentsSection,
+        ...scheduleSection,
+        ...historySection,
         ...attachmentSection,
         pendingContext ? `PENDING CONTEXT: ${JSON.stringify(pendingContext)}\n` : null,
+        ...temporalSection,
         `USER MESSAGE: "${userMessage}"`,
     ]
         .filter((line) => line !== null)
         .join("\n");
+}
+
+export async function parseUserMessage(
+    userMessage: string,
+    userTimezone: string = "Asia/Dhaka",
+    options: ParseOptions = {},
+): Promise<ParseResult> {
+    const nowUser = DateTime.now().setZone(userTimezone);
+    const inputText = buildInputText(userMessage, userTimezone, nowUser, options);
 
     const fallback: ParsedAssistantResponse = {
         intent: "general_reply",
@@ -582,8 +620,8 @@ export async function parseUserMessage(
                 `[Remique] llm usage model=${env.OPENAI_MODEL} ` +
                     `in=${usage.inputTokens} cached=${usage.cachedTokens} ` +
                     `out=${usage.outputTokens} ` +
-                    `notes=${savedNotes.length} facts=${knownFacts.length} ` +
-                    `docs=${savedDocuments.length} turns=${recentTurns.length}`,
+                    `notes=${options.savedNotes?.length ?? 0} facts=${options.knownFacts?.length ?? 0} ` +
+                    `docs=${options.savedDocuments?.length ?? 0} turns=${options.recentTurns?.length ?? 0}`,
             );
         }
 
