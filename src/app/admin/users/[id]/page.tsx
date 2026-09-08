@@ -4,7 +4,13 @@ import { notFound } from 'next/navigation';
 import { BlockToggle } from '@/components/admin/block-toggle';
 import { QuotaForm } from '@/components/admin/quota-form';
 import { UsageChart } from '@/components/admin/usage-chart';
-import { formatCost, formatTokens, getUserDetail } from '@/lib/admin-queries';
+import {
+  formatCost,
+  formatDate,
+  formatDateTime,
+  formatTokens,
+  getUserDetail,
+} from '@/lib/admin-queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,8 +42,17 @@ export default async function AdminUserDetailPage({
   const detail = await getUserDetail(id);
   if (!detail) notFound();
 
-  const { user, messages, documents, facts, activeReminders, pastReminders, usageByDay, usageWindow } =
-    detail;
+  const {
+    user,
+    messageCount,
+    messages,
+    documents,
+    facts,
+    activeReminders,
+    pastReminders,
+    usageByDay,
+    usageWindow,
+  } = detail;
 
   return (
     <div className="space-y-8">
@@ -49,12 +64,11 @@ export default async function AdminUserDetailPage({
           <div>
             <h1 className="font-display text-2xl tracking-display">{user.name ?? 'Unnamed'}</h1>
             <p className="mt-1 font-mono text-sm text-ink-3">
-              {user.phoneNumber} · {user.timezone} · joined{' '}
-              {user.createdAt.toISOString().slice(0, 10)}
+              {user.phoneNumber} · {user.timezone} · joined {formatDate(user.createdAt)}
             </p>
             {user.blockedAt ? (
               <p className="mt-2 text-sm text-signal-ink">
-                Blocked {user.blockedAt.toISOString().slice(0, 10)}
+                Blocked {formatDate(user.blockedAt)}
                 {user.blockedReason ? ` — ${user.blockedReason}` : ''}
               </p>
             ) : null}
@@ -70,7 +84,7 @@ export default async function AdminUserDetailPage({
           value={formatTokens(user.totalInputTokens + user.totalOutputTokens)}
         />
         <Stat label="Model calls" value={String(user.totalLlmCalls)} />
-        <Stat label="Messages" value={String(messages.length >= 100 ? '100+' : messages.length)} />
+        <Stat label="Messages" value={messageCount.toLocaleString()} />
       </div>
 
       <Section title="Current windows">
@@ -94,8 +108,8 @@ export default async function AdminUserDetailPage({
           userId={user.id}
           dailyTokenCap={user.dailyTokenCap}
           weeklyTokenCap={user.weeklyTokenCap}
-          defaultDaily={usageWindow.dailyCap}
-          defaultWeekly={usageWindow.weeklyCap}
+          defaultDaily={usageWindow.globalDailyCap}
+          defaultWeekly={usageWindow.globalWeeklyCap}
         />
       </Section>
 
@@ -114,7 +128,7 @@ export default async function AdminUserDetailPage({
                   ) : null}
                 </span>
                 <span className="font-mono text-xs text-ink-3">
-                  {r.scheduledAt.toISOString().replace('T', ' ').slice(0, 16)} UTC
+                  {formatDateTime(r.scheduledAt)}
                 </span>
               </li>
             ))}
@@ -146,7 +160,7 @@ export default async function AdminUserDetailPage({
                     {(d.sizeBytes / 1024).toFixed(0)} KB
                   </td>
                   <td className="py-2 font-mono text-xs text-ink-3">
-                    {d.createdAt.toISOString().slice(0, 10)}
+                    {formatDate(d.createdAt)}
                   </td>
                 </tr>
               ))}
@@ -170,7 +184,7 @@ export default async function AdminUserDetailPage({
         )}
       </Section>
 
-      <Section title="Recent messages (last 100)">
+      <Section title={`Recent messages (${messages.length} of ${messageCount})`}>
         <ul className="space-y-2 text-sm">
           {messages.map((m) => (
             <li key={m.id} className="border-b border-line pb-2">
@@ -182,7 +196,7 @@ export default async function AdminUserDetailPage({
                   {m.messageText || <em className="text-ink-3">({m.mediaType ?? 'no text'})</em>}
                 </span>
                 <span className="shrink-0 font-mono text-xs text-ink-3">
-                  {m.createdAt.toISOString().replace('T', ' ').slice(0, 16)}
+                  {formatDateTime(m.createdAt)}
                 </span>
               </div>
               {m.processingError ? (
@@ -204,7 +218,7 @@ export default async function AdminUserDetailPage({
                   {r.title} <span className="ml-2 text-xs text-ink-3">{r.status}</span>
                 </span>
                 <span className="font-mono text-xs text-ink-3">
-                  {r.scheduledAt.toISOString().slice(0, 10)}
+                  {formatDate(r.scheduledAt)}
                 </span>
               </li>
             ))}

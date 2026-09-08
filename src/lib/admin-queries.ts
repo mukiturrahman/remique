@@ -5,6 +5,9 @@ import { env } from './env';
 
 export type UserSort = 'cost' | 'recent' | 'joined';
 
+/** Rows per page in the user list. */
+export const PAGE_SIZE = 50;
+
 const ORDER_BY: Record<UserSort, Record<string, 'asc' | 'desc'>> = {
   cost: { totalCostMicros: 'desc' },
   recent: { updatedAt: 'desc' },
@@ -85,6 +88,14 @@ export function periodStart(period: Period): Date | null {
 
 export interface DashboardTotals {
   period: Period;
+  /**
+   * Whether a PAID payment has EVER been recorded, regardless of the window.
+   *
+   * Separate from `revenue` on purpose: a period with no revenue and a product
+   * with no payment system are different facts, and the UI must not render the
+   * second when it means the first.
+   */
+  hasEverBeenPaid: boolean;
   /** Every user, always — a headcount is a stock, not something a date window changes. */
   users: number;
   /** Users who joined inside the window. Equals `users` when the period is 'all'. */
@@ -127,7 +138,8 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
   // Every window ends at "now", so the upper bound is implicit everywhere.
   const inWindow = start ? { gte: start } : undefined;
 
-  const [users, newUsers, blocked, unsubscribed, usageAgg, revenueByCurrency] = await Promise.all([
+  const [users, newUsers, blocked, unsubscribed, usageAgg, revenueByCurrency, paidEver] =
+    await Promise.all([
     prisma.user.count(),
     start ? prisma.user.count({ where: { createdAt: inWindow } }) : prisma.user.count(),
     prisma.user.count({ where: { blockedAt: { not: null } } }),
@@ -151,7 +163,11 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
       where: { status: 'PAID', ...(start ? { createdAt: inWindow } : {}) },
       _sum: { amount: true },
     }),
-  ]);
+
+    // Deliberately unscoped. Answers "has money ever moved", which is what
+    // decides whether a zero means "nothing this week" or "no gateway yet".
+    prisma.payment.count({ where: { status: 'PAID' } }),
+    ]);
 
   // The largest single-currency total is the headline. With one currency —
   // which is the case today and for the foreseeable future — this is simply
@@ -162,6 +178,7 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
 
   return {
     period,
+    hasEverBeenPaid: paidEver > 0,
     users,
     newUsers,
     blocked,
@@ -172,6 +189,21 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     revenueCurrency: ranked[0]?.currency ?? 'BDT',
     revenueMixedCurrency: ranked.length > 1,
   };
+}
+
+/**
+ * Dates and times throughout the dashboard, rendered in Asia/Dhaka.
+ *
+ * Not UTC. The operator reads these sitting in Dhaka, and UTC is six hours
+ * behind — a message sent at 1:22 PM was being displayed as 07:22, and
+ * anything after 6 PM local was being dated to the previous day.
+ */
+export function formatDate(value: Date): string {
+  return DateTime.fromJSDate(value).setZone(ADMIN_TIMEZONE).toFormat('yyyy-LL-dd');
+}
+
+export function formatDateTime(value: Date): string {
+  return DateTime.fromJSDate(value).setZone(ADMIN_TIMEZONE).toFormat('yyyy-LL-dd HH:mm');
 }
 
 /** `1250` + `"BDT"` -> `"BDT 1,250.00"`. Money we were paid, not token cost. */
@@ -193,12 +225,20 @@ export async function getUserDetail(id: string) {
   const now = Date.now();
   const dayAgo = new Date(now - DAY_MS);
   const weekAgo = new Date(now - 7 * DAY_MS);
-  const monthAgo = new Date(now - 30 * DAY_MS);
+  // Aligned to the first bucket's local midnight, not "30 x 24h ago". Those
+  // differ by up to a day, and events in the gap matched the query but had no
+  // bucket to land in, so `bucketByDay` silently dropped them.
+  const monthAgo = DateTime.now()
+    .setZone(ADMIN_TIMEZONE)
+    .minus({ days: 29 })
+    .startOf('day')
+    .toJSDate();
 
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) return null;
 
   const [
+    messageCount,
     messages,
     documents,
     facts,
@@ -208,6 +248,9 @@ export async function getUserDetail(id: string) {
     dailyAgg,
     weeklyAgg,
   ] = await Promise.all([
+    // The real total. `messages` below is capped at 100 for display, so using
+    // its length as the count silently reported "100+" for a user with 291.
+    prisma.message.count({ where: { userId: id } }),
     prisma.message.findMany({
       where: { userId: id },
       orderBy: { createdAt: 'desc' },
@@ -262,6 +305,7 @@ export async function getUserDetail(id: string) {
 
   return {
     user,
+    messageCount,
     messages,
     documents,
     facts,
@@ -273,6 +317,12 @@ export async function getUserDetail(id: string) {
     usageWindow: {
       dailyTokens: tokensIn(dailyAgg),
       dailyCap: user.dailyTokenCap ?? env.DEFAULT_DAILY_TOKEN_CAP,
+      // The env defaults, separate from the effective caps above. The quota
+      // form's placeholder means "what you get if you leave this blank", so
+      // showing the user's own override there told them clearing the field
+      // would keep the override it was about to discard.
+      globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
+      globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
       dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
       weeklyTokens: tokensIn(weeklyAgg),
       weeklyCap: user.weeklyTokenCap ?? env.DEFAULT_WEEKLY_TOKEN_CAP,
@@ -291,7 +341,7 @@ export interface UsageDay {
 }
 
 /**
- * Buckets into 30 UTC days, including days with no traffic.
+ * Buckets into 30 Asia/Dhaka days, including days with no traffic.
  *
  * The gaps matter: a bar chart that silently omits quiet days makes sporadic
  * use look continuous.
@@ -300,16 +350,19 @@ function bucketByDay(
   events: Array<{ createdAt: Date; inputTokens: number; outputTokens: number; costMicros: number }>
 ): UsageDay[] {
   const buckets = new Map<string, UsageDay>();
-  const today = new Date();
+  const today = DateTime.now().setZone(ADMIN_TIMEZONE).startOf('day');
 
   for (let i = 29; i >= 0; i--) {
-    const d = new Date(today.getTime() - i * DAY_MS);
-    const key = d.toISOString().slice(0, 10);
+    const key = today.minus({ days: i }).toFormat('yyyy-LL-dd');
     buckets.set(key, { day: key, tokens: 0, costMicros: 0 });
   }
 
   for (const event of events) {
-    const key = event.createdAt.toISOString().slice(0, 10);
+    // Bucketed by Dhaka day so a bar labelled "the 8th" holds the events the
+    // operator would call the 8th.
+    const key = DateTime.fromJSDate(event.createdAt)
+      .setZone(ADMIN_TIMEZONE)
+      .toFormat('yyyy-LL-dd');
     const bucket = buckets.get(key);
     if (!bucket) continue;
     bucket.tokens += event.inputTokens + event.outputTokens;

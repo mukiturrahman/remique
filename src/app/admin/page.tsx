@@ -2,11 +2,13 @@ import Link from 'next/link';
 
 import {
   formatCost,
+  formatDate,
   formatRevenue,
   formatTokens,
   getDashboardTotals,
   isPeriod,
   listUsers,
+  PAGE_SIZE,
   PERIOD_LABELS,
   type Period,
   type UserSort,
@@ -82,22 +84,38 @@ export default async function AdminUsersPage({
   searchParams,
 }: {
   // In Next 15 searchParams is a Promise, like params.
-  searchParams: Promise<{ sort?: string; period?: string }>;
+  searchParams: Promise<{ sort?: string; period?: string; page?: string }>;
 }) {
-  const { sort: rawSort, period: rawPeriod } = await searchParams;
+  const { sort: rawSort, period: rawPeriod, page: rawPage } = await searchParams;
   const sort: UserSort = isSort(rawSort) ? rawSort : 'cost';
   // Both values reach a database query, so both are narrowed to their union
   // before they get there rather than trusted from the URL.
   const period: Period = isPeriod(rawPeriod) ? rawPeriod : 'all';
 
+  // Clamped, not trusted: a negative or non-numeric page must not reach
+  // Prisma's `skip`.
+  const parsedPage = Number(rawPage);
+  const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
   const [users, totals] = await Promise.all([
-    listUsers({ sort, limit: 100 }),
+    listUsers({ sort, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
     getDashboardTotals(period),
   ]);
 
-  // Zero PAID payments means no gateway has ever written a row, which is a
-  // different statement from "we earned nothing". The tiles say so.
-  const noPaymentsYet = totals.revenue === 0;
+  const pageCount = Math.max(1, Math.ceil(totals.users / PAGE_SIZE));
+  const href = (next: { sort?: UserSort; period?: Period; page?: number }) => {
+    const params = new URLSearchParams();
+    params.set('sort', next.sort ?? sort);
+    const nextPeriod = next.period ?? period;
+    if (nextPeriod !== 'all') params.set('period', nextPeriod);
+    const nextPage = next.page ?? page;
+    if (nextPage > 1) params.set('page', String(nextPage));
+    return `/admin?${params.toString()}`;
+  };
+
+  // "No gateway yet" is a claim about the product, not about this window. A
+  // quiet Tuesday must not render as "no payment system exists".
+  const noPaymentsYet = !totals.hasEverBeenPaid;
 
   return (
     <div>
@@ -115,7 +133,7 @@ export default async function AdminUsersPage({
           {PERIODS.map((key) => (
             <Link
               key={key}
-              href={key === 'all' ? `/admin?sort=${sort}` : `/admin?sort=${sort}&period=${key}`}
+              href={href({ period: key, page: 1 })}
               className={
                 key === period
                   ? 'rounded-md bg-brand-tint px-3 py-1.5 text-brand-deep'
@@ -131,7 +149,7 @@ export default async function AdminUsersPage({
           {SORTS.map(({ key, label }) => (
             <Link
               key={key}
-              href={period === 'all' ? `/admin?sort=${key}` : `/admin?sort=${key}&period=${period}`}
+              href={href({ sort: key, page: 1 })}
               className={
                 key === sort
                   ? 'rounded-md bg-brand-tint px-3 py-1.5 text-brand-deep'
@@ -216,7 +234,7 @@ export default async function AdminUsersPage({
                   </Link>
                 </td>
                 <td className="py-3 pr-4 font-mono text-xs text-ink-3">
-                  {u.createdAt.toISOString().slice(0, 10)}
+                  {formatDate(u.createdAt)}
                 </td>
                 <td className="py-3 pr-4">
                   <PlanBadge tier={u.planTier} expiresAt={u.planExpiresAt} />
@@ -243,8 +261,36 @@ export default async function AdminUsersPage({
         </table>
 
         {users.length === 0 ? (
-          <p className="py-12 text-center text-sm text-ink-3">No users yet.</p>
+          <p className="py-12 text-center text-sm text-ink-3">
+            {page > 1 ? 'No users on this page.' : 'No users yet.'}
+          </p>
         ) : null}
+
+      {pageCount > 1 ? (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-ink-3">
+            Page {page} of {pageCount} · showing {users.length} of {totals.users}
+          </span>
+          <div className="flex gap-2">
+            {page > 1 ? (
+              <Link
+                href={href({ page: page - 1 })}
+                className="rounded-md border border-line px-3 py-1.5 hover:bg-ground-2"
+              >
+                Previous
+              </Link>
+            ) : null}
+            {page < pageCount ? (
+              <Link
+                href={href({ page: page + 1 })}
+                className="rounded-md border border-line px-3 py-1.5 hover:bg-ground-2"
+              >
+                Next
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       </div>
     </div>
   );
