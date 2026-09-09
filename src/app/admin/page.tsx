@@ -250,6 +250,7 @@ export default async function AdminUsersPage({
                     <Link href={`/admin/users/${u.id}`} className="hover:text-brand-deep">
                       <span className="block font-medium text-ink">{u.name ?? 'Unnamed'}</span>
                       <span className="block font-mono text-xs text-ink-3">{u.phoneNumber}</span>
+                      {u.email && <span className="block font-mono text-[10px] text-ink-4">{u.email}</span>}
                     </Link>
                   </td>
                   <td className="py-3 pr-4 font-mono text-xs text-ink-3">

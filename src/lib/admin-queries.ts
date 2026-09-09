@@ -50,6 +50,7 @@ const USER_SELECT = {
   id: true,
   name: true,
   phoneNumber: true,
+  email: true,
   timezone: true,
   createdAt: true,
   updatedAt: true,
@@ -375,50 +376,12 @@ export async function getUserDetail(id: string) {
 
   const [
     messageCount,
-    messages,
-    documents,
-    facts,
-    activeReminders,
-    pastReminders,
     recentUsage,
     dailyAgg,
     weeklyAgg,
   ] = await Promise.all([
-    // The real total. `messages` below is capped at 100 for display, so using
-    // its length as the count silently reported "100+" for a user with 291.
+    // The real total.
     prisma.message.count({ where: { userId: id } }),
-    prisma.message.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      select: {
-        id: true,
-        direction: true,
-        messageText: true,
-        createdAt: true,
-        processedAt: true,
-        processingError: true,
-        mediaType: true,
-      },
-    }),
-    prisma.document.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.fact.findMany({
-      where: { userId: id },
-      orderBy: { updatedAt: 'desc' },
-    }),
-    // "What reminder is active" — the question the dashboard has to answer.
-    prisma.reminder.findMany({
-      where: { userId: id, status: 'SCHEDULED' },
-      orderBy: { scheduledAt: 'asc' },
-    }),
-    prisma.reminder.findMany({
-      where: { userId: id, status: { not: 'SCHEDULED' } },
-      orderBy: { scheduledAt: 'desc' },
-      take: 50,
-    }),
     // Raw rows for the 30-day chart. Bucketed in JS rather than SQL so this
     // stays portable and needs no raw query.
     prisma.usageEvent.findMany({
@@ -439,35 +402,30 @@ export async function getUserDetail(id: string) {
   const tokensIn = (a: typeof dailyAgg) =>
     (a._sum.inputTokens ?? 0) + (a._sum.outputTokens ?? 0);
 
-    const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+  const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
 
-    return {
-      user,
-      messageCount,
-      messages,
-      documents,
-      facts,
-      activeReminders,
-      pastReminders,
-      usageByDay: bucketByDay(recentUsage),
-      // Not named `window`: destructuring that in a component shadows the DOM
-      // global and trips lint rules for no benefit.
-      usageWindow: {
-        dailyTokens: tokensIn(dailyAgg),
-        dailyCap: user.dailyTokenCap ?? (isUnlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP),
-        // The env defaults, separate from the effective caps above. The quota
-        // form's placeholder means "what you get if you leave this blank", so
-        // showing the user's own override there told them clearing the field
-        // would keep the override it was about to discard.
-        globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
-        globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
-        dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
-        weeklyTokens: tokensIn(weeklyAgg),
-        weeklyCap: user.weeklyTokenCap ?? (isUnlimited ? null : env.DEFAULT_WEEKLY_TOKEN_CAP),
-        weeklyCostMicros: weeklyAgg._sum.costMicros ?? 0,
-      },
-    };
-  }
+  return {
+    user,
+    messageCount,
+    usageByDay: bucketByDay(recentUsage),
+    // Not named `window`: destructuring that in a component shadows the DOM
+    // global and trips lint rules for no benefit.
+    usageWindow: {
+      dailyTokens: tokensIn(dailyAgg),
+      dailyCap: user.dailyTokenCap ?? (isUnlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP),
+      // The env defaults, separate from the effective caps above. The quota
+      // form's placeholder means "what you get if you leave this blank", so
+      // showing the user's own override there told them clearing the field
+      // would keep the override it was about to discard.
+      globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
+      globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
+      dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
+      weeklyTokens: tokensIn(weeklyAgg),
+      weeklyCap: user.weeklyTokenCap ?? (isUnlimited ? null : env.DEFAULT_WEEKLY_TOKEN_CAP),
+      weeklyCostMicros: weeklyAgg._sum.costMicros ?? 0,
+    },
+  };
+}
 
 export type UserDetail = NonNullable<Awaited<ReturnType<typeof getUserDetail>>>;
 
