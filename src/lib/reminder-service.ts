@@ -52,7 +52,7 @@ const NOTE_LIMIT = 20;
  * or "make it 9pm" against what was actually said; short enough that it does
  * not crowd out KNOWN FACTS or the document list.
  */
-export const RECENT_TURNS_LIMIT = 8;
+export const RECENT_TURNS_LIMIT = 10;
 
 /**
  * Max age of conversation turns replayed to the model.
