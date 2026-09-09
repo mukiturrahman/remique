@@ -23,7 +23,7 @@ const en = {
         useCases: "Use cases",
         pricing: "Pricing",
         faq: "FAQ",
-        getStarted: "Get started",
+        getStarted: "Start remembering",
         openMenu: "Open menu",
         closeMenu: "Close menu",
         logoAlt: "Remique Logo",
@@ -55,8 +55,8 @@ const en = {
         subAfter: ". It confirms, schedules, and reminds. You move on.",
         worksOnWhatsApp: "Works on WhatsApp",
         noApp: "No app to install",
-        ctaPrimary: "Get started",
-        ctaSecondary: "Meet Remique",
+        ctaPrimary: "Never forget again",
+        ctaSecondary: "See it work",
         botAlt: "Remique Bot",
     },
 
@@ -108,7 +108,7 @@ const en = {
                 desc: "Remique delivers your reminder at the exact time, right inside WhatsApp. You do not need to remember anything.",
             },
         ],
-        cta: "Learn more",
+        cta: "See how it works",
     },
 
     problem: {
@@ -154,7 +154,7 @@ const en = {
                 body: "Every reminder ends with “Done or need more time?” Tell Remique when, and it comes back then.",
             },
         ],
-        cta: "See all features",
+        cta: "See everything it does",
     },
 
     pricing: {
@@ -211,7 +211,7 @@ const en = {
     banner: {
         title: "Your memory has a backup now.",
         body: "Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.",
-        cta: "See plan",
+        cta: "Get Remique now",
         priceNote: "Starts at ৳49/week",
         cardNote: "No card needed",
     },
@@ -253,7 +253,7 @@ const en = {
                 a: "Yes. Your reminders and notes are stored securely. We only use your data to send you reminders and never share it with third parties.",
             },
         ],
-        cta: "See all questions",
+        cta: "Get every answer",
     },
 
     footer: {
@@ -312,7 +312,7 @@ const en = {
         cta: {
             title: "Ready to stop forgetting?",
             sub: "Pick a plan, open WhatsApp, and start texting. That is the whole onboarding.",
-            button: "See plans",
+            button: "Start remembering",
         },
     },
 
@@ -349,7 +349,7 @@ const en = {
         cta: {
             title: "Whatever your life looks like, Remique fits in.",
             sub: "Start texting. Remique adapts to you.",
-            button: "Get started",
+            button: "Make it yours",
         },
     },
 
@@ -471,7 +471,7 @@ const en = {
         cta: {
             title: "Still have questions?",
             sub: "Text Remique on WhatsApp. It answers those too.",
-            button: "Get started",
+            button: "Start remembering",
         },
     },
 
@@ -506,7 +506,7 @@ const bn: Copy = {
         useCases: "কী কাজে লাগে",
         pricing: "প্রাইসিং",
         faq: "সাধারণ প্রশ্ন",
-        getStarted: "শুরু করুন",
+        getStarted: "মনে রাখা শুরু করুন",
         openMenu: "মেনু খুলুন",
         closeMenu: "মেনু বন্ধ করুন",
         logoAlt: "Remique লোগো",
@@ -527,15 +527,15 @@ const bn: Copy = {
         // prefix is empty here by design and the layout skips its line break.
         headlinePrefix: "",
         headlineSuffix: "আর কখনো ভুলবেন না।",
-        rotator: ["বাবার ওষুধ এর সময়", "৩টার মিটিং", "স্ত্রীর জন্মদিন", "ট্যাক্সের ডেডলাইন"],
+        rotator: ["বাবার ওষুধ এর সময়", "স্কুলের ফি", "৩টার মিটিং", "স্ত্রীর জন্মদিন", "ট্যাক্সের ডেডলাইন"],
         subBefore:
             "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা ",
         subAfter:
             "য়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। আপনি নিশ্চিন্ত।",
         worksOnWhatsApp: "WhatsApp-এই চলে",
         noApp: "কোনো অ্যাপ লাগবে না",
-        ctaPrimary: "শুরু করুন",
-        ctaSecondary: "Remique-কে চিনুন",
+        ctaPrimary: "আর ভুলবেন না",
+        ctaSecondary: "চোখে দেখে নিন",
         botAlt: "Remique বট",
     },
 
@@ -587,7 +587,7 @@ const bn: Copy = {
                 desc: "ঠিক সময়ে, WhatsApp-এর ভেতরেই রিমাইন্ডার পৌঁছে যাবে। আপনাকে আর কিছুই মনে রাখতে হবে না।",
             },
         ],
-        cta: "আরও জানুন",
+        cta: "কীভাবে কাজ করে দেখুন",
     },
 
     problem: {
@@ -632,7 +632,7 @@ const bn: Copy = {
                 body: "প্রতিটা রিমাইন্ডার শেষ হয় “হয়ে গেছে, নাকি আরেকটু সময় লাগবে?” দিয়ে। কখন লাগবে বলে দিন, Remique তখনই ফিরে আসবে।",
             },
         ],
-        cta: "সব ফিচার দেখুন",
+        cta: "ও কী কী পারে দেখুন",
     },
 
     pricing: {
@@ -689,7 +689,7 @@ const bn: Copy = {
     banner: {
         title: "আপনার মেমোরির এখন একটা ব্যাকআপ আছে।",
         body: "একটা প্ল্যান বাছুন, bKash-এ পে করুন, আর Remique-কে মেসেজ দেওয়া শুরু করুন। সেটআপ বলতে এটুকুই।",
-        cta: "প্ল্যান দেখুন",
+        cta: "এখনই Remique নিন",
         priceNote: "শুরু ৳49/সপ্তাহ থেকে",
         cardNote: "কার্ড লাগবে না",
     },
@@ -731,7 +731,7 @@ const bn: Copy = {
                 a: "হ্যাঁ। আপনার রিমাইন্ডার এবং নোটগুলো নিরাপদে সেভ করা থাকে। আমরা শুধু আপনাকে মনে করিয়ে দেওয়ার জন্যই তথ্যগুলো ব্যবহার করি, অন্য কারও সাথে শেয়ার করি না।",
             },
         ],
-        cta: "সব প্রশ্ন দেখুন",
+        cta: "সব উত্তর জেনে নিন",
     },
 
     footer: {
@@ -790,7 +790,7 @@ const bn: Copy = {
         cta: {
             title: "ভুলে যাওয়া বন্ধ করতে প্রস্তুত?",
             sub: "প্ল্যান বাছুন, WhatsApp খুলুন, আর মেসেজ দেওয়া শুরু করুন। অনবোর্ডিং এটুকুই।",
-            button: "প্ল্যান দেখুন",
+            button: "মনে রাখা শুরু করুন",
         },
     },
 
@@ -827,7 +827,7 @@ const bn: Copy = {
         cta: {
             title: "আপনার জীবন যেমনই হোক, Remique মানিয়ে নেয়।",
             sub: "মেসেজ দেওয়া শুরু করুন। Remique আপনার সাথেই মানিয়ে নেবে।",
-            button: "শুরু করুন",
+            button: "আপনার মতো করে নিন",
         },
     },
 
@@ -949,7 +949,7 @@ const bn: Copy = {
         cta: {
             title: "আরও কিছু জানার আছে?",
             sub: "WhatsApp-এ Remique-কে মেসেজ দিন। ও এগুলোরও উত্তর দিয়ে দেবে।",
-            button: "শুরু করুন",
+            button: "মনে রাখা শুরু করুন",
         },
     },
 
