@@ -61,6 +61,7 @@ export const BDAPPS_PLANS: Record<BdappsPlanPeriod, BdappsPlanConfig> = {
 
 export interface InitiateBdappsSubscriptionParams {
   phoneNumber?: string;
+  email?: string;
   userId?: string;
   planPeriod?: BdappsPlanPeriod | string;
   redirectUrl?: string;

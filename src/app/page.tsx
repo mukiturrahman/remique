@@ -223,7 +223,7 @@ function HomeContent() {
                 <Navbar />
 
                 {/* ── 1. HERO ──────────────────────────────────────────────────── */}
-                <section className="relative isolate overflow-hidden pt-32 pb-24 lg:pt-48 lg:pb-36">
+                <section className="relative isolate overflow-hidden pt-28 pb-14 lg:pt-40 lg:pb-24">
                     <div
                         className="absolute inset-0 -z-10"
                         style={{
@@ -237,7 +237,7 @@ function HomeContent() {
                         <div className="absolute inset-0 bg-white/30 backdrop-blur-[4px]" />
                     </div>
 
-                    <div className="mx-auto grid max-w-6xl gap-16 px-5 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:gap-12 lg:items-center">
+                    <div className="mx-auto grid max-w-6xl gap-10 px-5 sm:gap-12 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:gap-12 lg:items-center">
                         {/* LEFT COLUMN */}
                         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
                             {/* Social proof pill */}
@@ -265,7 +265,7 @@ function HomeContent() {
                                 </span>
                             </div>
 
-                            <h1 className="text-balance font-display text-[clamp(2.5rem,5.2vw,4.2rem)] font-semibold leading-[1.05] tracking-display text-ink drop-shadow-sm">
+                            <h1 className="text-balance font-display text-[clamp(2.05rem,5.2vw,4.2rem)] font-semibold leading-[1.05] tracking-display text-ink drop-shadow-sm">
                                 {c.hero.headlinePrefix && (
                                     <>
                                         {c.hero.headlinePrefix} <br className="hidden lg:block" />
@@ -295,12 +295,12 @@ function HomeContent() {
                                 {c.hero.subAfter}
                             </p>
 
-                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3.5 text-[17px] font-medium text-ink-3">
+                            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-3.5 gap-y-2 text-[15.5px] font-medium text-ink-3 sm:text-[17px] lg:justify-start">
                                 <span className="inline-flex items-center gap-2">
                                     <MarkWhatsApp className="h-5 w-5 text-brand" />
                                     {c.hero.worksOnWhatsApp}
                                 </span>
-                                <span className="text-line-strong">·</span>
+                                <span className="text-ink-3/45">·</span>
                                 <span>{c.hero.noApp}</span>
                             </div>
 
@@ -312,7 +312,7 @@ function HomeContent() {
                         {/* RIGHT COLUMN */}
                         <div className="relative mx-auto mt-6 w-full max-w-[420px] lg:mt-0 lg:ml-auto lg:mr-0 lg:max-w-[460px]">
                             {/* The bot icon peeking */}
-                            <div className="absolute -left-6 -top-10 z-10 lg:-left-12 lg:-top-16 drop-shadow-2xl">
+                            <div className="absolute -left-1 -top-8 z-10 sm:-left-6 sm:-top-10 lg:-left-12 lg:-top-16 drop-shadow-2xl">
                                 <Image
                                     src="/logo.png"
                                     alt={c.hero.botAlt}
@@ -332,7 +332,7 @@ function HomeContent() {
 
                 {/* ── 2. BURIED ────────────────────────────────────────────────── */}
                 <section>
-                    <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
                         {/* The two illustrations flank the text; the arc carries the eye
                             from the mess on the left to Remique on the right. */}
                         <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr_1fr] lg:items-center lg:gap-8">
@@ -342,7 +342,7 @@ function HomeContent() {
 
                             <div className="relative order-1 text-center lg:order-2 lg:pt-24">
                                 <ArrowArc />
-                                <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.8vw,3rem)] font-semibold leading-[1.05] tracking-display text-ink">
+                                <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(1.7rem,3.8vw,3rem)] font-semibold leading-[1.05] tracking-display text-ink">
                                     {c.buried.title}
                                 </h2>
                                 <p className="mx-auto mt-6 max-w-[42ch] text-[16.5px] leading-relaxed text-ink-2">
@@ -368,7 +368,7 @@ function HomeContent() {
 
                 {/* ── 3. OVERLOAD ──────────────────────────────────────────────── */}
                 <section>
-                    <div className="mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14 lg:py-32">
+                    <div className="mx-auto grid max-w-6xl gap-12 px-5 py-12 sm:py-14 lg:py-16 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14">
                         {/* object-contain so the artwork is never cropped, whatever
                             proportion it arrives in. */}
                         {/* The source is square, so the frame is too — a 4:3 box just letterboxed it. */}
@@ -383,7 +383,7 @@ function HomeContent() {
                         </div>
 
                         <div className="text-center lg:text-left">
-                            <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.9rem,3.6vw,2.8rem)] font-semibold leading-[1.08] tracking-display text-ink lg:mx-0">
+                            <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.65rem,3.6vw,2.8rem)] font-semibold leading-[1.08] tracking-display text-ink lg:mx-0">
                                 {c.overload.title}
                             </h2>
 
@@ -401,10 +401,10 @@ function HomeContent() {
 
                 {/* ── 4. LANGUAGE STRIP ────────────────────────────────────────── */}
                 <section className="overflow-hidden">
-                    <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[1fr_0.8fr] lg:gap-16 lg:py-28">
+                    <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 sm:py-14 sm:px-8 lg:grid-cols-[1fr_0.8fr] lg:gap-16 lg:py-16">
                         {/* LEFT COLUMN */}
                         <div className="text-center lg:text-left">
-                            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.2rem,4.4vw,3.4rem)] font-semibold leading-[1.04] tracking-display text-ink lg:mx-0">
+                            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(1.8rem,4.4vw,3.4rem)] font-semibold leading-[1.04] tracking-display text-ink lg:mx-0">
                                 {c.languages.title}
                             </h2>
                             {/* Each point is a thing the reader does not have to do, so
@@ -435,8 +435,8 @@ function HomeContent() {
 
                 {/* ── 6. PROBLEM ───────────────────────────────────────────────── */}
                 <section className=" ">
-                    <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
-                        <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
+                    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 text-center sm:px-8">
+                        <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[clamp(1.7rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
                             {c.problem.title}
                         </h2>
                         <p className="mx-auto mt-6 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
@@ -461,9 +461,9 @@ function HomeContent() {
                 </section>
 
                 {/* ── 7. THE LOOP ─────────────────────────────────────────────── */}
-                <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                <section className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
                     <div className="text-center">
-                        <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
+                        <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.55rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
                             {c.loop.title}
                         </h2>
                         <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
@@ -492,12 +492,12 @@ function HomeContent() {
                 </section>
 
                 {/* ── 8. PRICING ───────────────────────────────────────────────── */}
-                <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                <section className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
                     <div className="text-center">
                         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
                             {c.pricing.eyebrow}
                         </p>
-                        <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
+                        <h2 className="mx-auto mt-4 max-w-[22ch] text-balance font-display text-[clamp(1.7rem,4vw,3.2rem)] font-semibold leading-[1.04] tracking-display text-ink">
                             {c.pricing.title}
                         </h2>
                         <p className="mx-auto mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
@@ -508,10 +508,10 @@ function HomeContent() {
                 </section>
 
                 {/* ── 9. FULL INDEX ───────────────────────────────────────────── */}
-                <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                <section className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
                     <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
                         <div className="lg:self-center">
-                            <h2 className="max-w-[14ch] text-balance font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
+                            <h2 className="max-w-[14ch] text-balance font-display text-[clamp(1.55rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
                                 {c.featuresIndex.title}
                             </h2>
                             <p className="mt-5 max-w-[38ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
@@ -546,14 +546,14 @@ function HomeContent() {
                 </section>
 
                 {/* ── 10. GREEN CTA BANNER ─────────────────────────────────────── */}
-                <section className="px-5 py-20 sm:px-8 lg:py-28">
-                    <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-white/20 border border-white/40 shadow-2xl backdrop-blur-xl px-6 py-20 text-center sm:px-12 lg:py-28">
+                <section className="px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
+                    <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] bg-white/20 border border-white/40 shadow-2xl backdrop-blur-xl px-6 py-14 text-center sm:px-12 sm:py-16 lg:py-20">
                         <div
                             aria-hidden="true"
                             className="pointer-events-none absolute inset-0 opacity-70 mix-blend-soft-light bg-[radial-gradient(120%_120%_at_50%_-10%,rgba(255,255,255,0.5)_0%,transparent_55%)]"
                         />
                         <div className="relative">
-                            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(2.1rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-white">
+                            <h2 className="mx-auto max-w-[16ch] text-balance font-display text-[clamp(1.8rem,4.4vw,3.5rem)] font-semibold leading-[1.02] tracking-display text-white">
                                 {c.banner.title}
                             </h2>
                             <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/80">
@@ -575,12 +575,12 @@ function HomeContent() {
 
                 {/* ── 11. FAQ ──────────────────────────────────────────────────── */}
                 <section className="text-white">
-                    <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+                    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
                         <div className="text-center">
                             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
                                 {c.faq.eyebrow}
                             </p>
-                            <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
+                            <h2 className="mx-auto mt-4 max-w-[20ch] text-balance font-display text-[clamp(1.7rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-white">
                                 {c.faq.title}
                             </h2>
                         </div>

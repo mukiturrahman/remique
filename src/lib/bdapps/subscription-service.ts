@@ -76,9 +76,15 @@ export async function initiateBdappsSubscription(
         data: {
           whatsappId: raw,
           phoneNumber: formatted,
+          email: params.email || null,
           timezone: 'Asia/Dhaka',
           planTier: 'free',
         },
+      });
+    } else if (params.email && user.email !== params.email) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { email: params.email },
       });
     }
   }
@@ -136,7 +142,10 @@ export async function initiateBdappsSubscription(
   });
 
   const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
-  const redirectUrl = params.redirectUrl || `${appBaseUrl}/api/billing/bdapps/callback`;
+  const baseRedirect = params.redirectUrl || `${appBaseUrl}/api/billing/bdapps/callback`;
+  const redirectUrl = baseRedirect.includes('?') 
+    ? `${baseRedirect}&requestId=${requestId}` 
+    : `${baseRedirect}?requestId=${requestId}`;
 
   const { url } = buildBdappsAuthorizationUrl({
     redirectUrl,
@@ -161,9 +170,11 @@ export async function initiateBdappsSubscription(
 export async function handleBdappsCallback(
   searchParams: URLSearchParams
 ): Promise<HandleBdappsCallbackResult> {
+  console.log('[bdApps Callback] Received searchParams:', Object.fromEntries(searchParams.entries()));
+  
   const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
 
-  const requestId = searchParams.get('requestId') || undefined;
+  const requestId = searchParams.get('requestId') || searchParams.get('reference') || undefined;
   const subscriberId = searchParams.get('subscriberId') || undefined;
   const status = searchParams.get('status')?.toUpperCase();
   const statusCode = searchParams.get('statusCode');
@@ -172,7 +183,7 @@ export async function handleBdappsCallback(
 
   // Check failure cases
   const isFailed =
-    Boolean(errorCode) ||
+    (errorCode && !['0', '0000', 'null', 'undefined', 'success'].includes(errorCode.toLowerCase())) ||
     status === 'CANCELLED' ||
     status === 'FAILED' ||
     status === 'DECLINED' ||
@@ -299,12 +310,8 @@ export async function handleBdappsCallback(
     });
     await sendWhatsAppMessage(
       user.phoneNumber,
-      `🎉 *Welcome to Remique Pro!* 🚀\n\n` +
-        `Your bKash subscription is now active.\n` +
-        `• *Plan:* Pro ${plan.label} (৳${plan.amount})\n` +
-        `• *Valid Until:* ${expiryDateStr}\n` +
-        `• *Features:* Unlimited reminders, priority delivery, and custom categories.\n\n` +
-        `Send me any reminder right here in WhatsApp to get started!`
+      `Your second brain has been activated 🧠✨.\n\n` +
+        `You're now on Remique Pro ${plan.label}. You can start chatting right away!`
     );
   } catch (notifyErr) {
     console.warn('[bdApps] Failed to send WhatsApp confirmation message:', notifyErr);
@@ -318,7 +325,7 @@ export async function handleBdappsCallback(
       id: user.id,
       phoneNumber: user.phoneNumber,
     },
-    redirectUrl: `${appBaseUrl}/billing/success?requestId=${encodeURIComponent(requestId || '')}`,
+    redirectUrl: `https://wa.me/8801853501469?text=Hi`,
   };
 }
 

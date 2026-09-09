@@ -33,7 +33,7 @@ export function LangToggle({ className = "" }: { className?: string }) {
                         onClick={() => setLang(option.value)}
                         aria-pressed={active}
                         aria-label={option.full}
-                        className={`rounded-full px-3 py-1.5 text-[13.5px] font-semibold tracking-tight transition-all duration-200 ${
+                        className={`rounded-full px-2.5 py-1 text-[12.5px] font-semibold tracking-tight transition-all duration-200 sm:px-3 sm:py-1.5 sm:text-[13.5px] ${
                             active ? "bg-brand text-white shadow-press" : "text-ink-2 hover:text-ink"
                         }`}
                     >

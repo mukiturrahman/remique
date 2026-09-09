@@ -574,6 +574,8 @@ export async function processIncomingUserMessage(
     pendingContext: activeState?.pendingData,
     savedNotes: notesText,
     userName: user.name,
+    userPlan: user.planTier === 'free' ? 'Free' : `Pro (${user.planPeriod || 'monthly'})`,
+    isSubscribed: user.planTier !== 'free',
     remindersToday: todayReminders.map(toScheduleEntry),
     upcomingReminders: upcomingContext.map(toScheduleEntry),
     recentTurns: recentMessages
@@ -1381,6 +1383,24 @@ export async function processIncomingUserMessage(
     await replyToUser(
       user,
       parsed.reply_text || '✅ I have saved that to your memory.'
+    );
+    return;
+  }
+
+  if (parsed.intent === 'cancel_subscription') {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { planTier: 'free' },
+    });
+
+    await prisma.subscription.updateMany({
+      where: { userId: user.id, status: 'ACTIVE' },
+      data: { status: 'CANCELLED', cancelledAt: new Date() },
+    });
+
+    await replyToUser(
+      user,
+      "Your subscription has been cancelled. I'll stop messaging you for now. You can always subscribe again on our website! 👋"
     );
     return;
   }

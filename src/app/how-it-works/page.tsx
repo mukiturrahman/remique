@@ -32,7 +32,7 @@ export default function HowItWorksPage() {
         <Navbar />
 
         {/* ── HEADER ────────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-5 pb-6 pt-32 sm:px-8 lg:pt-40">
+        <section className="mx-auto max-w-6xl px-5 pb-6 pt-28 sm:px-8 lg:pt-36">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
             {page.eyebrow}
           </p>
@@ -68,7 +68,7 @@ export default function HowItWorksPage() {
 
         {/* ── FEATURE: CHASE MODE ───────────────────────────────────────── */}
         <section className="">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+          <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">
               {page.chase.eyebrow}
             </p>
@@ -94,7 +94,7 @@ export default function HowItWorksPage() {
         </section>
 
         {/* ── CTA ───────────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
+        <section className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 text-center sm:px-8">
           <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
             {page.cta.title}
           </h2>

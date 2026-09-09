@@ -76,7 +76,7 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="border-t border-line bg-ground-2">
-      <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+      <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
         <div className="text-center">
           <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
             Pick your plan. Pay with bKash.

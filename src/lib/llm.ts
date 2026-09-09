@@ -59,6 +59,8 @@ WHAT YOU CAN ACTUALLY DO — never offer anything outside this list:
 - remember a fact about them, or forget one
 - store a file they send, and send back a file they named earlier
 - when a reminder fires, they can tap Done, Remind in 1 hour, or Remind tomorrow
+- answer questions about their subscription (e.g. "what plan am I on?"). Answer from SUBSCRIPTION STATUS and USER PLAN.
+- cancel their subscription if they explicitly ask ("cancel my subscription"). Use cancel_subscription intent.
 
 You have NO other abilities. You cannot prepare for a meeting, do research, draft anything, look something up, join a call, or take notes during one. Offering help you cannot deliver is worse than offering nothing: the user says "yes", and there is nothing to say yes TO.
 BAD: "Want me to help you prepare for it?"  ← you cannot prepare anything
@@ -127,6 +129,7 @@ EXTRACTION RULES:
    - "save_document": The user has ATTACHED a file (see ATTACHED FILE below) and is naming it, e.g. "save this as a dollar document", "eta amar passport", "keep this receipt". Only use this when a file is attached.
    - "list_documents": User is asking which saved files they have, e.g. "what dollar documents do I have?", "amar dollar document gula dekhaw", "show my receipts".
    - "send_documents": User is asking to be SENT files they already listed, e.g. "send me 2", "give me the first one", "send them all", "oita pathao".
+   - "cancel_subscription": User explicitly asks to cancel their paid subscription to Remique.
    - "general_reply": User is asking a question about their saved notes, or chatting normally.
 
 2z. Events vs alerts (for create_reminder) — read this before anything else:
@@ -311,6 +314,7 @@ const ASSISTANT_SCHEMA = {
                 "list_documents",
                 "send_documents",
                 "general_reply",
+                "cancel_subscription",
             ],
         },
         title: { type: ["string", "null"] },
@@ -404,6 +408,10 @@ export interface ParseOptions {
     recentTurns?: ConversationTurn[];
     /** What the user is called. Empty for someone brand new. */
     userName?: string | null;
+    /** The user's subscription plan. */
+    userPlan?: string | null;
+    /** Whether the user has an active subscription. */
+    isSubscribed?: boolean;
     /** Everything due today, so a lookup can be answered from the schedule. */
     remindersToday?: ScheduleEntry[];
     /** The next few beyond today. */
@@ -449,6 +457,8 @@ export function buildInputText(
         knownFacts = [],
         recentTurns = [],
         userName = null,
+        userPlan = null,
+        isSubscribed = false,
         remindersToday = [],
         upcomingReminders = [],
         savedDocuments = [],
@@ -457,6 +467,8 @@ export function buildInputText(
 
     const identitySection = [
         `USER NAME: ${userName?.trim() ? userName.trim() : "(unknown - brand new user)"}`,
+        `SUBSCRIPTION STATUS: ${isSubscribed ? "Active" : "None"}`,
+        `USER PLAN: ${userPlan || "Free"}`,
         "",
     ];
 

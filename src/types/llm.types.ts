@@ -15,7 +15,8 @@ export type AssistantIntent =
   | 'save_document'
   | 'list_documents'
   | 'send_documents'
-  | 'general_reply';
+  | 'general_reply'
+  | 'cancel_subscription';
 
 /** One durable thing the model learned from this message. */
 export interface ExtractedFact {
@@ -137,6 +138,20 @@ export interface ScheduleEntry {
 export interface ConversationTurn {
   role: 'user' | 'assistant';
   text: string;
+}
+
+export interface ParseOptions {
+  pendingContext?: unknown;
+  savedNotes?: string[];
+  knownFacts?: KnownFact[];
+  recentTurns?: ConversationTurn[];
+  userName?: string | null;
+  userPlan?: string | null;
+  isSubscribed?: boolean;
+  remindersToday?: ScheduleEntry[];
+  upcomingReminders?: ScheduleEntry[];
+  savedDocuments?: DocumentCandidate[];
+  attachedFile?: { mediaType: string; fileName?: string | null } | null;
 }
 
 /** One row of the KNOWN FACTS block injected into the prompt. */

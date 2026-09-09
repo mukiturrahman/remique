@@ -9,6 +9,7 @@ import { useCopy, useLang } from "@/components/lang-provider";
 export default function PricingPage() {
   const [billing, setBilling] = useState<"weekly" | "monthly">("monthly");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function PricingPage() {
 
   async function handleCheckout(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!phone.trim()) {
+    if (!phone.trim() || !email.trim()) {
       setError(page.modal.errorEmpty);
       return;
     }
@@ -56,6 +57,7 @@ export default function PricingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phoneNumber: phone.trim(),
+          email: email.trim(),
           planPeriod: billing,
         }),
       });
@@ -122,6 +124,21 @@ export default function PricingPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block font-mono text-[11px] uppercase tracking-wider text-ink-3 mb-1.5">
+                    {page.modal.emailLabel}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder={page.modal.emailPlaceholder}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-xl border border-white/30 bg-white/40 px-4 py-3 text-[15px] font-medium text-ink placeholder:text-ink-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                    required
+                  />
+                </div>
+
                 {error && (
                   <p className="text-[13px] text-red-500 font-medium">
                     {error}
@@ -149,7 +166,7 @@ export default function PricingPage() {
         )}
 
         {/* ── HEADER ────────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-5 pb-6 pt-32 text-center sm:px-8 lg:pt-40">
+        <section className="mx-auto max-w-6xl px-5 pb-6 pt-28 text-center sm:px-8 lg:pt-36">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
             {page.eyebrow}
           </p>
@@ -248,7 +265,7 @@ export default function PricingPage() {
 
         {/* ── FEATURE GRID ──────────────────────────────────────────────── */}
         <section className="">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+          <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
             <h2 className="text-center font-display text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
               {page.allFeaturesTitle}
             </h2>

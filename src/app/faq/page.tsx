@@ -18,7 +18,7 @@ export default function FaqPage() {
         <Navbar />
 
         {/* ── HEADER ────────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-5 pb-6 pt-32 text-center sm:px-8 lg:pt-40">
+        <section className="mx-auto max-w-6xl px-5 pb-6 pt-28 text-center sm:px-8 lg:pt-36">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
             {page.eyebrow}
           </p>
@@ -31,13 +31,13 @@ export default function FaqPage() {
         </section>
 
         {/* ── ACCORDION ─────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-3xl px-5 py-14 sm:px-8 lg:py-20">
+        <section className="mx-auto max-w-3xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
           <FaqAccordion items={page.items} />
         </section>
 
         {/* ── CTA ───────────────────────────────────────────────────────── */}
         <section className="">
-          <div className="mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 lg:py-28">
+          <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 text-center sm:px-8">
             <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.04] tracking-display text-ink">
               {page.cta.title}
             </h2>
