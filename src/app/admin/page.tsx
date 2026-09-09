@@ -23,10 +23,11 @@ const SORTS: Array<{ key: UserSort; label: string }> = [
   { key: 'cost', label: 'Cost' },
   { key: 'recent', label: 'Recently active' },
   { key: 'joined', label: 'Newest' },
+  { key: 'unsubscribed', label: 'Unsubscribed' },
 ];
 
 function isSort(value: string | undefined): value is UserSort {
-  return value === 'cost' || value === 'recent' || value === 'joined';
+  return value === 'cost' || value === 'recent' || value === 'joined' || value === 'unsubscribed';
 }
 
 function SummaryTile({

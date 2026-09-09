@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { prisma } from './db';
 import { env } from './env';
 
-export type UserSort = 'cost' | 'recent' | 'joined';
+export type UserSort = 'cost' | 'recent' | 'joined' | 'unsubscribed';
 
 /**
  * The window the overview is scoped to.
@@ -44,6 +44,7 @@ const ORDER_BY: Record<UserSort, Record<string, 'asc' | 'desc'>> = {
   cost: { totalCostMicros: 'desc' },
   recent: { updatedAt: 'desc' },
   joined: { createdAt: 'desc' },
+  unsubscribed: { planExpiresAt: 'desc' },
 };
 
 const USER_SELECT = {
@@ -86,9 +87,18 @@ export interface ListUsersOptions {
 export async function listUsers(options: ListUsersOptions = {}) {
   const { sort = 'cost', period = 'all', limit = PAGE_SIZE, offset = 0 } = options;
   const start = periodStart(period);
+  
+  const baseWhere = sort === 'unsubscribed' ? {
+    planExpiresAt: {
+      not: null,
+      lt: new Date(),
+      ...(start ? { gte: start } : {}),
+    },
+  } : undefined;
 
   if (!start || period === 'all') {
     const users = await prisma.user.findMany({
+      where: baseWhere,
       orderBy: ORDER_BY[sort] ?? ORDER_BY.cost,
       take: limit,
       skip: offset,
@@ -157,6 +167,7 @@ export async function listUsers(options: ListUsersOptions = {}) {
       .filter((u): u is SelectedUser => Boolean(u));
   } else {
     pageUsers = await prisma.user.findMany({
+      where: baseWhere,
       orderBy: ORDER_BY[sort] ?? ORDER_BY.recent,
       take: limit,
       skip: offset,
