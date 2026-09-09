@@ -96,6 +96,20 @@ export async function initiateBdappsSubscription(
     };
   }
 
+  // Prevent double-subscription
+  if (user.planTier === 'pro') {
+    const activeSub = await prisma.subscription.findFirst({
+      where: { userId: user.id, status: 'ACTIVE' },
+    });
+    
+    if (activeSub) {
+      return {
+        success: false,
+        error: 'This WhatsApp number is already subscribed to Remique Pro.',
+      };
+    }
+  }
+
   const requestId = generateRequestId();
   const now = new Date();
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
