@@ -25,7 +25,7 @@ Add the following environment variables to your `.env` / deployment configuratio
 | `BDAPPS_API_SECRET` | API Secret from bdApps Developer Portal | `7f41a8b...` |
 | `BDAPPS_APP_ID` | bdApps Application ID | `APP_012345` |
 | `BDAPPS_AUTH_URL` | bdApps SDK Authorization URL | `https://user.bdapps.com/sdk/subscription/authorize` |
-| `NEXT_PUBLIC_APP_URL` | Fully qualified base URL of Remique | `https://remique.com` |
+| `NEXT_PUBLIC_APP_URL` | Fully qualified base URL of Remique | `https://remique.app` |
 
 > 🔒 **Security Notice:** Never commit `BDAPPS_API_SECRET` to Git or expose it in client-side bundles.
 
@@ -65,7 +65,7 @@ https://user.bdapps.com/sdk/subscription/authorize
   ```
   apiKey + "|" + requestTime + "|" + apiSecret
   ```
-* **`redirectUrl`**: URL-encoded destination URL where bdApps sends the user after completion (`https://remique.com/api/billing/bdapps/callback`).
+* **`redirectUrl`**: URL-encoded destination URL where bdApps sends the user after completion (`https://remique.app/api/billing/bdapps/callback`).
 
 ---
 

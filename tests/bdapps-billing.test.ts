@@ -73,7 +73,7 @@ describe('bdApps authorization URL builder', () => {
     const res = buildBdappsAuthorizationUrl({
       apiKey: 'app_key_abc',
       apiSecret: 'secret_xyz',
-      redirectUrl: 'https://remique.com/api/billing/bdapps/callback',
+      redirectUrl: 'https://remique.app/api/billing/bdapps/callback',
       requestId: '260908180000123',
       requestTime: '2026-09-08T18:00:00.000Z',
       authBaseUrl: 'https://user.bdapps.com/sdk/subscription/authorize',
@@ -92,7 +92,7 @@ describe('bdApps authorization URL builder', () => {
     assert.equal(parsed.searchParams.get('signature'), res.signature);
     assert.equal(
       parsed.searchParams.get('redirectUrl'),
-      'https://remique.com/api/billing/bdapps/callback'
+      'https://remique.app/api/billing/bdapps/callback'
     );
   });
 

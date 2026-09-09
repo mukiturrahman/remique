@@ -184,6 +184,24 @@ a {
   }
 }
 
+/* The hero peek bot: a wider, slower float than the nav mark, with the -12deg
+   rest tilt baked in so the keyframes do not clobber a Tailwind rotate. */
+@keyframes remique-peek {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-12deg);
+  }
+  25% {
+    transform: translate3d(-3px, -9px, 0) rotate(-17deg);
+  }
+  55% {
+    transform: translate3d(3px, 3px, 0) rotate(-7deg);
+  }
+  80% {
+    transform: translate3d(0, -4px, 0) rotate(-13.5deg);
+  }
+}
+
 @keyframes remique-caret {
   0%,
   45% {
@@ -212,11 +230,17 @@ a {
   will-change: transform;
 }
 
+.peek {
+  animation: remique-peek 5.2s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .pulse,
   .caret,
-  .bob {
+  .bob,
+  .peek {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

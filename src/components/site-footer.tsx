@@ -65,7 +65,7 @@ export function SiteFooter() {
                         <ul className="mt-5 space-y-3">
                             {[
                                 { href: "/faq", label: c.footer.faq },
-                                { href: "mailto:support@remique.com", label: c.footer.contact },
+                                { href: "mailto:support@remique.app", label: c.footer.contact },
                             ].map((l) => (
                                 <li key={l.href}>
                                     <Link

@@ -29,7 +29,7 @@ export function Navbar() {
         </Link>
 
         {/* desktop links */}
-        <div className="ml-auto hidden items-center gap-1 lg:flex">
+        <div className="mx-auto hidden items-center gap-1 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -47,7 +47,7 @@ export function Navbar() {
 
         <Link
           href="/pricing"
-          className="ml-auto hidden items-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[14.5px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep lg:inline-flex lg:ml-4"
+          className="ml-auto hidden items-center gap-2 rounded-full bg-brand px-4 py-2.5 font-display text-[14.5px] font-semibold tracking-tight text-white transition-colors duration-200 hover:bg-brand-deep lg:ml-0 lg:inline-flex"
         >
           {c.nav.getStarted}
         </Link>

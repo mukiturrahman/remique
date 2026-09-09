@@ -488,7 +488,8 @@ const en = {
         badge: "bKash Payment",
         titleCancelled: "Subscription Cancelled",
         titleIncomplete: "Payment Incomplete",
-        descCancelled: "You cancelled the bKash subscription authorization. No charge was made to your account.",
+        descCancelled:
+            "You cancelled the bKash subscription authorization. No charge was made to your account.",
         descIncompletePrefix: "The transaction could not be completed: ",
         descIncompleteSuffix: ". No funds were debited.",
         descDefault: "The bKash transaction was not completed. Please try again.",
@@ -526,7 +527,7 @@ const bn: Copy = {
         // prefix is empty here by design and the layout skips its line break.
         headlinePrefix: "",
         headlineSuffix: "আর কখনো ভুলবেন না।",
-        rotator: ["বিদ্যুৎ বিল", "স্কুলের ফি", "৩টার মিটিং", "মায়ের জন্মদিন", "ট্যাক্সের ডেডলাইন"],
+        rotator: ["বাবার ওষুধ এর সময়", "৩টার মিটিং", "স্ত্রীর জন্মদিন", "ট্যাক্সের ডেডলাইন"],
         subBefore:
             "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা ",
         subAfter:
@@ -965,7 +966,8 @@ const bn: Copy = {
         badge: "bKash পেমেন্ট",
         titleCancelled: "সাবস্ক্রিপশন বাতিল করা হয়েছে",
         titleIncomplete: "পেমেন্ট সম্পন্ন হয়নি",
-        descCancelled: "আপনি bKash সাবস্ক্রিপশন অনুমোদন বাতিল করেছেন। আপনার অ্যাকাউন্ট থেকে কোনো টাকা কাটা হয়নি।",
+        descCancelled:
+            "আপনি bKash সাবস্ক্রিপশন অনুমোদন বাতিল করেছেন। আপনার অ্যাকাউন্ট থেকে কোনো টাকা কাটা হয়নি।",
         descIncompletePrefix: "লেনদেন সম্পন্ন করা যায়নি: ",
         descIncompleteSuffix: "। কোনো টাকা কাটা হয়নি।",
         descDefault: "bKash লেনদেন সম্পন্ন হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",

@@ -60,7 +60,7 @@ export function FloatingLangToggle() {
     return (
         <aside
             aria-label="Language selector"
-            className="fixed top-4 right-4 sm:top-6 sm:right-6 lg:right-8 z-[60] flex items-center"
+            className="fixed top-4 right-4 sm:top-6 sm:right-6 lg:right-8 z-[60] flex h-[64px] items-center"
         >
             <LangToggle />
         </aside>

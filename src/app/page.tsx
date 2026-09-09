@@ -129,10 +129,12 @@ function CtaLink({
     href,
     children,
     tone = "brand",
+    size = "md",
 }: {
     href: string;
     children: React.ReactNode;
     tone?: "brand" | "light" | "outline";
+    size?: "md" | "lg";
 }) {
     const styles = {
         brand: "bg-brand text-white shadow-lift hover:bg-brand-deep hover:shadow-panel active:shadow-press",
@@ -141,10 +143,15 @@ function CtaLink({
             "border border-white/40 text-white shadow-lift hover:shadow-panel hover:bg-white/10",
     } as const;
 
+    const sizes = {
+        md: "gap-2.5 px-6 py-3.5 text-[16px]",
+        lg: "gap-3 px-8 py-[18px] text-[19px]",
+    } as const;
+
     return (
         <Link
             href={href}
-            className={`group inline-flex items-center gap-2.5 rounded-full px-6 py-3.5 font-display text-[16px] font-semibold tracking-tight transition-all duration-200 active:translate-y-px ${styles[tone]}`}
+            className={`group inline-flex items-center rounded-full font-display font-semibold tracking-tight transition-all duration-200 active:translate-y-px ${sizes[size]} ${styles[tone]}`}
         >
             {children}
             <IconArrow className="h-[17px] w-[17px] transition-transform duration-300 ease-out group-hover:translate-x-1" />
@@ -288,9 +295,9 @@ function HomeContent() {
                                 {c.hero.subAfter}
                             </p>
 
-                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 text-[14.5px] font-medium text-ink-3">
-                                <span className="inline-flex items-center gap-1.5">
-                                    <MarkWhatsApp className="h-4 w-4 text-brand" />
+                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3.5 text-[17px] font-medium text-ink-3">
+                                <span className="inline-flex items-center gap-2">
+                                    <MarkWhatsApp className="h-5 w-5 text-brand" />
                                     {c.hero.worksOnWhatsApp}
                                 </span>
                                 <span className="text-line-strong">·</span>
@@ -298,7 +305,7 @@ function HomeContent() {
                             </div>
 
                             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
-                                <CtaLink href="/pricing">{c.hero.ctaPrimary}</CtaLink>
+                                <CtaLink href="/pricing" size="lg">{c.hero.ctaPrimary}</CtaLink>
                             </div>
                         </div>
 
@@ -311,7 +318,7 @@ function HomeContent() {
                                     alt={c.hero.botAlt}
                                     width={120}
                                     height={120}
-                                    className="w-24 h-auto -rotate-12 lg:w-32"
+                                    className="peek w-24 h-auto lg:w-32"
                                 />
                             </div>
 
