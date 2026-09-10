@@ -39,9 +39,36 @@ const cursive = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Remique — WhatsApp reminders in English, Banglish and বাংলা",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://remique.com"),
+  title: "Remique | Your WhatsApp AI Assistant",
   description:
     "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali. No app to install, no account to make.",
+  keywords: ["WhatsApp AI", "WhatsApp reminders", "Banglish reminders", "Bengali AI assistant", "Remique", "AI reminder bot"],
+  openGraph: {
+    title: "Remique | Your WhatsApp AI Assistant",
+    description: "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali.",
+    url: "/",
+    siteName: "Remique",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/openGraphBannerImage.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Remique | Your WhatsApp AI Assistant",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Remique | Your WhatsApp AI Assistant",
+    description: "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali.",
+    images: ["/openGraphBannerImage.jpg"],
+  },
+  icons: {
+    icon: "/logo.ico",
+  },
 };
 
 export const viewport: Viewport = {
