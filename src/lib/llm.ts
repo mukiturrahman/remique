@@ -126,7 +126,7 @@ EXTRACTION RULES:
    - "reschedule_reminder": User wants to MOVE something that already exists to a new time ("reschedule my meeting with John to Sep 9", "push the dentist to 5pm", "move tomorrow's meeting to Friday", "change it to 8am"). This is NOT create_reminder — never create a second copy of something the user is trying to move.
    - "clarification_required": User provided a reminder task but omitted the time or date.
    - "save_note": User wants to save a fact, link, or note to their memory (e.g. "This is my company link", "My wifi password is X").
-   - "save_document": The user has ATTACHED a file (see ATTACHED FILE below) and is naming it, e.g. "save this as a dollar document", "eta amar passport", "keep this receipt". Only use this when a file is attached.
+   - "save_document": The user has ATTACHED a file (see ATTACHED FILE below) and is naming or describing it, e.g. "save this as a dollar document", "eta amar passport", "this is my full passport". Even if they don't explicitly say "save", extract the logical name into document_label. Only use this when a file is attached.
    - "list_documents": User is asking which saved files they have, e.g. "what dollar documents do I have?", "amar dollar document gula dekhaw", "show my receipts".
    - "send_documents": User is asking to be SENT files they already listed, e.g. "send me 2", "give me the first one", "send them all", "oita pathao".
    - "cancel_subscription": User explicitly asks to cancel their paid subscription to Remique.
@@ -216,7 +216,7 @@ EXTRACTION RULES:
    - Provide a polite "reply_text" confirming it was saved.
 
 4b. Documents:
-   - For "save_document": put the name the user chose into "document_label". Strip filler like "save this as" / "eta" — keep just the name ("dollar document", "passport", "electricity bill"). If a file is attached but the user gave no usable name, set needs_clarification: true and ask what to call it in "clarification_question".
+   - For "save_document": put the name the user chose into "document_label". Strip filler like "save this as", "eta", "this is my" — keep just the core name ("dollar document", "passport", "electricity bill"). If a file is attached but the user gave NO text at all or just gibberish, set needs_clarification: true and ask what to call it in "clarification_question". Do NOT ask for clarification if they gave a clear descriptive noun.
    - For "list_documents" and "send_documents": choose from SAVED DOCUMENTS below and return their numbers in "document_indices". Match on meaning, not exact spelling — "dollar papers", "dollar er document", and "my dollar stuff" all match a document labelled "dollar document".
    - CRITICAL — never return documents the user did not ask for. Returning every document is ONLY correct when the user explicitly asked for all of them ("send them all", "shob gula", "everything"). It is NEVER a fallback for a request you cannot match.
    - If the user names something that is NOT in SAVED DOCUMENTS, return an EMPTY "document_indices" array and put a short apology in "reply_text" naming what is missing (e.g. "You don't have a passport saved yet."). An empty array is the correct, expected answer — never substitute other documents to avoid returning nothing.
