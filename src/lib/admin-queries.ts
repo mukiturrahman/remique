@@ -390,6 +390,10 @@ export async function getUserDetail(id: string) {
     recentUsage,
     dailyAgg,
     weeklyAgg,
+    messages,
+    documents,
+    facts,
+    reminders,
   ] = await Promise.all([
     // The real total.
     prisma.message.count({ where: { userId: id } }),
@@ -408,6 +412,23 @@ export async function getUserDetail(id: string) {
       where: { userId: id, createdAt: { gte: weekAgo } },
       _sum: { inputTokens: true, outputTokens: true, costMicros: true },
     }),
+    prisma.message.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+      take: 1000,
+    }),
+    prisma.document.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.fact.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.reminder.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+    }),
   ]);
 
   const tokensIn = (a: typeof dailyAgg) =>
@@ -418,6 +439,10 @@ export async function getUserDetail(id: string) {
   return {
     user,
     messageCount,
+    messages: messages.reverse(), // chronologically ordered for display
+    documents,
+    facts,
+    reminders,
     usageByDay: bucketByDay(recentUsage),
     // Not named `window`: destructuring that in a component shadows the DOM
     // global and trips lint rules for no benefit.
