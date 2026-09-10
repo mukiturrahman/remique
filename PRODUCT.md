@@ -22,7 +22,7 @@ The mechanism a neighbor could not truthfully copy: natural-language reminder pa
 
 ## Operating Context
 
-- Entry point is a WhatsApp thread with the bot number **+880 1853-501469** (`https://wa.me/8801853501469?text=Hi`). No web app, no dashboard, no login.
+- Entry point is a WhatsApp thread with the bot number **+880 1895-638339** (`https://wa.me/8801895638339?text=Hi`). No web app, no dashboard, no login.
 - Timezone default `Asia/Dhaka` (UTC+6).
 - Interaction is pure chat: create, list ("amr reminder gula dekhaw" / "show my reminders"), cancel, and a clarification turn when the user gives a task but no time.
 - The landing page's only job is to get a first-time visitor into that WhatsApp thread.

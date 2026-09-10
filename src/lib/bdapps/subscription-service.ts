@@ -339,7 +339,7 @@ export async function handleBdappsCallback(
       id: user.id,
       phoneNumber: user.phoneNumber,
     },
-    redirectUrl: `https://wa.me/8801853501469?text=Hi`,
+    redirectUrl: `https://wa.me/8801895638339?text=Hi`,
   };
 }
 
