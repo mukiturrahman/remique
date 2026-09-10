@@ -34,8 +34,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('[API /api/billing/bdapps/subscribe] POST Error:', error);
+    
+    // Prevent leaking Prisma or developer errors to the UI
+    let errorMessage = 'Something went wrong. Please try again.';
+    if (error?.message && !error.message.includes('prisma') && !error.message.includes('invocation')) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { error: error?.message || 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -65,7 +72,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(result.authorizationUrl);
   } catch (error: any) {
     console.error('[API /api/billing/bdapps/subscribe] GET Error:', error);
-    const errMsg = encodeURIComponent(error?.message || 'Server error');
+    
+    // Prevent leaking Prisma or developer errors to the UI
+    let errorMessage = 'Something went wrong. Please try again.';
+    if (error?.message && !error.message.includes('prisma') && !error.message.includes('invocation')) {
+      errorMessage = error.message;
+    }
+    
+    const errMsg = encodeURIComponent(errorMessage);
     return NextResponse.redirect(new URL(`/pricing?error=${errMsg}`, req.url));
   }
 }

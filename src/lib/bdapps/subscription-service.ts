@@ -71,21 +71,31 @@ export async function initiateBdappsSubscription(
       },
     });
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          whatsappId: raw,
-          phoneNumber: formatted,
-          email: params.email || null,
-          timezone: 'Asia/Dhaka',
-          planTier: 'free',
-        },
-      });
-    } else if (params.email && user.email !== params.email) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { email: params.email },
-      });
+    try {
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            whatsappId: raw,
+            phoneNumber: formatted,
+            email: params.email || null,
+            timezone: 'Asia/Dhaka',
+            planTier: 'free',
+          },
+        });
+      } else if (params.email && user.email !== params.email) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { email: params.email },
+        });
+      }
+    } catch (dbError: any) {
+      if (dbError.code === 'P2002') {
+        return {
+          success: false,
+          error: 'This email address or phone number is already connected to another account.',
+        };
+      }
+      throw dbError;
     }
   }
 
