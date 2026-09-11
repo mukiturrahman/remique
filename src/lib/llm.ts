@@ -561,7 +561,7 @@ export function buildInputText(
 
     const temporalSection = [
         "SYSTEM TEMPORAL CONTEXT:",
-        `- Current Local Time: ${nowUser.toISO()} (${userTimezone})`,
+        `- Current Local Time: ${nowUser.toFormat("yyyy-MM-dd'T'HH:mm:ssZZ")} (${userTimezone})`,
         `- Current Day of Week: ${nowUser.toFormat("cccc")}`,
         `- Timezone: ${userTimezone}`,
         "",
