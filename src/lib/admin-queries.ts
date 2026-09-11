@@ -64,6 +64,9 @@ const USER_SELECT = {
   dailyTokenCap: true,
   weeklyTokenCap: true,
   planTier: true,
+  // Which pro plan, not just that they are on one: weekly and monthly are
+  // different products at different prices and both store `planTier: 'pro'`.
+  planPeriod: true,
   planExpiresAt: true,
   _count: {
     select: { messages: true, documents: true, reminders: true, facts: true },
@@ -75,6 +78,40 @@ export interface ListUsersOptions {
   period?: Period;
   limit?: number;
   offset?: number;
+  /** Free-text match across name, phone number and email. */
+  q?: string;
+  /** Restricts the list to the ids the attention query returned. */
+  onlyIds?: string[] | null;
+}
+
+/**
+ * The search clause, or undefined when there is nothing to search for.
+ *
+ * `mode: 'insensitive'` is Postgres-only, which this project is. A blank or
+ * whitespace-only query must not become `contains: ''` — that matches every
+ * row and reads as a broken filter rather than an absent one.
+ */
+function searchWhere(q: string | undefined) {
+  const term = q?.trim();
+  if (!term) return undefined;
+
+  return {
+    OR: [
+      { name: { contains: term, mode: 'insensitive' as const } },
+      { phoneNumber: { contains: term, mode: 'insensitive' as const } },
+      { email: { contains: term, mode: 'insensitive' as const } },
+    ],
+  };
+}
+
+/** Combines the filters that can apply at once, dropping the ones that are off. */
+function composeWhere(
+  ...clauses: Array<Record<string, unknown> | undefined>
+): Record<string, unknown> | undefined {
+  const live = clauses.filter(Boolean) as Record<string, unknown>[];
+  if (live.length === 0) return undefined;
+  if (live.length === 1) return live[0];
+  return { AND: live };
 }
 
 /**
@@ -85,16 +122,24 @@ export interface ListUsersOptions {
  * and `messages` for that time window and merges period metrics into each row.
  */
 export async function listUsers(options: ListUsersOptions = {}) {
-  const { sort = 'cost', period = 'all', limit = PAGE_SIZE, offset = 0 } = options;
+  const { sort = 'cost', period = 'all', limit = PAGE_SIZE, offset = 0, q, onlyIds } = options;
   const start = periodStart(period);
-  
-  const baseWhere = sort === 'unsubscribed' ? {
-    planExpiresAt: {
-      not: null,
-      lt: new Date(),
-      ...(start ? { gte: start } : {}),
-    },
-  } : undefined;
+
+  const baseWhere = composeWhere(
+    sort === 'unsubscribed'
+      ? {
+          planExpiresAt: {
+            not: null,
+            lt: new Date(),
+            ...(start ? { gte: start } : {}),
+          },
+        }
+      : undefined,
+    searchWhere(q),
+    // An empty array is a real answer — "nothing needs attention" — and has to
+    // narrow to zero rows rather than fall through to every user.
+    onlyIds ? { id: { in: onlyIds } } : undefined
+  );
 
   if (!start || period === 'all') {
     const users = await prisma.user.findMany({
@@ -120,7 +165,11 @@ export async function listUsers(options: ListUsersOptions = {}) {
 
   let pageUsers: SelectedUser[] = [];
 
-  if (sort === 'cost') {
+  // The period-cost ranking below reaches for every user with usage in the
+  // window, which cannot honour a search or an id restriction. When one is
+  // active, fall through to the filtered query ordered by lifetime cost — the
+  // page is a handful of matches at that point, not a leaderboard.
+  if (sort === 'cost' && !baseWhere) {
     // 1. Group usage_events by user for the period to find top spenders in this window
     const periodUsage = await prisma.usageEvent.groupBy({
       by: ['userId'],
@@ -174,6 +223,7 @@ export async function listUsers(options: ListUsersOptions = {}) {
       select: USER_SELECT,
     });
   }
+
 
   if (pageUsers.length === 0) {
     return [];
@@ -229,6 +279,158 @@ export async function listUsers(options: ListUsersOptions = {}) {
 
 export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
 
+/**
+ * How many rows the current filters actually match.
+ *
+ * Paging off the global headcount was wrong the moment search landed: a query
+ * matching three people would still offer five pages of "next".
+ */
+export function countListedUsers(
+  options: Pick<ListUsersOptions, 'sort' | 'period' | 'q' | 'onlyIds'> = {}
+): Promise<number> {
+  const { sort = 'cost', period = 'all', q, onlyIds } = options;
+  const start = periodStart(period);
+
+  return prisma.user.count({
+    where: composeWhere(
+      sort === 'unsubscribed'
+        ? { planExpiresAt: { not: null, lt: new Date(), ...(start ? { gte: start } : {}) } }
+        : undefined,
+      searchWhere(q),
+      onlyIds ? { id: { in: onlyIds } } : undefined
+    ),
+  });
+}
+
+/** Weekly and monthly are two products; both store `planTier: 'pro'`. */
+const PLAN_WORD: Record<string, string> = { weekly: 'Weekly', monthly: 'Monthly' };
+
+/** Why a user is on the attention list. The wording is what the UI prints. */
+export type AttentionKind = 'blocked' | 'lapsed' | 'over-cap';
+
+export interface AttentionItem {
+  id: string;
+  name: string | null;
+  phoneNumber: string;
+  kind: AttentionKind;
+  /** A full sentence, not a badge — the operator should not have to decode it. */
+  reason: string;
+}
+
+/**
+ * Everyone who needs the operator today.
+ *
+ * Three real conditions, in descending urgency: blocked (someone is cut off
+ * right now), over their daily cap (someone is being refused replies), and
+ * lapsed (a paid period ended). Nothing here is inferred or scored — each row
+ * is a fact already in the database.
+ */
+export async function getAttention(limit = 12): Promise<AttentionItem[]> {
+  const dayAgo = new Date(Date.now() - DAY_MS);
+
+  const [blocked, lapsed, dayUsage] = await Promise.all([
+    prisma.user.findMany({
+      where: { blockedAt: { not: null } },
+      orderBy: { blockedAt: 'desc' },
+      take: limit,
+      select: { id: true, name: true, phoneNumber: true, blockedAt: true, blockedReason: true },
+    }),
+    prisma.user.findMany({
+      where: { planExpiresAt: { not: null, lt: new Date() }, planTier: { not: 'free' } },
+      orderBy: { planExpiresAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        planTier: true,
+        planPeriod: true,
+        planExpiresAt: true,
+      },
+    }),
+    prisma.usageEvent.groupBy({
+      by: ['userId'],
+      where: { createdAt: { gte: dayAgo } },
+      _sum: { inputTokens: true, outputTokens: true },
+    }),
+  ]);
+
+  const items: AttentionItem[] = blocked.map((u) => ({
+    id: u.id,
+    name: u.name,
+    phoneNumber: u.phoneNumber,
+    kind: 'blocked' as const,
+    reason: u.blockedReason
+      ? `Blocked ${formatDate(u.blockedAt!)} — ${u.blockedReason}`
+      : `Blocked ${formatDate(u.blockedAt!)}, still cut off`,
+  }));
+
+  // Only the heaviest users can be at their cap, so the per-user cap lookup is
+  // scoped to them rather than run across the whole table.
+  const heaviest = dayUsage
+    .map((g) => ({
+      userId: g.userId,
+      tokens: (g._sum.inputTokens ?? 0) + (g._sum.outputTokens ?? 0),
+    }))
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, 50);
+
+  if (heaviest.length > 0) {
+    const capped = await prisma.user.findMany({
+      where: { id: { in: heaviest.map((h) => h.userId) } },
+      select: { id: true, name: true, phoneNumber: true, dailyTokenCap: true, planTier: true },
+    });
+    const capById = new Map(capped.map((u) => [u.id, u]));
+
+    for (const { userId, tokens } of heaviest) {
+      const user = capById.get(userId);
+      if (!user) continue;
+
+      const unlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+      const cap = user.dailyTokenCap ?? (unlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP);
+      // A null cap is unlimited: there is nothing to exceed.
+      if (cap === null || tokens < cap * 0.9) continue;
+
+      items.push({
+        id: user.id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        kind: 'over-cap',
+        reason:
+          tokens >= cap
+            ? `Over the daily cap — ${formatTokens(tokens)} of ${formatTokens(cap)}, replies are being refused`
+            : `Close to the daily cap — ${formatTokens(tokens)} of ${formatTokens(cap)} in 24 hours`,
+      });
+    }
+  }
+
+  for (const u of lapsed) {
+    items.push({
+      id: u.id,
+      name: u.name,
+      phoneNumber: u.phoneNumber,
+      kind: 'lapsed',
+      // Named the way the table names it: "pro plan ended" hides which of the
+      // two plans it was, and "permanent" is not a plan at all.
+      reason:
+        u.planTier === 'permanent'
+          ? `Admin access ended ${formatDate(u.planExpiresAt!)}`
+          : `${PLAN_WORD[u.planPeriod?.toLowerCase() ?? ''] ?? 'Pro'} plan ended ${formatDate(u.planExpiresAt!)}`,
+    });
+  }
+
+  // One row per person: being blocked outranks being over cap, which outranks
+  // a lapsed plan, and the insertion order above already encodes that.
+  const seen = new Set<string>();
+  return items.filter((item) => !seen.has(item.id) && seen.add(item.id)).slice(0, limit);
+}
+
+/** Just the ids, for narrowing the user table to the attention list. */
+export async function getAttentionUserIds(): Promise<string[]> {
+  const items = await getAttention(200);
+  return items.map((item) => item.id);
+}
+
 
 export interface DashboardTotals {
   period: Period;
@@ -245,10 +447,21 @@ export interface DashboardTotals {
   /** Users who joined inside the window. Equals `users` when the period is 'all'. */
   newUsers: number;
   blocked: number;
+  /** Users seen in the last seven days. A stock, like the headcount. */
+  activeRecently: number;
   /** Paid periods that ended inside the window. See getDashboardTotals(). */
   unsubscribed: number;
+  /**
+   * Who spent the most inside the window.
+   *
+   * Not derivable from the page of users on screen — that page is paginated,
+   * sorted and searchable, and the biggest spender may not be on it.
+   */
+  topSpender: { id: string; name: string | null; costMicros: number } | null;
 
   // ── Flows: these DO scope to the window ────────────────────────
+  /** Messages in both directions, so the figure matches what the table sums to. */
+  messages: number;
   tokens: number;
   /** What we paid OpenAI, in USD micros. */
   tokenCostMicros: number;
@@ -261,6 +474,43 @@ export interface DashboardTotals {
    * UI has to say so rather than quietly showing a wrong total.
    */
   revenueMixedCurrency: boolean;
+}
+
+/**
+ * The single heaviest spender in the window, or null when nobody has spent.
+ *
+ * Unbounded windows read the denormalised lifetime counter; a scoped window
+ * has to aggregate `usage_events`, because that counter cannot be sliced by
+ * date at all.
+ */
+async function topSpenderIn(
+  start: Date | null
+): Promise<{ id: string; name: string | null; costMicros: number } | null> {
+  if (!start) {
+    const user = await prisma.user.findFirst({
+      where: { totalCostMicros: { gt: 0 } },
+      orderBy: { totalCostMicros: 'desc' },
+      select: { id: true, name: true, totalCostMicros: true },
+    });
+    return user ? { id: user.id, name: user.name, costMicros: user.totalCostMicros } : null;
+  }
+
+  const [top] = await prisma.usageEvent.groupBy({
+    by: ['userId'],
+    where: { createdAt: { gte: start } },
+    _sum: { costMicros: true },
+    orderBy: { _sum: { costMicros: 'desc' } },
+    take: 1,
+  });
+
+  if (!top || !top._sum.costMicros) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: top.userId },
+    select: { id: true, name: true },
+  });
+
+  return user ? { id: user.id, name: user.name, costMicros: top._sum.costMicros } : null;
 }
 
 /**
@@ -282,11 +532,25 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
   // Every window ends at "now", so the upper bound is implicit everywhere.
   const inWindow = start ? { gte: start } : undefined;
 
-  const [users, newUsers, blocked, unsubscribed, usageAgg, revenueByCurrency, paidEver] =
-    await Promise.all([
+  const [
+    users,
+    newUsers,
+    blocked,
+    activeRecently,
+    unsubscribed,
+    messages,
+    usageAgg,
+    revenueByCurrency,
+    paidEver,
+    topSpender,
+  ] = await Promise.all([
     prisma.user.count(),
     start ? prisma.user.count({ where: { createdAt: inWindow } }) : prisma.user.count(),
     prisma.user.count({ where: { blockedAt: { not: null } } }),
+
+    // Deliberately a fixed seven days rather than the selected window: "who is
+    // still around" is not a question the period control is asking.
+    prisma.user.count({ where: { updatedAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
 
     // "Unsubscribed" = a paid period that has already ended. Keyed on
     // planExpiresAt rather than planTier so it still counts correctly if a
@@ -294,6 +558,8 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     prisma.user.count({
       where: { planExpiresAt: { not: null, lt: now, ...(start ? { gte: start } : {}) } },
     }),
+
+    prisma.message.count({ where: start ? { createdAt: inWindow } : undefined }),
 
     prisma.usageEvent.aggregate({
       where: start ? { createdAt: inWindow } : undefined,
@@ -311,7 +577,9 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     // Deliberately unscoped. Answers "has money ever moved", which is what
     // decides whether a zero means "nothing this week" or "no gateway yet".
     prisma.payment.count({ where: { status: 'PAID' } }),
-    ]);
+
+    topSpenderIn(start),
+  ]);
 
   // The largest single-currency total is the headline. With one currency —
   // which is the case today and for the foreseeable future — this is simply
@@ -330,7 +598,10 @@ export async function getDashboardTotals(period: Period = 'all'): Promise<Dashbo
     users,
     newUsers,
     blocked,
+    activeRecently,
     unsubscribed,
+    topSpender,
+    messages,
     tokens: inTokens - cachedTokens + outTokens,
     tokenCostMicros: usageAgg._sum.costMicros ?? 0,
     revenue: ranked[0]?.amount ?? 0,
