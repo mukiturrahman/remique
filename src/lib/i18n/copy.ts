@@ -75,6 +75,13 @@ const en = {
         imageAlt: "An overloaded brain trying to hold everything at once",
     },
 
+    privacySection: {
+        title: "Meet Officer Remi. Your data is strictly yours.",
+        body: "We understand that your reminders might contain personal or sensitive information. Officer Remi makes sure everything stays secure, encrypted, and is never shared with third parties.",
+        fix: "We don't sell data. We sell a service that makes your life easier. Your privacy is non-negotiable.",
+        imageAlt: "Officer Remi guarding your data",
+    },
+
     languages: {
         title: "As easy as texting a friend.",
         // Each one is a thing the reader does not have to do. Short enough to
@@ -556,6 +563,13 @@ const bn: Copy = {
         body: "Science বলে, ব্রেইন যখন capacity-র বেশি জিনিস ধরে রাখার চেষ্টা করে, তখন ভুলে যাওয়াটাই স্বাভাবিক। আপনি অলস না, আপনার memory খারাপ না, আপনার ব্রেইন শুধু ওভারলোডেড।",
         fix: "সমাধান জটিল কিছু না। ব্রেইনরে একটু জায়গা দিন, আর ছোট ছোট জিনিসগুলা Remique-কে মনে রাখতে দিন। WhatsApp-এই বলে দিলেই হবে।",
         imageAlt: "ওভারলোডেড ব্রেইন একসাথে সবকিছু ধরে রাখার চেষ্টা করছে",
+    },
+
+    privacySection: {
+        title: "অফিসার রেমির পাহারায় আপনার ডেটা শুধুই আপনার।",
+        body: "আমরা জানি আপনার রিমাইন্ডারে ব্যক্তিগত বা গুরুত্বপূর্ণ তথ্য থাকতে পারে। অফিসার রেমি নিশ্চিত করে যে আপনার ডেটা এনক্রিপ্টেড, নিরাপদ এবং কোনো থার্ড পার্টির সাথে শেয়ার করা হয় না।",
+        fix: "আমরা ডেটা বিক্রি করি না। আমরা এমন একটা সার্ভিস দিই যা আপনার জীবন সহজ করে। আপনার প্রাইভেসি নিয়ে কোনো আপস নেই।",
+        imageAlt: "আপনার ডেটা পাহারা দিচ্ছে অফিসার রেমি",
     },
 
     languages: {

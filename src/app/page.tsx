@@ -312,14 +312,16 @@ function HomeContent() {
                         {/* RIGHT COLUMN */}
                         <div className="relative mx-auto mt-6 w-full max-w-[420px] lg:mt-0 lg:ml-auto lg:mr-0 lg:max-w-[460px]">
                             {/* The bot icon peeking */}
-                            <div className="absolute -left-1 -top-8 z-10 sm:-left-6 sm:-top-10 lg:-left-12 lg:-top-16 drop-shadow-2xl">
-                                <Image
-                                    src="/logo.png"
-                                    alt={c.hero.botAlt}
-                                    width={120}
-                                    height={120}
-                                    className="peek w-24 h-auto lg:w-32"
-                                />
+                            <div className="absolute -left-1 -top-8 z-10 sm:-left-6 sm:-top-10 lg:-left-12 lg:-top-16 drop-shadow-2xl group cursor-pointer">
+                                <div className="transition-transform duration-500 ease-out group-hover:scale-125 group-hover:-translate-y-4 group-hover:-rotate-12">
+                                    <Image
+                                        src="/logo.png"
+                                        alt={c.hero.botAlt}
+                                        width={120}
+                                        height={120}
+                                        className="peek w-24 h-auto lg:w-32"
+                                    />
+                                </div>
                             </div>
 
                             {/* The rounded media card containing WhatsAppMockup */}
@@ -394,6 +396,37 @@ function HomeContent() {
                             {/* The turn from diagnosis to fix gets its own beat. */}
                             <p className="mx-auto mt-9 max-w-[48ch] rounded-2xl border border-white/40 border-l-2 border-l-brand bg-white/25 px-6 py-5 text-left font-display text-[17px] font-semibold leading-snug tracking-tight text-ink shadow-lift backdrop-blur-md lg:mx-0">
                                 {c.overload.fix}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ── 3.5 PRIVACY ──────────────────────────────────────────────── */}
+                <section>
+                    <div className="mx-auto grid max-w-6xl gap-12 px-5 py-12 sm:py-14 lg:py-16 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
+                        <div className="relative mx-auto aspect-square w-full max-w-[520px] lg:max-w-none lg:order-2 group cursor-pointer">
+                            <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-3 group-hover:-translate-y-2">
+                                <Image
+                                    src="/officerRemi.png"
+                                    alt={c.privacySection.imageAlt}
+                                    fill
+                                    className="object-contain bob"
+                                    sizes="(max-width: 1024px) 90vw, 46vw"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="text-center lg:text-left lg:order-1">
+                            <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.65rem,3.6vw,2.8rem)] font-semibold leading-[1.08] tracking-display text-ink lg:mx-0">
+                                {c.privacySection.title}
+                            </h2>
+
+                            <p className="mx-auto mt-7 max-w-[52ch] text-[16.5px] leading-relaxed text-ink-2 lg:mx-0">
+                                {c.privacySection.body}
+                            </p>
+
+                            <p className="mx-auto mt-9 max-w-[48ch] rounded-2xl border border-white/40 border-l-2 border-l-brand bg-white/25 px-6 py-5 text-left font-display text-[17px] font-semibold leading-snug tracking-tight text-ink shadow-lift backdrop-blur-md lg:mx-0">
+                                {c.privacySection.fix}
                             </p>
                         </div>
                     </div>
