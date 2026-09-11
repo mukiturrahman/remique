@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { env } from '@/lib/env';
 import { prisma } from '@/lib/db';
 import {
   verifyQStashRequest,
@@ -31,10 +32,11 @@ const BATCH = 25;
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
+    const expectedUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/jobs/sweep`;
     const auth = await verifyQStashRequest(
       request.headers.get('upstash-signature'),
       rawBody,
-      request.url
+      expectedUrl
     );
 
     if (!auth.ok) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { env } from '@/lib/env';
 import { prisma } from '@/lib/db';
 import {
   sendWhatsAppButtons,
@@ -26,7 +27,10 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const signature = request.headers.get('upstash-signature');
 
-    const auth = await verifyQStashRequest(signature, rawBody, request.url);
+    // Use the canonical app URL for signature verification, as Vercel's request.url 
+    // can sometimes resolve to internal/branch domains and cause signature mismatch.
+    const expectedUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/jobs/send-reminder`;
+    const auth = await verifyQStashRequest(signature, rawBody, expectedUrl);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
