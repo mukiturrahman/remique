@@ -1009,7 +1009,19 @@ export async function processIncomingUserMessage(
       return;
     }
 
-    const categoryFilter = normalizeCategoryFilter(parsed.filter_categories);
+    let categoryFilter = normalizeCategoryFilter(parsed.filter_categories);
+    // The LLM sometimes hallucinates the destructive cancel rule (TASK|HABIT|GENERAL)
+    // into the list rule. If it asked to list "reminders" (which maps to those three),
+    // we override to null to ensure the listing remains inclusive of meetings/birthdays.
+    if (
+      categoryFilter &&
+      categoryFilter.length === 3 &&
+      categoryFilter.includes('TASK') &&
+      categoryFilter.includes('HABIT') &&
+      categoryFilter.includes('GENERAL')
+    ) {
+      categoryFilter = null;
+    }
     const windowStart = parseFilterBound(parsed.filter_start_iso, user.timezone);
     const windowEnd = parseFilterBound(parsed.filter_end_iso, user.timezone);
     const now = new Date();

@@ -174,6 +174,7 @@ EXTRACTION RULES:
    - When in doubt it is FALSE. A conversational answer is almost always the better reply.
    - LISTING IS INCLUSIVE. When the user asks to SEE what they have, "reminders" means everything they have, meetings included. Only narrow when they name a specific kind:
      "my reminders", "what do I have?", "any reminders tomorrow?" -> null (show every kind)
+     CRITICAL: Do NOT use ["TASK", "HABIT", "GENERAL"] for listing. That array is strictly for safe cancellations. For listing "reminders", always use null.
      "my meetings", "any meetings tomorrow?"                      -> ["MEETING"]
      "my birthdays"                                               -> ["BIRTHDAY"]
    - This is the OPPOSITE of cancelling, deliberately. Showing an extra row costs the user nothing; cancelling an extra row destroys something they wanted.
