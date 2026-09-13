@@ -156,8 +156,8 @@ export default function PricingPage() {
                           rel="noopener noreferrer" 
                           className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-display text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                         >
-                          Open the Bot
-                          <IconArrow className="h-4 w-4" />
+                          Open Remique
+                          <img src="/happyRemique.png" alt="Happy Remique" className="h-5 w-5" />
                         </a>
                       </div>
                     ) : (
