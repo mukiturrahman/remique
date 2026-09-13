@@ -148,10 +148,7 @@ export default function PricingPage() {
                   }`}>
                     {isAlreadySubscribed ? (
                       <div className="flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2">
-                          <img src="/happyRemique.png" alt="Happy Remique" className="h-7 w-7" />
-                          <p className="font-semibold text-[16px]">🎉 Congratulations!</p>
-                        </div>
+                        <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
                         <p>You're already subscribed. If you didn't receive the bot link, tap the button below to open it.</p>
                         <a 
                           href="https://wa.me/8801895638339?text=Hi" 
