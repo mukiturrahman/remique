@@ -148,7 +148,10 @@ export default function PricingPage() {
                   }`}>
                     {isAlreadySubscribed ? (
                       <div className="flex flex-col gap-2.5">
-                        <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
+                        <div className="flex items-center gap-2">
+                          <img src="/happyRemique.png" alt="Happy Remique" className="h-7 w-7" />
+                          <p className="font-semibold text-[16px]">Congratulations!</p>
+                        </div>
                         <p>You're already subscribed. If you didn't receive the bot link, tap the button below to open it.</p>
                         <a 
                           href="https://wa.me/8801895638339?text=Hi" 
@@ -157,7 +160,7 @@ export default function PricingPage() {
                           className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-display text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                         >
                           Open Remique
-                          <img src="/happyRemique.png" alt="Happy Remique" className="h-5 w-5" />
+                          <IconArrow className="h-4 w-4" />
                         </a>
                       </div>
                     ) : (
