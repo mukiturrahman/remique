@@ -143,7 +143,7 @@ export default function PricingPage() {
                 {error && (
                   <div className={`relative text-[14px] font-medium leading-relaxed rounded-xl ${
                     isAlreadySubscribed 
-                      ? "bg-green-500/10 text-green-600 border border-green-500/20 p-4 overflow-hidden" 
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20 p-4" 
                       : "text-red-500"
                   }`}>
                     {isAlreadySubscribed ? (
@@ -151,7 +151,7 @@ export default function PricingPage() {
                         <img 
                           src="/happyRemique.png" 
                           alt="Happy Remique" 
-                          className="absolute -top-1 -right-2 h-16 w-16 rotate-12 opacity-90 drop-shadow-sm" 
+                          className="absolute -top-4 -right-3 h-16 w-auto object-contain rotate-12 drop-shadow-md z-20" 
                         />
                         <div className="relative z-10 flex flex-col gap-2.5 pr-8">
                           <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
