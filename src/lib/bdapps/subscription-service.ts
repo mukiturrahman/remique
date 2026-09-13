@@ -106,18 +106,52 @@ export async function initiateBdappsSubscription(
     };
   }
 
-  // Prevent double-subscription
-  if (user.planTier === 'pro') {
-    const activeSub = await prisma.subscription.findFirst({
-      where: { userId: user.id, status: 'ACTIVE' },
-    });
-    
-    if (activeSub) {
+  // Check for active subscription regardless of current user.planTier
+  const activeSub = await prisma.subscription.findFirst({
+    where: { userId: user.id, status: 'ACTIVE' },
+  });
+
+  if (activeSub) {
+    if (user.planTier === 'pro' && activeSub.planPeriod === plan.period) {
       return {
         success: false,
         error: 'ALREADY_SUBSCRIBED',
       };
     }
+    
+    // User already has an active bdapps subscription but planTier or period got changed.
+    // Handle the plan change directly by restoring 'pro' status without a new authorization.
+    const now = new Date();
+    const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        planTier: 'pro',
+        planPeriod: plan.period,
+        planStartedAt: now,
+        planExpiresAt: activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
+      },
+    });
+    
+    await prisma.subscription.update({
+      where: { id: activeSub.id },
+      data: {
+        planPeriod: plan.period,
+        amount: plan.amount,
+        currency: plan.currency,
+      },
+    });
+
+    return {
+      success: true,
+      authorizationUrl: `https://wa.me/8801895638339?text=Hi`,
+      requestId: activeSub.requestId || undefined,
+      user: {
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+      },
+    };
   }
 
   const requestId = generateRequestId();
