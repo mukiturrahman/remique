@@ -151,7 +151,7 @@ export default function PricingPage() {
                         <img 
                           src="/happyRemique.png" 
                           alt="Happy Remique" 
-                          className="absolute -top-4 -right-3 h-16 w-auto object-contain rotate-12 drop-shadow-md z-20" 
+                          className="absolute -top-4 -right-3 h-16 w-auto object-contain animate-float drop-shadow-md z-20" 
                         />
                         <div className="relative z-10 flex flex-col gap-2.5 pr-8">
                           <p className="font-semibold text-[15px]">🎉 Congratulations!</p>

@@ -56,6 +56,15 @@ export default {
           "0 2px 4px rgba(11, 21, 18, 0.05), 0 18px 36px -14px rgba(11, 21, 18, 0.2)",
         press: "0 1px 2px rgba(11, 21, 18, 0.12)",
       },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0) rotate(12deg)" },
+          "50%": { transform: "translateY(-6px) rotate(14deg)" },
+        }
+      },
+      animation: {
+        float: "float 3s ease-in-out infinite",
+      }
     },
   },
   plugins: [],
