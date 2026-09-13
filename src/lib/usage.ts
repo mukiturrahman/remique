@@ -77,8 +77,10 @@ export async function checkQuota(user: {
   planTier?: string;
   dailyTokenCap: number | null;
   weeklyTokenCap: number | null;
+  planExpiresAt?: Date | null;
 }): Promise<QuotaVerdict> {
-  const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+  const isLapsed = user.planTier !== 'free' && user.planTier !== 'permanent' && user.planExpiresAt && user.planExpiresAt < new Date();
+  const isUnlimited = (user.planTier === 'permanent' || user.planTier === 'pro') && !isLapsed;
 
   // Unlimited tiers bypass token caps unless explicit custom numeric overrides are set.
   // Skipping aggregations also avoids two queries on the critical inbound message path.

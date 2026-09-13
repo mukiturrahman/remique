@@ -74,7 +74,16 @@ export async function POST(
       : { planTier: tier, planPeriod: period, planStartedAt: new Date(), planExpiresAt: expiresAt };
 
   try {
-    await prisma.user.update({ where: { id }, data });
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id }, data });
+
+      if (tier === 'free') {
+        await tx.subscription.updateMany({
+          where: { userId: id, status: { in: ['ACTIVE', 'PENDING'] } },
+          data: { status: 'CANCELLED', cancelledAt: new Date() },
+        });
+      }
+    });
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }

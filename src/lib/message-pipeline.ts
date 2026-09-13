@@ -101,18 +101,19 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     return { status: 'blocked', retryable: false };
   }
 
-  // ── Unsubscribed user ────────────────────────────────────────────
-  if (user.planTier === 'free') {
+  // ── Unsubscribed or lapsed user ────────────────────────────────────────────
+  const now = new Date();
+  const isLapsed = user.planTier !== 'free' && user.planTier !== 'permanent' && user.planExpiresAt && user.planExpiresAt < now;
+  if (user.planTier === 'free' || isLapsed) {
     await prisma.message.update({
       where: { id: message.id },
       data: { processedAt: new Date(), processingError: 'Unsubscribed' },
     });
 
-    console.warn(`[Remique] Unsubscribed user message dropped userId=${user.id}`);
+    console.warn(`[Remique] Unsubscribed or lapsed user message dropped userId=${user.id}`);
     return { status: 'processed', retryable: false };
   }
 
-  const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
   // Fired first and never awaited on the reply path. The user sees "typing…"
