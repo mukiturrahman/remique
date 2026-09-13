@@ -1,18 +1,49 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 enum ReminderStatus {
   SCHEDULED
   PROCESSING
   SENT
+  // The user tapped Done. Distinct from SENT, which only means it was
+  // delivered — plenty of delivered reminders are never acted on.
+  DONE
   CANCELLED
   FAILED
+}
+
+// What kind of thing a reminder is about. Without this every row is just a
+// reminder, so "any meetings tomorrow?" and "any reminders tomorrow?" return
+// the same undifferentiated list.
+enum ReminderCategory {
+  MEETING
+  BIRTHDAY
+  TASK
+  HABIT
+  GENERAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
 }
 
 enum MessageDirection {
@@ -21,18 +52,249 @@ enum MessageDirection {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  whatsappId        String             @unique @map("whatsapp_id")
-  phoneNumber       String             @map("phone_number")
-  name              String?
-  timezone          String             @default("Asia/Dhaka")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  whatsappId  String   @unique @map("whatsapp_id")
+  phoneNumber String   @map("phone_number")
+  email       String?  @unique
+  name        String?
+  timezone    String   @default("Asia/Dhaka")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // ── Blocking ──────────────────────────────────────────────────
+  // Null means active. A timestamp means blocked, and when.
+  blockedAt     DateTime? @map("blocked_at")
+  blockedReason String?   @map("blocked_reason")
+
+  // Set when the "your access is paused" notice has been delivered, so it is
+  // sent exactly once no matter how many messages follow. Cleared on unblock.
+  blockNoticeSentAt DateTime? @map("block_notice_sent_at")
+
+  // ── Denormalised usage totals ─────────────────────────────────
+  // Kept alongside usage_events so the admin user list is one query instead
+  // of a groupBy over every event ever recorded. Incremented in the same
+  // transaction as the UsageEvent insert.
+  totalInputTokens  Int @default(0) @map("total_input_tokens")
+  totalOutputTokens Int @default(0) @map("total_output_tokens")
+  totalCostMicros   Int @default(0) @map("total_cost_micros")
+  totalLlmCalls     Int @default(0) @map("total_llm_calls")
+
+  // ── Per-user quota overrides ──────────────────────────────────
+  // Null means "use the global env default". A paid plan later writes a
+  // bigger number here and needs no code change.
+  dailyTokenCap  Int? @map("daily_token_cap")
+  weeklyTokenCap Int? @map("weekly_token_cap")
+
+  // ── Billing scaffolding, deliberately unused ──────────────────
+  // Landed now so billing does not need a second migration. Nothing reads
+  // these until a payment gateway exists.
+  planTier      String    @default("free") @map("plan_tier")
+  planPeriod    String?   @map("plan_period")
+  planStartedAt DateTime? @map("plan_started_at")
+  planExpiresAt DateTime? @map("plan_expires_at")
+
   reminders         Reminder[]
   messages          Message[]
   conversationState ConversationState?
+  notes             Note[]
+  documents         Document[]
+  facts             Fact[]
+  usageEvents       UsageEvent[]
+  payments          Payment[]
+  subscription      Subscription?
 
   @@map("users")
+}
+
+// A file the user handed to the bot on WhatsApp, stored in S3.
+//
+// `label` is nullable on purpose: when an image arrives with no caption we
+// still store the bytes immediately (Meta's media IDs expire, and the user may
+// take minutes to answer), then fill the label in on the next turn. An
+// unlabeled row is invisible to retrieval and is swept after 24 hours.
+model Document {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  label     String?
+  mediaType String   @map("media_type")
+  mimeType  String   @map("mime_type")
+  fileName  String?  @map("file_name")
+  s3Key     String   @map("s3_key")
+  sizeBytes Int      @map("size_bytes")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("documents")
+}
+
+// One row per paid API call, not per message. A message that triggers a
+// vision call and a parse call must produce two rows, or the cost of images
+// can never be separated from the cost of text.
+model UsageEvent {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  // The inbound message that caused the call. Nullable because a future
+  // background call (a summarisation pass, an embedding job) has no inbound
+  // message to point at.
+  messageId String? @map("message_id")
+
+  // What the call was for: "parse" today; "vision", "transcribe", "embed"
+  // later. A plain string rather than an enum so adding a purpose does not
+  // need a migration.
+  purpose String @default("parse")
+
+  provider String @default("openai")
+  model    String
+
+  inputTokens Int @map("input_tokens")
+
+  // The discounted portion of inputTokens — the static system prompt, once
+  // OpenAI has seen it recently. Stored separately because the cost is
+  // (inputTokens - cachedTokens) at full rate plus cachedTokens at the
+  // discounted one.
+  cachedTokens Int @default(0) @map("cached_tokens")
+  outputTokens Int @map("output_tokens")
+
+  // USD * 1_000_000, integer. Floats must never hold money, and one
+  // gpt-4.1-mini call is a fraction of a cent, so cents is too coarse.
+  // Computed at write time so a later price change cannot rewrite history.
+  costMicros Int @map("cost_micros")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("usage_events")
+}
+
+// One row per payment attempt, written by whichever gateway we adopt.
+//
+// Exists before the gateway does so the dashboard's revenue figure has a real
+// source rather than a hardcoded zero, and so adding payments later is a code
+// change instead of a second migration.
+//
+// Revenue is the SUM of rows with status PAID. A PENDING or FAILED row must
+// never count — that is the whole reason status is on the row rather than
+// implied by the record existing.
+model Payment {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  // Decimal, not integer micros. Token costs are fractions of a cent and use
+  // micros; real money is not, and Postgres sums NUMERIC exactly. Mixing the
+  // two representations in one column is how rounding bugs get shipped.
+  amount Decimal @db.Decimal(12, 2)
+
+  // ISO 4217. Summing across currencies is meaningless, so the dashboard sums
+  // one currency at a time — see getDashboardTotals().
+  currency String @default("BDT")
+
+  // "bkash" | "sslcommerz" | "stripe" | whatever we adopt. A plain string so
+  // adding a provider needs no migration.
+  provider String
+
+  // The gateway's own id for this transaction. Unique so a replayed webhook
+  // cannot record the same payment twice.
+  externalId String? @unique @map("external_id")
+
+  status PaymentStatus @default(PENDING)
+
+  // What the payment bought. Null for a one-off that is not a subscription
+  // period.
+  periodStart DateTime? @map("period_start")
+  periodEnd   DateTime? @map("period_end")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([subscriptionId])
+  @@map("payments")
+}
+
+// User's recurring billing subscription via bdApps bKash SDK.
+model Subscription {
+  id                 String             @id @default(uuid())
+  userId             String             @unique @map("user_id")
+  planTier           String             @default("pro") @map("plan_tier")
+  planPeriod         String             @default("monthly") @map("plan_period")
+  amount             Decimal            @db.Decimal(12, 2)
+  currency           String             @default("BDT")
+  status             SubscriptionStatus @default(ACTIVE)
+
+  // bdApps subscription identifiers
+  requestId          String?            @unique @map("request_id")
+  subscriberId       String?            @map("subscriber_id")
+
+  // Billing cycle timestamps
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments           Payment[]
+
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+// A single durable thing the bot knows about the user, e.g.
+// subject="girlfriend", predicate="birthday", value="2026-09-10".
+//
+// Structured rather than free text so a fact can be UPDATED and FORGOTTEN.
+// The old `Note` model could only append, which is how the same user ended up
+// with "Dotinverse", a duplicate "Dotinverse", "Forget Dotinverse" and
+// "My company name is Roveup" all in context at once, all contradicting.
+//
+// The [userId, subject, predicate] uniqueness is the mechanism: restating a
+// fact overwrites it instead of adding a rival copy.
+model Fact {
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  subject   String
+  predicate String
+  value     String
+
+  // Set when the value is a date, so reminders can be computed off it
+  // ("10 minutes before her birthday") instead of guessed from prose.
+  valueDate DateTime? @map("value_date")
+
+  // True for things that repeat every year, like birthdays. `valueDate` holds
+  // the next occurrence; the year is not meaningful on its own.
+  recurring Boolean @default(false)
+
+  // Which message taught us this. Lets a bad extraction be traced back.
+  sourceMessageId String? @map("source_message_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subject, predicate])
+  @@index([userId, updatedAt])
+  @@map("facts")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notes")
 }
 
 model Message {
@@ -43,29 +305,77 @@ model Message {
   messageText       String           @map("message_text")
   rawPayload        Json?            @map("raw_payload")
   createdAt         DateTime         @default(now()) @map("created_at")
-  user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Async processing state. The webhook only writes the row; the QStash worker
+  // owns processedAt. A row with processedAt = null has NOT been answered yet,
+  // so a Meta webhook retry must re-enqueue it rather than drop it as a duplicate.
+  processedAt     DateTime? @map("processed_at")
+  attempts        Int       @default(0)
+  processingError String?   @map("processing_error")
+  qstashMessageId String?   @map("qstash_message_id")
+
+  // Set only for inbound media. Carried on the row so the pipeline never has to
+  // re-parse the Meta payload, and so a replayed message still knows what to
+  // download. `mediaId` is Meta's ID and expires — download promptly.
+  mediaId       String? @map("media_id")
+  mediaType     String? @map("media_type")
+  mediaMimeType String? @map("media_mime_type")
+  mediaFilename String? @map("media_filename")
+
+  // Set when the inbound message is a tap on one of our reply buttons rather
+  // than typed text. Carries which button, so the action is handled exactly
+  // and without an LLM call.
+  buttonReplyId String? @map("button_reply_id")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([direction, processedAt])
+  @@index([userId, direction, createdAt])
   @@map("messages")
 }
 
 model Reminder {
-  id              String         @id @default(uuid())
-  userId          String         @map("user_id")
+  id              String           @id @default(uuid())
+  userId          String           @map("user_id")
   title           String
-  originalMessage String         @map("original_message")
-  scheduledAt     DateTime       @map("scheduled_at")
-  timezone        String         @default("Asia/Dhaka")
+  originalMessage String           @map("original_message")
+  scheduledAt     DateTime         @map("scheduled_at")
+  timezone        String           @default("Asia/Dhaka")
+  category        ReminderCategory @default(GENERAL)
+
+  // The event this alert points at, e.g. the meeting itself at 9 PM. Null for
+  // a standalone reminder ("take a shower in 10 minutes") where the reminder
+  // IS the thing, rather than a heads-up about something else.
+  anchorAt    DateTime? @map("anchor_at")
+  anchorTitle String?   @map("anchor_title")
+
+  // How many minutes before `anchorAt` this fires. This is the handle the user
+  // reaches for: "change the 30 mins one to 1 hour" targets offsetMinutes=30,
+  // and a confirmation can then say "the 1-hour heads-up" instead of quoting a
+  // wall-clock time back at them.
+  offsetMinutes Int? @map("offset_minutes")
+
+  // Shared by every alert created for the same event, so editing one can
+  // restate its siblings and cancelling can offer to take the set.
+  groupId String? @map("group_id")
+
+  // Was extracted by the model and then dropped on the floor: "remind me every
+  // morning" silently became a one-shot. Populated now, and the delivery path
+  // schedules the next occurrence after a successful send.
   recurrenceRule  String?        @map("recurrence_rule")
   status          ReminderStatus @default(SCHEDULED)
   qstashMessageId String?        @map("qstash_message_id")
   attempts        Int            @default(0)
   errorMessage    String?        @map("error_message")
   sentAt          DateTime?      @map("sent_at")
+  completedAt     DateTime?      @map("completed_at")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
+  @@index([userId, category, scheduledAt])
+  @@index([userId, groupId])
   @@index([status, scheduledAt])
   @@map("reminders")
 }

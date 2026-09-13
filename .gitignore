@@ -41,3 +41,6 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+
+# Impeccable design-tool state (build phases, question logs, review captures)
+.impeccable/
