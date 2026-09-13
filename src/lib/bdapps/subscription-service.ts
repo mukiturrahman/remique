@@ -92,7 +92,7 @@ export async function initiateBdappsSubscription(
       if (dbError.code === 'P2002') {
         return {
           success: false,
-          error: 'This email address or phone number is already connected to another account.',
+          error: 'ALREADY_SUBSCRIBED',
         };
       }
       throw dbError;
@@ -115,7 +115,7 @@ export async function initiateBdappsSubscription(
     if (activeSub) {
       return {
         success: false,
-        error: 'This WhatsApp number is already subscribed to Remique Pro.',
+        error: 'ALREADY_SUBSCRIBED',
       };
     }
   }

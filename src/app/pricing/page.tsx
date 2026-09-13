@@ -140,8 +140,23 @@ export default function PricingPage() {
                 </div>
 
                 {error && (
-                  <p className="text-[13px] text-red-500 font-medium">
-                    {error}
+                  <p className="text-[13px] text-red-500 font-medium leading-snug">
+                    {error === "ALREADY_SUBSCRIBED" || error.includes("already") || error.includes("registered") ? (
+                      <>
+                        You're already subscribed! If you didn't receive the bot link,{" "}
+                        <a 
+                          href="https://wa.me/8801895638339?text=Hi" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="underline hover:text-red-400 font-semibold"
+                        >
+                          click here
+                        </a>{" "}
+                        to open the bot.
+                      </>
+                    ) : (
+                      error
+                    )}
                   </p>
                 )}
 
