@@ -1,9 +1,35 @@
-import { DateTime } from 'luxon';
+import { DateTime } from "luxon";
+import { db } from "../db";
+import {
+  users,
+  usageEvents,
+  messages,
+  payments,
+  documents,
+  facts,
+  reminders,
+} from "../db/schema";
+import {
+  eq,
+  desc,
+  asc,
+  inArray,
+  isNull,
+  isNotNull,
+  and,
+  or,
+  sql,
+  sum,
+  count,
+  gte,
+  lt,
+  not,
+  notInArray,
+  ilike,
+} from "drizzle-orm";
+import { env } from "./env";
 
-import { prisma } from './db';
-import { env } from './env';
-
-export type UserSort = 'cost' | 'recent' | 'joined' | 'unsubscribed';
+export type UserSort = "cost" | "recent" | "joined" | "unsubscribed";
 
 /**
  * The window the overview is scoped to.
@@ -12,66 +38,42 @@ export type UserSort = 'cost' | 'recent' | 'joined' | 'unsubscribed';
  * month the operator is living in, or the figure is wrong for the first and
  * last six hours of every month.
  */
-export type Period = 'all' | 'today' | 'month' | '30d';
+export type Period = "all" | "today" | "month" | "30d";
 
-export const ADMIN_TIMEZONE = 'Asia/Dhaka';
+export const ADMIN_TIMEZONE = "Asia/Dhaka";
 
 export const PERIOD_LABELS: Record<Period, string> = {
-  all: 'All time',
-  today: 'Today',
-  month: 'This month',
-  '30d': 'Last 30 days',
+  all: "All time",
+  today: "Today",
+  month: "This month",
+  "30d": "Last 30 days",
 };
 
 export function isPeriod(value: string | undefined): value is Period {
-  return value === 'all' || value === 'today' || value === 'month' || value === '30d';
+  return (
+    value === "all" || value === "today" || value === "month" || value === "30d"
+  );
 }
 
-/** Null for 'all' — an unbounded window, which Prisma expresses by omitting the filter. */
+/** Null for 'all' — an unbounded window, which Drizzle expresses by omitting the filter. */
 export function periodStart(period: Period): Date | null {
-  if (period === 'all') return null;
+  if (period === "all") return null;
 
   const now = DateTime.now().setZone(ADMIN_TIMEZONE);
-  if (period === 'today') return now.startOf('day').toJSDate();
-  if (period === 'month') return now.startOf('month').toJSDate();
+  if (period === "today") return now.startOf("day").toJSDate();
+  if (period === "month") return now.startOf("month").toJSDate();
   return now.minus({ days: 30 }).toJSDate();
 }
 
 /** Rows per page in the user list. */
 export const PAGE_SIZE = 50;
 
-const ORDER_BY: Record<UserSort, Record<string, 'asc' | 'desc'>> = {
-  cost: { totalCostMicros: 'desc' },
-  recent: { updatedAt: 'desc' },
-  joined: { createdAt: 'desc' },
-  unsubscribed: { planExpiresAt: 'desc' },
+const ORDER_BY = {
+  cost: desc(users.totalCostMicros),
+  recent: desc(users.updatedAt),
+  joined: desc(users.createdAt),
+  unsubscribed: desc(users.planExpiresAt),
 };
-
-const USER_SELECT = {
-  id: true,
-  name: true,
-  phoneNumber: true,
-  email: true,
-  timezone: true,
-  createdAt: true,
-  updatedAt: true,
-  blockedAt: true,
-  blockedReason: true,
-  totalInputTokens: true,
-  totalOutputTokens: true,
-  totalCostMicros: true,
-  totalLlmCalls: true,
-  dailyTokenCap: true,
-  weeklyTokenCap: true,
-  planTier: true,
-  // Which pro plan, not just that they are on one: weekly and monthly are
-  // different products at different prices and both store `planTier: 'pro'`.
-  planPeriod: true,
-  planExpiresAt: true,
-  _count: {
-    select: { messages: true, documents: true, reminders: true, facts: true },
-  },
-} as const;
 
 export interface ListUsersOptions {
   sort?: UserSort;
@@ -86,100 +88,138 @@ export interface ListUsersOptions {
 
 /**
  * The search clause, or undefined when there is nothing to search for.
- *
- * `mode: 'insensitive'` is Postgres-only, which this project is. A blank or
- * whitespace-only query must not become `contains: ''` — that matches every
- * row and reads as a broken filter rather than an absent one.
  */
 function searchWhere(q: string | undefined) {
   const term = q?.trim();
   if (!term) return undefined;
 
-  return {
-    OR: [
-      { name: { contains: term, mode: 'insensitive' as const } },
-      { phoneNumber: { contains: term, mode: 'insensitive' as const } },
-      { email: { contains: term, mode: 'insensitive' as const } },
-    ],
-  };
+  return or(
+    ilike(users.name, `%${term}%`),
+    ilike(users.phoneNumber, `%${term}%`),
+    ilike(users.email, `%${term}%`),
+  );
 }
 
 /** Combines the filters that can apply at once, dropping the ones that are off. */
-function composeWhere(
-  ...clauses: Array<Record<string, unknown> | undefined>
-): Record<string, unknown> | undefined {
-  const live = clauses.filter(Boolean) as Record<string, unknown>[];
+function composeWhere(...clauses: Array<any>) {
+  const live = clauses.filter(Boolean);
   if (live.length === 0) return undefined;
   if (live.length === 1) return live[0];
-  return { AND: live };
+  return and(...live);
 }
-
-/**
- * The user list.
- *
- * When period is 'all', reads the denormalised counters on `users` directly.
- * When period is scoped ('today', 'month', '30d'), aggregates `usage_events`
- * and `messages` for that time window and merges period metrics into each row.
- */
 export async function listUsers(options: ListUsersOptions = {}) {
-  const { sort = 'cost', period = 'all', limit = PAGE_SIZE, offset = 0, q, onlyIds } = options;
+  const {
+    sort = "cost",
+    period = "all",
+    limit = PAGE_SIZE,
+    offset = 0,
+    q,
+    onlyIds,
+  } = options;
   const start = periodStart(period);
 
   const baseWhere = composeWhere(
-    sort === 'unsubscribed'
-      ? {
-          planExpiresAt: {
-            not: null,
-            lt: new Date(),
-            ...(start ? { gte: start } : {}),
-          },
-        }
+    sort === "unsubscribed"
+      ? and(
+          isNotNull(users.planExpiresAt),
+          lt(users.planExpiresAt, new Date()),
+          start ? gte(users.planExpiresAt, start) : undefined,
+        )
       : undefined,
     searchWhere(q),
-    // An empty array is a real answer — "nothing needs attention" — and has to
-    // narrow to zero rows rather than fall through to every user.
-    onlyIds ? { id: { in: onlyIds } } : undefined
+    onlyIds ? inArray(users.id, onlyIds) : undefined,
   );
 
-  if (!start || period === 'all') {
-    const users = await prisma.user.findMany({
-      where: baseWhere,
-      orderBy: ORDER_BY[sort] ?? ORDER_BY.cost,
-      take: limit,
-      skip: offset,
-      select: USER_SELECT,
-    });
+  const USER_SELECT = {
+    id: users.id,
+    name: users.name,
+    phoneNumber: users.phoneNumber,
+    email: users.email,
+    timezone: users.timezone,
+    createdAt: users.createdAt,
+    updatedAt: users.updatedAt,
+    blockedAt: users.blockedAt,
+    blockedReason: users.blockedReason,
+    totalInputTokens: users.totalInputTokens,
+    totalOutputTokens: users.totalOutputTokens,
+    totalCostMicros: users.totalCostMicros,
+    totalLlmCalls: users.totalLlmCalls,
+    dailyTokenCap: users.dailyTokenCap,
+    weeklyTokenCap: users.weeklyTokenCap,
+    planTier: users.planTier,
+    planPeriod: users.planPeriod,
+    planExpiresAt: users.planExpiresAt,
+  };
 
-    return users.map((u) => ({
+  if (!start || period === "all") {
+    const fetchedUsers = await db
+      .select({
+        ...USER_SELECT,
+        _count_messages: sql<number>`(SELECT count(*) FROM ${messages} WHERE ${messages.userId} = ${users.id})::int`,
+        _count_documents: sql<number>`(SELECT count(*) FROM ${documents} WHERE ${documents.userId} = ${users.id})::int`,
+        _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
+        _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
+      })
+      .from(users)
+      .where(baseWhere)
+      .orderBy(ORDER_BY[sort] ?? ORDER_BY.cost)
+      .limit(limit)
+      .offset(offset);
+
+    return fetchedUsers.map((u) => ({
       ...u,
+      _count: {
+        messages: u._count_messages,
+        documents: u._count_documents,
+        reminders: u._count_reminders,
+        facts: u._count_facts,
+      },
       periodTokens: u.totalInputTokens + u.totalOutputTokens,
       periodCostMicros: u.totalCostMicros,
-      periodMessages: u._count.messages,
+      periodMessages: u._count_messages,
       periodLlmCalls: u.totalLlmCalls,
     }));
   }
 
-  type SelectedUser = Awaited<
-    ReturnType<typeof prisma.user.findMany<{ select: typeof USER_SELECT }>>
-  >[number];
+  type SelectedUser = {
+    id: string;
+    name: string | null;
+    phoneNumber: string;
+    email: string | null;
+    timezone: string;
+    createdAt: Date;
+    updatedAt: Date;
+    blockedAt: Date | null;
+    blockedReason: string | null;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    totalCostMicros: number;
+    totalLlmCalls: number;
+    dailyTokenCap: number | null;
+    weeklyTokenCap: number | null;
+    planTier: string;
+    planPeriod: string | null;
+    planExpiresAt: Date | null;
+    _count_messages: number;
+    _count_documents: number;
+    _count_reminders: number;
+    _count_facts: number;
+  };
 
   let pageUsers: SelectedUser[] = [];
 
-  // The period-cost ranking below reaches for every user with usage in the
-  // window, which cannot honour a search or an id restriction. When one is
-  // active, fall through to the filtered query ordered by lifetime cost — the
-  // page is a handful of matches at that point, not a leaderboard.
-  if (sort === 'cost' && !baseWhere) {
-    // 1. Group usage_events by user for the period to find top spenders in this window
-    const periodUsage = await prisma.usageEvent.groupBy({
-      by: ['userId'],
-      where: { createdAt: { gte: start } },
-      _sum: { costMicros: true },
-    });
+  if (sort === "cost" && !baseWhere) {
+    const periodUsage = await db
+      .select({
+        userId: usageEvents.userId,
+        costMicros: sum(usageEvents.costMicros).mapWith(Number),
+      })
+      .from(usageEvents)
+      .where(gte(usageEvents.createdAt, start))
+      .groupBy(usageEvents.userId);
 
-    // Sort active users by period cost descending
     const sortedActive = periodUsage.sort(
-      (a, b) => (b._sum.costMicros ?? 0) - (a._sum.costMicros ?? 0)
+      (a, b) => (b.costMicros ?? 0) - (a.costMicros ?? 0),
     );
     const activeUserIds = sortedActive.map((u) => u.userId);
 
@@ -191,13 +231,17 @@ export async function listUsers(options: ListUsersOptions = {}) {
     const needed = limit - pageUserIds.length;
     if (needed > 0) {
       const inactiveOffset = Math.max(0, offset - activeUserIds.length);
-      const inactiveUsers = await prisma.user.findMany({
-        where: { id: { notIn: activeUserIds } },
-        orderBy: { totalCostMicros: 'desc' },
-        skip: inactiveOffset,
-        take: needed,
-        select: { id: true },
-      });
+      const inactiveUsers = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          activeUserIds.length > 0
+            ? notInArray(users.id, activeUserIds)
+            : undefined,
+        )
+        .orderBy(desc(users.totalCostMicros))
+        .limit(needed)
+        .offset(inactiveOffset);
       pageUserIds.push(...inactiveUsers.map((u) => u.id));
     }
 
@@ -205,25 +249,36 @@ export async function listUsers(options: ListUsersOptions = {}) {
       return [];
     }
 
-    const fetchedUsers = await prisma.user.findMany({
-      where: { id: { in: pageUserIds } },
-      select: USER_SELECT,
-    });
+    const fetchedUsers = await db
+      .select({
+        ...USER_SELECT,
+        _count_messages: sql<number>`(SELECT count(*) FROM ${messages} WHERE ${messages.userId} = ${users.id})::int`,
+        _count_documents: sql<number>`(SELECT count(*) FROM ${documents} WHERE ${documents.userId} = ${users.id})::int`,
+        _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
+        _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
+      })
+      .from(users)
+      .where(inArray(users.id, pageUserIds));
 
     const userMap = new Map(fetchedUsers.map((u) => [u.id, u]));
     pageUsers = pageUserIds
       .map((id) => userMap.get(id))
       .filter((u): u is SelectedUser => Boolean(u));
   } else {
-    pageUsers = await prisma.user.findMany({
-      where: baseWhere,
-      orderBy: ORDER_BY[sort] ?? ORDER_BY.recent,
-      take: limit,
-      skip: offset,
-      select: USER_SELECT,
-    });
+    pageUsers = await db
+      .select({
+        ...USER_SELECT,
+        _count_messages: sql<number>`(SELECT count(*) FROM ${messages} WHERE ${messages.userId} = ${users.id})::int`,
+        _count_documents: sql<number>`(SELECT count(*) FROM ${documents} WHERE ${documents.userId} = ${users.id})::int`,
+        _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
+        _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
+      })
+      .from(users)
+      .where(baseWhere)
+      .orderBy(ORDER_BY[sort] ?? ORDER_BY.recent)
+      .limit(limit)
+      .offset(offset);
   }
-
 
   if (pageUsers.length === 0) {
     return [];
@@ -231,44 +286,63 @@ export async function listUsers(options: ListUsersOptions = {}) {
 
   const pageUserIds = pageUsers.map((u) => u.id);
 
-  // Fetch period usage & message counts for the users on this page
   const [usageGroups, messageGroups] = await Promise.all([
-    prisma.usageEvent.groupBy({
-      by: ['userId'],
-      where: {
-        userId: { in: pageUserIds },
-        createdAt: { gte: start },
-      },
-      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true, costMicros: true },
-      _count: { id: true },
-    }),
-    prisma.message.groupBy({
-      by: ['userId'],
-      where: {
-        userId: { in: pageUserIds },
-        createdAt: { gte: start },
-      },
-      _count: { id: true },
-    }),
+    db
+      .select({
+        userId: usageEvents.userId,
+        inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
+        cachedTokens: sum(usageEvents.cachedTokens).mapWith(Number),
+        outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
+        costMicros: sum(usageEvents.costMicros).mapWith(Number),
+        count: count(usageEvents.id),
+      })
+      .from(usageEvents)
+      .where(
+        and(
+          inArray(usageEvents.userId, pageUserIds),
+          gte(usageEvents.createdAt, start),
+        ),
+      )
+      .groupBy(usageEvents.userId),
+    db
+      .select({
+        userId: messages.userId,
+        count: count(messages.id),
+      })
+      .from(messages)
+      .where(
+        and(
+          inArray(messages.userId, pageUserIds),
+          gte(messages.createdAt, start),
+        ),
+      )
+      .groupBy(messages.userId),
   ]);
 
-  const usageMap = new Map(
+  const usageMap = new Map<string, { tokens: number; costMicros: number; calls: number }>(
     usageGroups.map((g) => [
       g.userId,
       {
-        tokens: (g._sum.inputTokens ?? 0) - (g._sum.cachedTokens ?? 0) + (g._sum.outputTokens ?? 0),
-        costMicros: g._sum.costMicros ?? 0,
-        calls: g._count.id,
+        tokens:
+          (g.inputTokens ?? 0) - (g.cachedTokens ?? 0) + (g.outputTokens ?? 0),
+        costMicros: g.costMicros ?? 0,
+        calls: g.count,
       },
-    ])
+    ]),
   );
 
-  const messagesMap = new Map(messageGroups.map((g) => [g.userId, g._count.id]));
+  const messagesMap = new Map(messageGroups.map((g) => [g.userId, g.count]));
 
   return pageUsers.map((u) => {
     const usage = usageMap.get(u.id);
     return {
       ...u,
+      _count: {
+        messages: u._count_messages,
+        documents: u._count_documents,
+        reminders: u._count_reminders,
+        facts: u._count_facts,
+      },
       periodTokens: usage?.tokens ?? 0,
       periodCostMicros: usage?.costMicros ?? 0,
       periodMessages: messagesMap.get(u.id) ?? 0,
@@ -279,123 +353,146 @@ export async function listUsers(options: ListUsersOptions = {}) {
 
 export type UserListRow = Awaited<ReturnType<typeof listUsers>>[number];
 
-/**
- * How many rows the current filters actually match.
- *
- * Paging off the global headcount was wrong the moment search landed: a query
- * matching three people would still offer five pages of "next".
- */
-export function countListedUsers(
-  options: Pick<ListUsersOptions, 'sort' | 'period' | 'q' | 'onlyIds'> = {}
+export async function countListedUsers(
+  options: Pick<ListUsersOptions, "sort" | "period" | "q" | "onlyIds"> = {},
 ): Promise<number> {
-  const { sort = 'cost', period = 'all', q, onlyIds } = options;
+  const { sort = "cost", period = "all", q, onlyIds } = options;
   const start = periodStart(period);
 
-  return prisma.user.count({
-    where: composeWhere(
-      sort === 'unsubscribed'
-        ? { planExpiresAt: { not: null, lt: new Date(), ...(start ? { gte: start } : {}) } }
-        : undefined,
-      searchWhere(q),
-      onlyIds ? { id: { in: onlyIds } } : undefined
-    ),
-  });
+  const [res] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(
+      composeWhere(
+        sort === "unsubscribed"
+          ? and(
+              isNotNull(users.planExpiresAt),
+              lt(users.planExpiresAt, new Date()),
+              start ? gte(users.planExpiresAt, start) : undefined,
+            )
+          : undefined,
+        searchWhere(q),
+        onlyIds ? inArray(users.id, onlyIds) : undefined,
+      ),
+    );
+
+  return res.count;
 }
+const PLAN_WORD: Record<string, string> = {
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
 
-/** Weekly and monthly are two products; both store `planTier: 'pro'`. */
-const PLAN_WORD: Record<string, string> = { weekly: 'Weekly', monthly: 'Monthly' };
-
-/** Why a user is on the attention list. The wording is what the UI prints. */
-export type AttentionKind = 'blocked' | 'lapsed' | 'over-cap';
+export type AttentionKind = "blocked" | "lapsed" | "over-cap";
 
 export interface AttentionItem {
   id: string;
   name: string | null;
   phoneNumber: string;
   kind: AttentionKind;
-  /** A full sentence, not a badge — the operator should not have to decode it. */
   reason: string;
 }
 
-/**
- * Everyone who needs the operator today.
- *
- * Three real conditions, in descending urgency: blocked (someone is cut off
- * right now), over their daily cap (someone is being refused replies), and
- * lapsed (a paid period ended). Nothing here is inferred or scored — each row
- * is a fact already in the database.
- */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export async function getAttention(limit = 12): Promise<AttentionItem[]> {
   const dayAgo = new Date(Date.now() - DAY_MS);
 
   const [blocked, lapsed, dayUsage] = await Promise.all([
-    prisma.user.findMany({
-      where: { blockedAt: { not: null } },
-      orderBy: { blockedAt: 'desc' },
-      take: limit,
-      select: { id: true, name: true, phoneNumber: true, blockedAt: true, blockedReason: true },
-    }),
-    prisma.user.findMany({
-      where: { planExpiresAt: { not: null, lt: new Date() }, planTier: { not: 'free' } },
-      orderBy: { planExpiresAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        phoneNumber: true,
-        planTier: true,
-        planPeriod: true,
-        planExpiresAt: true,
-      },
-    }),
-    prisma.usageEvent.groupBy({
-      by: ['userId'],
-      where: { createdAt: { gte: dayAgo } },
-      _sum: { inputTokens: true, outputTokens: true },
-    }),
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        phoneNumber: users.phoneNumber,
+        blockedAt: users.blockedAt,
+        blockedReason: users.blockedReason,
+      })
+      .from(users)
+      .where(isNotNull(users.blockedAt))
+      .orderBy(desc(users.blockedAt))
+      .limit(limit),
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        phoneNumber: users.phoneNumber,
+        planTier: users.planTier,
+        planPeriod: users.planPeriod,
+        planExpiresAt: users.planExpiresAt,
+      })
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.planExpiresAt),
+          lt(users.planExpiresAt, new Date()),
+          not(eq(users.planTier, "free")),
+        ),
+      )
+      .orderBy(desc(users.planExpiresAt))
+      .limit(limit),
+    db
+      .select({
+        userId: usageEvents.userId,
+        inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
+        outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
+      })
+      .from(usageEvents)
+      .where(gte(usageEvents.createdAt, dayAgo))
+      .groupBy(usageEvents.userId),
   ]);
 
   const items: AttentionItem[] = blocked.map((u) => ({
     id: u.id,
     name: u.name,
     phoneNumber: u.phoneNumber,
-    kind: 'blocked' as const,
+    kind: "blocked" as const,
     reason: u.blockedReason
       ? `Blocked ${formatDate(u.blockedAt!)} — ${u.blockedReason}`
       : `Blocked ${formatDate(u.blockedAt!)}, still cut off`,
   }));
 
-  // Only the heaviest users can be at their cap, so the per-user cap lookup is
-  // scoped to them rather than run across the whole table.
   const heaviest = dayUsage
     .map((g) => ({
       userId: g.userId,
-      tokens: (g._sum.inputTokens ?? 0) + (g._sum.outputTokens ?? 0),
+      tokens: (g.inputTokens ?? 0) + (g.outputTokens ?? 0),
     }))
     .sort((a, b) => b.tokens - a.tokens)
     .slice(0, 50);
 
   if (heaviest.length > 0) {
-    const capped = await prisma.user.findMany({
-      where: { id: { in: heaviest.map((h) => h.userId) } },
-      select: { id: true, name: true, phoneNumber: true, dailyTokenCap: true, planTier: true },
-    });
-    const capById = new Map(capped.map((u) => [u.id, u]));
+    const capped = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        phoneNumber: users.phoneNumber,
+        dailyTokenCap: users.dailyTokenCap,
+        planTier: users.planTier,
+      })
+      .from(users)
+      .where(
+        inArray(
+          users.id,
+          heaviest.map((h) => h.userId),
+        ),
+      );
+
+    const capById = new Map<string, typeof capped[number]>(capped.map((u) => [u.id, u]));
 
     for (const { userId, tokens } of heaviest) {
       const user = capById.get(userId);
       if (!user) continue;
 
-      const unlimited = user.planTier === 'permanent' || user.planTier === 'pro';
-      const cap = user.dailyTokenCap ?? (unlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP);
-      // A null cap is unlimited: there is nothing to exceed.
+      const unlimited =
+        user.planTier === "permanent" || user.planTier === "pro";
+      const cap =
+        user.dailyTokenCap ?? (unlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP);
       if (cap === null || tokens < cap * 0.9) continue;
 
       items.push({
         id: user.id,
         name: user.name,
         phoneNumber: user.phoneNumber,
-        kind: 'over-cap',
+        kind: "over-cap",
         reason:
           tokens >= cap
             ? `Over the daily cap — ${formatTokens(tokens)} of ${formatTokens(cap)}, replies are being refused`
@@ -409,223 +506,188 @@ export async function getAttention(limit = 12): Promise<AttentionItem[]> {
       id: u.id,
       name: u.name,
       phoneNumber: u.phoneNumber,
-      kind: 'lapsed',
-      // Named the way the table names it: "pro plan ended" hides which of the
-      // two plans it was, and "permanent" is not a plan at all.
+      kind: "lapsed",
       reason:
-        u.planTier === 'permanent'
+        u.planTier === "permanent"
           ? `Admin access ended ${formatDate(u.planExpiresAt!)}`
-          : `${PLAN_WORD[u.planPeriod?.toLowerCase() ?? ''] ?? 'Pro'} plan ended ${formatDate(u.planExpiresAt!)}`,
+          : `${PLAN_WORD[u.planPeriod?.toLowerCase() ?? ""] ?? "Pro"} plan ended ${formatDate(u.planExpiresAt!)}`,
     });
   }
 
-  // One row per person: being blocked outranks being over cap, which outranks
-  // a lapsed plan, and the insertion order above already encodes that.
   const seen = new Set<string>();
-  return items.filter((item) => !seen.has(item.id) && seen.add(item.id)).slice(0, limit);
+  return items
+    .filter((item) => !seen.has(item.id) && seen.add(item.id))
+    .slice(0, limit);
 }
 
-/** Just the ids, for narrowing the user table to the attention list. */
 export async function getAttentionUserIds(): Promise<string[]> {
   const items = await getAttention(200);
   return items.map((item) => item.id);
 }
 
-
 export interface DashboardTotals {
   period: Period;
-  /**
-   * Whether a PAID payment has EVER been recorded, regardless of the window.
-   *
-   * Separate from `revenue` on purpose: a period with no revenue and a product
-   * with no payment system are different facts, and the UI must not render the
-   * second when it means the first.
-   */
   hasEverBeenPaid: boolean;
-  /** Every user, always — a headcount is a stock, not something a date window changes. */
   users: number;
-  /** Users who joined inside the window. Equals `users` when the period is 'all'. */
   newUsers: number;
   blocked: number;
-  /** Users seen in the last seven days. A stock, like the headcount. */
   activeRecently: number;
-  /** Paid periods that ended inside the window. See getDashboardTotals(). */
   unsubscribed: number;
-  /**
-   * Who spent the most inside the window.
-   *
-   * Not derivable from the page of users on screen — that page is paginated,
-   * sorted and searchable, and the biggest spender may not be on it.
-   */
   topSpender: { id: string; name: string | null; costMicros: number } | null;
-
-  // ── Flows: these DO scope to the window ────────────────────────
-  /** Messages in both directions, so the figure matches what the table sums to. */
   messages: number;
   tokens: number;
-  /** What we paid OpenAI, in USD micros. */
   tokenCostMicros: number;
-  /** What customers paid us, in `revenueCurrency`. Zero until a gateway lands. */
   revenue: number;
   revenueCurrency: string;
-  /**
-   * True when PAID payments exist in more than one currency. The revenue
-   * figure then covers only `revenueCurrency` and understates the rest, so the
-   * UI has to say so rather than quietly showing a wrong total.
-   */
   revenueMixedCurrency: boolean;
 }
 
-/**
- * The single heaviest spender in the window, or null when nobody has spent.
- *
- * Unbounded windows read the denormalised lifetime counter; a scoped window
- * has to aggregate `usage_events`, because that counter cannot be sliced by
- * date at all.
- */
 async function topSpenderIn(
-  start: Date | null
+  start: Date | null,
 ): Promise<{ id: string; name: string | null; costMicros: number } | null> {
   if (!start) {
-    const user = await prisma.user.findFirst({
-      where: { totalCostMicros: { gt: 0 } },
-      orderBy: { totalCostMicros: 'desc' },
-      select: { id: true, name: true, totalCostMicros: true },
-    });
-    return user ? { id: user.id, name: user.name, costMicros: user.totalCostMicros } : null;
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        totalCostMicros: users.totalCostMicros,
+      })
+      .from(users)
+      .where(gte(users.totalCostMicros, 0))
+      .orderBy(desc(users.totalCostMicros))
+      .limit(1);
+
+    return user
+      ? { id: user.id, name: user.name, costMicros: user.totalCostMicros }
+      : null;
   }
 
-  const [top] = await prisma.usageEvent.groupBy({
-    by: ['userId'],
-    where: { createdAt: { gte: start } },
-    _sum: { costMicros: true },
-    orderBy: { _sum: { costMicros: 'desc' } },
-    take: 1,
-  });
+  const [top] = await db
+    .select({
+      userId: usageEvents.userId,
+      costMicros: sum(usageEvents.costMicros).mapWith(Number),
+    })
+    .from(usageEvents)
+    .where(gte(usageEvents.createdAt, start))
+    .groupBy(usageEvents.userId)
+    .orderBy(desc(sum(usageEvents.costMicros)))
+    .limit(1);
 
-  if (!top || !top._sum.costMicros) return null;
+  if (!top || !top.costMicros) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: top.userId },
-    select: { id: true, name: true },
-  });
+  const [user] = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(eq(users.id, top.userId))
+    .limit(1);
 
-  return user ? { id: user.id, name: user.name, costMicros: top._sum.costMicros } : null;
+  return user
+    ? { id: user.id, name: user.name, costMicros: top.costMicros }
+    : null;
 }
-
-/**
- * The figures across the whole table, not the page being shown.
- *
- * Split deliberately into stocks and flows. Headcount and block count are
- * stocks — "how many users did I have in March" is not a question this answers,
- * and pretending otherwise would need daily snapshots we do not keep. Revenue,
- * tokens and cost are flows and scope to the window.
- *
- * The flow figures come from `usage_events` and `payments` rather than the
- * denormalised counters on `users`, because those counters are lifetime totals
- * and cannot be sliced by date at all.
- */
-export async function getDashboardTotals(period: Period = 'all'): Promise<DashboardTotals> {
+export async function getDashboardTotals(
+  period: Period = "all",
+): Promise<DashboardTotals> {
   const now = new Date();
   const start = periodStart(period);
 
-  // Every window ends at "now", so the upper bound is implicit everywhere.
-  const inWindow = start ? { gte: start } : undefined;
+  const inWindow = start ? gte(users.createdAt, start) : undefined;
+  const eventsInWindow = start ? gte(usageEvents.createdAt, start) : undefined;
+  const messagesInWindow = start ? gte(messages.createdAt, start) : undefined;
+  const paymentsInWindow = start ? gte(payments.createdAt, start) : undefined;
 
   const [
-    users,
-    newUsers,
-    blocked,
-    activeRecently,
-    unsubscribed,
-    messages,
-    usageAgg,
+    [{ count: totalUsers }],
+    [{ count: newUsersCount }],
+    [{ count: blockedCount }],
+    [{ count: activeCount }],
+    [{ count: unsubscribedCount }],
+    [{ count: messagesCount }],
+    [usageAgg],
     revenueByCurrency,
-    paidEver,
+    [{ count: paidEverCount }],
     topSpender,
   ] = await Promise.all([
-    prisma.user.count(),
-    start ? prisma.user.count({ where: { createdAt: inWindow } }) : prisma.user.count(),
-    prisma.user.count({ where: { blockedAt: { not: null } } }),
-
-    // Deliberately a fixed seven days rather than the selected window: "who is
-    // still around" is not a question the period control is asking.
-    prisma.user.count({ where: { updatedAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
-
-    // "Unsubscribed" = a paid period that has already ended. Keyed on
-    // planExpiresAt rather than planTier so it still counts correctly if a
-    // future gateway resets the tier to "free" on lapse.
-    prisma.user.count({
-      where: { planExpiresAt: { not: null, lt: now, ...(start ? { gte: start } : {}) } },
-    }),
-
-    prisma.message.count({ where: start ? { createdAt: inWindow } : undefined }),
-
-    prisma.usageEvent.aggregate({
-      where: start ? { createdAt: inWindow } : undefined,
-      _sum: { inputTokens: true, cachedTokens: true, outputTokens: true, costMicros: true },
-    }),
-
-    // Grouped, because adding up two currencies produces a number that means
-    // nothing. Only PAID counts — a PENDING or FAILED row is not revenue.
-    prisma.payment.groupBy({
-      by: ['currency'],
-      where: { status: 'PAID', ...(start ? { createdAt: inWindow } : {}) },
-      _sum: { amount: true },
-    }),
-
-    // Deliberately unscoped. Answers "has money ever moved", which is what
-    // decides whether a zero means "nothing this week" or "no gateway yet".
-    prisma.payment.count({ where: { status: 'PAID' } }),
-
+    db.select({ count: count() }).from(users),
+    db.select({ count: count() }).from(users).where(inWindow),
+    db.select({ count: count() }).from(users).where(isNotNull(users.blockedAt)),
+    db
+      .select({ count: count() })
+      .from(users)
+      .where(gte(users.updatedAt, new Date(now.getTime() - 7 * DAY_MS))),
+    db
+      .select({ count: count() })
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.planExpiresAt),
+          lt(users.planExpiresAt, now),
+          start ? gte(users.planExpiresAt, start) : undefined,
+        ),
+      ),
+    db.select({ count: count() }).from(messages).where(messagesInWindow),
+    db
+      .select({
+        inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
+        cachedTokens: sum(usageEvents.cachedTokens).mapWith(Number),
+        outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
+        costMicros: sum(usageEvents.costMicros).mapWith(Number),
+      })
+      .from(usageEvents)
+      .where(eventsInWindow),
+    db
+      .select({
+        currency: payments.currency,
+        amount: sum(payments.amount).mapWith(Number),
+      })
+      .from(payments)
+      .where(and(eq(payments.status, "PAID"), paymentsInWindow))
+      .groupBy(payments.currency),
+    db
+      .select({ count: count() })
+      .from(payments)
+      .where(eq(payments.status, "PAID")),
     topSpenderIn(start),
   ]);
 
-  // The largest single-currency total is the headline. With one currency —
-  // which is the case today and for the foreseeable future — this is simply
-  // the total.
   const ranked = revenueByCurrency
-    .map((row) => ({ currency: row.currency, amount: Number(row._sum.amount ?? 0) }))
+    .map((row) => ({ currency: row.currency, amount: Number(row.amount ?? 0) }))
     .sort((a, b) => b.amount - a.amount);
 
-  const inTokens = usageAgg._sum.inputTokens ?? 0;
-  const cachedTokens = usageAgg._sum.cachedTokens ?? 0;
-  const outTokens = usageAgg._sum.outputTokens ?? 0;
+  const inTokens = usageAgg?.inputTokens ?? 0;
+  const cachedTokens = usageAgg?.cachedTokens ?? 0;
+  const outTokens = usageAgg?.outputTokens ?? 0;
 
   return {
     period,
-    hasEverBeenPaid: paidEver > 0,
-    users,
-    newUsers,
-    blocked,
-    activeRecently,
-    unsubscribed,
+    hasEverBeenPaid: paidEverCount > 0,
+    users: totalUsers,
+    newUsers: newUsersCount,
+    blocked: blockedCount,
+    activeRecently: activeCount,
+    unsubscribed: unsubscribedCount,
     topSpender,
-    messages,
+    messages: messagesCount,
     tokens: inTokens - cachedTokens + outTokens,
-    tokenCostMicros: usageAgg._sum.costMicros ?? 0,
+    tokenCostMicros: usageAgg?.costMicros ?? 0,
     revenue: ranked[0]?.amount ?? 0,
-    revenueCurrency: ranked[0]?.currency ?? 'BDT',
+    revenueCurrency: ranked[0]?.currency ?? "BDT",
     revenueMixedCurrency: ranked.length > 1,
   };
 }
 
-/**
- * Dates and times throughout the dashboard, rendered in Asia/Dhaka.
- *
- * Not UTC. The operator reads these sitting in Dhaka, and UTC is six hours
- * behind — a message sent at 1:22 PM was being displayed as 07:22, and
- * anything after 6 PM local was being dated to the previous day.
- */
 export function formatDate(value: Date): string {
-  return DateTime.fromJSDate(value).setZone(ADMIN_TIMEZONE).toFormat('yyyy-LL-dd');
+  return DateTime.fromJSDate(value)
+    .setZone(ADMIN_TIMEZONE)
+    .toFormat("yyyy-LL-dd");
 }
 
 export function formatDateTime(value: Date): string {
-  return DateTime.fromJSDate(value).setZone(ADMIN_TIMEZONE).toFormat('yyyy-LL-dd HH:mm');
+  return DateTime.fromJSDate(value)
+    .setZone(ADMIN_TIMEZONE)
+    .toFormat("yyyy-LL-dd HH:mm");
 }
 
-/** `1250` + `"BDT"` -> `"BDT 1,250.00"`. Money we were paid, not token cost. */
 export function formatRevenue(amount: number, currency: string): string {
   return `${currency} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -633,103 +695,115 @@ export function formatRevenue(amount: number, currency: string): string {
   })}`;
 }
 
-export function countUsers(): Promise<number> {
-  return prisma.user.count();
+export async function countUsers(): Promise<number> {
+  const [{ count: c }] = await db.select({ count: count() }).from(users);
+  return c;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** One user, everything the dashboard shows. Null when the id is unknown. */
 export async function getUserDetail(id: string) {
   const now = Date.now();
   const dayAgo = new Date(now - DAY_MS);
   const weekAgo = new Date(now - 7 * DAY_MS);
-  // Aligned to the first bucket's local midnight, not "30 x 24h ago". Those
-  // differ by up to a day, and events in the gap matched the query but had no
-  // bucket to land in, so `bucketByDay` silently dropped them.
   const monthAgo = DateTime.now()
     .setZone(ADMIN_TIMEZONE)
     .minus({ days: 29 })
-    .startOf('day')
+    .startOf("day")
     .toJSDate();
 
-  const user = await prisma.user.findUnique({ where: { id } });
+  const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   if (!user) return null;
 
   const [
-    messageCount,
+    [{ count: messageCount }],
     recentUsage,
-    dailyAgg,
-    weeklyAgg,
-    messages,
-    documents,
-    facts,
-    reminders,
+    [dailyAgg],
+    [weeklyAgg],
+    messagesList,
+    documentsList,
+    factsList,
+    remindersList,
   ] = await Promise.all([
-    // The real total.
-    prisma.message.count({ where: { userId: id } }),
-    // Raw rows for the 30-day chart. Bucketed in JS rather than SQL so this
-    // stays portable and needs no raw query.
-    prisma.usageEvent.findMany({
-      where: { userId: id, createdAt: { gte: monthAgo } },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true, inputTokens: true, outputTokens: true, costMicros: true },
-    }),
-    prisma.usageEvent.aggregate({
-      where: { userId: id, createdAt: { gte: dayAgo } },
-      _sum: { inputTokens: true, outputTokens: true, costMicros: true },
-    }),
-    prisma.usageEvent.aggregate({
-      where: { userId: id, createdAt: { gte: weekAgo } },
-      _sum: { inputTokens: true, outputTokens: true, costMicros: true },
-    }),
-    prisma.message.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-      take: 1000,
-    }),
-    prisma.document.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.fact.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.reminder.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: 'desc' },
-    }),
+    db.select({ count: count() }).from(messages).where(eq(messages.userId, id)),
+    db
+      .select({
+        createdAt: usageEvents.createdAt,
+        inputTokens: usageEvents.inputTokens,
+        outputTokens: usageEvents.outputTokens,
+        costMicros: usageEvents.costMicros,
+      })
+      .from(usageEvents)
+      .where(
+        and(eq(usageEvents.userId, id), gte(usageEvents.createdAt, monthAgo)),
+      )
+      .orderBy(asc(usageEvents.createdAt)),
+    db
+      .select({
+        inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
+        outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
+        costMicros: sum(usageEvents.costMicros).mapWith(Number),
+      })
+      .from(usageEvents)
+      .where(
+        and(eq(usageEvents.userId, id), gte(usageEvents.createdAt, dayAgo)),
+      ),
+    db
+      .select({
+        inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
+        outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
+        costMicros: sum(usageEvents.costMicros).mapWith(Number),
+      })
+      .from(usageEvents)
+      .where(
+        and(eq(usageEvents.userId, id), gte(usageEvents.createdAt, weekAgo)),
+      ),
+    db
+      .select()
+      .from(messages)
+      .where(eq(messages.userId, id))
+      .orderBy(desc(messages.createdAt))
+      .limit(1000),
+    db
+      .select()
+      .from(documents)
+      .where(eq(documents.userId, id))
+      .orderBy(desc(documents.createdAt)),
+    db
+      .select()
+      .from(facts)
+      .where(eq(facts.userId, id))
+      .orderBy(desc(facts.createdAt)),
+    db
+      .select()
+      .from(reminders)
+      .where(eq(reminders.userId, id))
+      .orderBy(desc(reminders.createdAt)),
   ]);
 
-  const tokensIn = (a: typeof dailyAgg) =>
-    (a._sum.inputTokens ?? 0) + (a._sum.outputTokens ?? 0);
+  const tokensIn = (a: any) => (a?.inputTokens ?? 0) + (a?.outputTokens ?? 0);
 
-  const isUnlimited = user.planTier === 'permanent' || user.planTier === 'pro';
+  const isUnlimited = user.planTier === "permanent" || user.planTier === "pro";
 
   return {
     user,
     messageCount,
-    messages: messages.reverse(), // chronologically ordered for display
-    documents,
-    facts,
-    reminders,
+    messages: messagesList.reverse(),
+    documents: documentsList,
+    facts: factsList,
+    reminders: remindersList,
     usageByDay: bucketByDay(recentUsage),
-    // Not named `window`: destructuring that in a component shadows the DOM
-    // global and trips lint rules for no benefit.
     usageWindow: {
       dailyTokens: tokensIn(dailyAgg),
-      dailyCap: user.dailyTokenCap ?? (isUnlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP),
-      // The env defaults, separate from the effective caps above. The quota
-      // form's placeholder means "what you get if you leave this blank", so
-      // showing the user's own override there told them clearing the field
-      // would keep the override it was about to discard.
+      dailyCap:
+        user.dailyTokenCap ??
+        (isUnlimited ? null : env.DEFAULT_DAILY_TOKEN_CAP),
       globalDailyCap: env.DEFAULT_DAILY_TOKEN_CAP,
       globalWeeklyCap: env.DEFAULT_WEEKLY_TOKEN_CAP,
-      dailyCostMicros: dailyAgg._sum.costMicros ?? 0,
+      dailyCostMicros: dailyAgg?.costMicros ?? 0,
       weeklyTokens: tokensIn(weeklyAgg),
-      weeklyCap: user.weeklyTokenCap ?? (isUnlimited ? null : env.DEFAULT_WEEKLY_TOKEN_CAP),
-      weeklyCostMicros: weeklyAgg._sum.costMicros ?? 0,
+      weeklyCap:
+        user.weeklyTokenCap ??
+        (isUnlimited ? null : env.DEFAULT_WEEKLY_TOKEN_CAP),
+      weeklyCostMicros: weeklyAgg?.costMicros ?? 0,
     },
   };
 }
@@ -737,54 +811,47 @@ export async function getUserDetail(id: string) {
 export type UserDetail = NonNullable<Awaited<ReturnType<typeof getUserDetail>>>;
 
 export interface UsageDay {
-  /** YYYY-MM-DD in UTC. */
   day: string;
   tokens: number;
   costMicros: number;
 }
 
-/**
- * Buckets into 30 Asia/Dhaka days, including days with no traffic.
- *
- * The gaps matter: a bar chart that silently omits quiet days makes sporadic
- * use look continuous.
- */
 function bucketByDay(
-  events: Array<{ createdAt: Date; inputTokens: number; outputTokens: number; costMicros: number }>
+  events: Array<{
+    createdAt: Date;
+    inputTokens: number;
+    outputTokens: number;
+    costMicros: number;
+  }>,
 ): UsageDay[] {
   const buckets = new Map<string, UsageDay>();
-  const today = DateTime.now().setZone(ADMIN_TIMEZONE).startOf('day');
+  const today = DateTime.now().setZone(ADMIN_TIMEZONE).startOf("day");
 
   for (let i = 29; i >= 0; i--) {
-    const key = today.minus({ days: i }).toFormat('yyyy-LL-dd');
+    const key = today.minus({ days: i }).toFormat("yyyy-LL-dd");
     buckets.set(key, { day: key, tokens: 0, costMicros: 0 });
   }
 
   for (const event of events) {
-    // Bucketed by Dhaka day so a bar labelled "the 8th" holds the events the
-    // operator would call the 8th.
     const key = DateTime.fromJSDate(event.createdAt)
       .setZone(ADMIN_TIMEZONE)
-      .toFormat('yyyy-LL-dd');
+      .toFormat("yyyy-LL-dd");
     const bucket = buckets.get(key);
     if (!bucket) continue;
     bucket.tokens += event.inputTokens + event.outputTokens;
     bucket.costMicros += event.costMicros;
   }
 
-  return [...buckets.values()];
+  return Array.from(buckets.values());
 }
 
-/** `1234567` → `"$1.23"`. Used by every page that shows money. */
 export function formatCost(micros: number): string {
   return `$${(micros / 1_000_000).toFixed(2)}`;
 }
 
-/** `1234567` → `"1.23M"`. Used by every page that shows token counts. */
 export function formatTokens(n: number | null | undefined): string {
-  if (n === null || n === undefined || !Number.isFinite(n)) return 'Unlimited';
+  if (n === null || n === undefined || !Number.isFinite(n)) return "Unlimited";
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return String(n);
 }
-

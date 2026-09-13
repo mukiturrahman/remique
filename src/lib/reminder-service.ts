@@ -1,5 +1,11 @@
-import { ConversationState, Document, User } from '@prisma/client';
-import { prisma } from './db';
+type User = typeof users.$inferSelect;
+type ConversationState = typeof conversationStates.$inferSelect;
+type Document = typeof documents.$inferSelect;
+type Fact = typeof facts.$inferSelect;
+type Reminder = typeof reminders.$inferSelect;
+import { db } from '../db';
+import { sql, and, or, eq, gt, gte, lt, lte, inArray, desc, asc, not, notInArray, isNotNull } from 'drizzle-orm';
+import { users, reminders, conversationStates, notes, facts, messages, documents, subscriptions } from '../db/schema';
 import { parseUserMessage } from './llm';
 import { validateAndNormalizeDate } from './date-normalizer';
 import { cancelScheduledDelivery, scheduleDelayedReminder } from './qstash';
@@ -165,7 +171,7 @@ export type IndexResolution =
   | { kind: 'out_of_range'; available: number };
 
 export function resolveListedReminderIds(
-  activeState: ConversationState | null,
+  activeState: ConversationState | null | undefined,
   indices: number[] | null | undefined
 ): IndexResolution {
   const wanted = (indices ?? []).filter((n) => Number.isInteger(n));
@@ -240,7 +246,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
   const [action, reminderId] = buttonReplyId.split(':');
 
   const reminder = reminderId
-    ? await prisma.reminder.findFirst({ where: { id: reminderId, userId: user.id } })
+    ? await db.query.reminders.findFirst({ where: (r, { eq, and }) => and(eq(r.id, reminderId), eq(r.userId, user.id)) })
     : null;
 
   if (!reminder) {
@@ -255,10 +261,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
       return;
     }
 
-    await prisma.reminder.update({
-      where: { id: reminder.id },
-      data: { status: 'DONE', completedAt: new Date() },
-    });
+    (await db.update(reminders).set({ status: 'DONE', completedAt: new Date() }).where(eq(reminders.id, reminder.id)).returning())[0];
 
     console.log(`[Remique] reminder ${reminder.id} marked DONE`);
     await replyToUser(user, doneMessage(user.name));
@@ -281,21 +284,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
     return;
   }
 
-  const snoozed = await prisma.reminder.create({
-    data: {
-      userId: user.id,
-      title: reminder.title,
-      originalMessage: reminder.originalMessage,
-      scheduledAt: snoozeTo.toJSDate(),
-      timezone: user.timezone,
-      category: reminder.category,
-      anchorAt: reminder.anchorAt,
-      anchorTitle: reminder.anchorTitle,
-      offsetMinutes: reminder.offsetMinutes,
-      groupId: reminder.groupId,
-      status: 'SCHEDULED',
-    },
-  });
+  const snoozed = (await db.insert(reminders).values({ userId: user.id, title: reminder.title, originalMessage: reminder.originalMessage, scheduledAt: snoozeTo.toJSDate(), timezone: user.timezone, category: reminder.category, anchorAt: reminder.anchorAt, anchorTitle: reminder.anchorTitle, offsetMinutes: reminder.offsetMinutes, groupId: reminder.groupId, status: 'SCHEDULED' }).returning())[0];
 
   console.log(
     `[Remique] reminder ${reminder.id} snoozed -> ${snoozed.id} at ${snoozeTo.toISO()}`
@@ -499,12 +488,7 @@ export async function processIncomingUserMessage(
   const activeState =
     prefetchedState !== undefined
       ? prefetchedState
-      : await prisma.conversationState.findFirst({
-          where: {
-            userId: user.id,
-            expiresAt: { gt: new Date() },
-          },
-        });
+      : await db.query.conversationStates.findFirst({ where: (cs, { and, eq, gt }) => and(eq(cs.userId, user.id), gt(cs.expiresAt, new Date())) });
 
   // Notes and document labels are both prompt context, so they are read
   // together — this is on the user's critical path.
@@ -514,58 +498,20 @@ export async function processIncomingUserMessage(
 
   const [userNotes, userFacts, recentMessages, todayReminders, upcomingContext, userDocuments] =
     await Promise.all([
-    prisma.note.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-      take: NOTE_LIMIT,
-    }),
-    prisma.fact.findMany({
-      where: { userId: user.id },
-      orderBy: { updatedAt: 'desc' },
-      take: FACT_LIMIT,
-    }),
+    db.query.notes.findMany({ where: (n, { eq }) => eq(n.userId, user.id), orderBy: (n, { desc }) => desc(n.createdAt), limit: NOTE_LIMIT }),
+    db.query.facts.findMany({ where: (f, { eq }) => eq(f.userId, user.id), orderBy: (f, { desc }) => desc(f.updatedAt), limit: FACT_LIMIT }),
     // The message being answered is already persisted, so it is excluded here —
     // otherwise the model sees the current question twice and treats its own
     // input as prior context. Messages older than the session cutoff are
     // dropped so settled conversations from hours ago do not burn tokens or
     // confuse referents in fresh tasks.
-    prisma.message.findMany({
-      where: {
-        userId: user.id,
-        id: { not: message.id },
-        createdAt: { gte: sessionCutoff },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: RECENT_TURNS_LIMIT,
-      select: { direction: true, messageText: true },
-    }),
+    db.query.messages.findMany({ where: (m, { and, eq, not, gte }) => and(eq(m.userId, user.id), not(eq(m.id, message.id)), gte(m.createdAt, sessionCutoff)), orderBy: (m, { desc }) => desc(m.createdAt), limit: RECENT_TURNS_LIMIT, columns: { direction: true, messageText: true } }),
     // The schedule itself. Without this the model answers "do I have anything
     // today?" from nothing, so it either refuses or invents — and it cannot
     // offer the useful extra ("the only thing you've got is...").
-    prisma.reminder.findMany({
-      where: {
-        userId: user.id,
-        status: 'SCHEDULED',
-        scheduledAt: { gte: dayStart, lte: dayEnd },
-      },
-      orderBy: { scheduledAt: 'asc' },
-    }),
-    prisma.reminder.findMany({
-      where: {
-        userId: user.id,
-        status: 'SCHEDULED',
-        scheduledAt: { gt: dayEnd },
-      },
-      orderBy: { scheduledAt: 'asc' },
-      take: UPCOMING_CONTEXT_LIMIT,
-    }),
-    prisma.document.findMany({
-      // Unlabeled rows are mid-flow uploads with no name yet. They are not
-      // retrievable and must never appear as a candidate.
-      where: { userId: user.id, label: { not: null } },
-      orderBy: { createdAt: 'desc' },
-      take: DOCUMENT_CANDIDATE_LIMIT,
-    }),
+    db.query.reminders.findMany({ where: (r, { and, eq, gte, lte }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gte(r.scheduledAt, dayStart), lte(r.scheduledAt, dayEnd)), orderBy: (r, { asc }) => asc(r.scheduledAt) }),
+    db.query.reminders.findMany({ where: (r, { and, eq, gt }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gt(r.scheduledAt, dayEnd)), orderBy: (r, { asc }) => asc(r.scheduledAt), limit: UPCOMING_CONTEXT_LIMIT }),
+    db.query.documents.findMany({ where: (d, { and, eq, isNotNull }) => and(eq(d.userId, user.id), isNotNull(d.label)), orderBy: (d, { desc }) => desc(d.createdAt), limit: DOCUMENT_CANDIDATE_LIMIT }),
   ]);
 
   const notesText = userNotes.map((n) => n.content);
@@ -654,11 +600,8 @@ export async function processIncomingUserMessage(
       const label = (parsed.document_label || userMessage).trim();
 
       if (label) {
-        await prisma.document.update({
-          where: { id: pending.documentId },
-          data: { label },
-        });
-        await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+        (await db.update(documents).set({ label }).where(eq(documents.id, pending.documentId)).returning())[0];
+        await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
         await replyToUser(user, `✅ Saved as *${label}*.`);
         return;
       }
@@ -675,7 +618,7 @@ export async function processIncomingUserMessage(
       const byId = new Map(userDocuments.map((d) => [d.id, d]));
       const confirmed = ids.map((id) => byId.get(id)).filter((d): d is Document => Boolean(d));
 
-      await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+      await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
 
       if (confirmed.length > 0) {
         await deliverDocuments(user, confirmed);
@@ -713,26 +656,11 @@ export async function processIncomingUserMessage(
 
       if (isAffirmative) {
         const item = pending.pendingReminder;
-        const reminder = await prisma.reminder.create({
-          data: {
-            userId: user.id,
-            title: item.title,
-            originalMessage: item.originalMessage,
-            scheduledAt: new Date(item.scheduledAt),
-            timezone: user.timezone,
-            category: normalizeCategory(item.category),
-            recurrenceRule: item.recurrenceRule,
-            anchorAt: item.anchorAt ? new Date(item.anchorAt) : null,
-            anchorTitle: item.anchorTitle,
-            offsetMinutes: item.offsetMinutes,
-            groupId: item.groupId,
-            status: 'SCHEDULED',
-          },
-        });
+        const [reminder] = await db.insert(reminders).values({ userId: user.id, title: item.title, originalMessage: item.originalMessage, scheduledAt: new Date(item.scheduledAt), timezone: user.timezone, category: normalizeCategory(item.category), recurrenceRule: item.recurrenceRule, anchorAt: item.anchorAt ? new Date(item.anchorAt) : null, anchorTitle: item.anchorTitle, offsetMinutes: item.offsetMinutes, groupId: item.groupId, status: 'SCHEDULED' }).returning();
 
         await Promise.all([
           scheduleReminderDelivery(reminder.id, reminder.scheduledAt),
-          prisma.conversationState.deleteMany({ where: { userId: user.id } }),
+          db.delete(conversationStates).where(eq(conversationStates.userId, user.id)),
         ]);
 
         const when = friendlyWhen(reminder.scheduledAt, user.timezone);
@@ -749,7 +677,7 @@ export async function processIncomingUserMessage(
       }
 
       if (isNegative) {
-        await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+        await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
         await replyToUser(
           user,
           conflictDeclinedMessage(
@@ -802,20 +730,13 @@ export async function processIncomingUserMessage(
 
   // ─── Flow A: Clarification Required ────────────────────────────────
   if (parsed.needs_clarification || parsed.intent === 'clarification_required') {
-    await prisma.conversationState.upsert({
-      where: { userId: user.id },
-      update: {
-        pendingIntent: 'create_reminder',
+    (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'create_reminder',
         pendingData: { partialTitle: parsed.title, userMessage },
-        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-      },
-      create: {
-        userId: user.id,
-        pendingIntent: 'create_reminder',
+        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'create_reminder',
         pendingData: { partialTitle: parsed.title, userMessage },
-        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-      },
-    });
+        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
     const question = parsed.clarification_question || 'What time should Remique remind you?';
     await replyToUser(user, question);
@@ -857,23 +778,14 @@ export async function processIncomingUserMessage(
         const first = requested[0];
         const validated = validateAndNormalizeDate(first.scheduled_iso, user.timezone);
         if (validated.isValid && validated.scheduledAtUtc) {
-          const conflicting = await prisma.reminder.findFirst({
-            where: {
-              userId: user.id,
-              status: 'SCHEDULED',
-              scheduledAt: validated.scheduledAtUtc,
-            },
-            orderBy: { createdAt: 'desc' },
-          });
+          const conflicting = await db.query.reminders.findFirst({ where: (r, { and, eq }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), eq(r.scheduledAt, validated.scheduledAtUtc!)), orderBy: (r, { desc }) => desc(r.createdAt) });
 
           if (conflicting) {
             const newTitle = first.title?.trim() || anchorTitle || 'Reminder';
             const when = friendlyWhen(validated.scheduledAtUtc, user.timezone);
 
-            await prisma.conversationState.upsert({
-              where: { userId: user.id },
-              update: {
-                pendingIntent: 'confirm_conflict',
+            (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'confirm_conflict',
                 pendingData: {
                   pendingReminder: {
                     title: newTitle,
@@ -892,11 +804,8 @@ export async function processIncomingUserMessage(
                   conflictingTitle: conflicting.title,
                   whenPhrase: when,
                 },
-                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-              },
-              create: {
-                userId: user.id,
-                pendingIntent: 'confirm_conflict',
+                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'confirm_conflict',
                 pendingData: {
                   pendingReminder: {
                     title: newTitle,
@@ -915,9 +824,7 @@ export async function processIncomingUserMessage(
                   conflictingTitle: conflicting.title,
                   whenPhrase: when,
                 },
-                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-              },
-            });
+                expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
             await replyToUser(
               user,
@@ -950,22 +857,7 @@ export async function processIncomingUserMessage(
             ? item.offset_minutes
             : null;
 
-        const reminder = await prisma.reminder.create({
-          data: {
-            userId: user.id,
-            title: item.title?.trim() || anchorTitle || 'Reminder',
-            originalMessage: userMessage,
-            scheduledAt: validated.scheduledAtUtc!,
-            timezone: user.timezone,
-            category: normalizeCategory(item.category ?? parsed.category),
-            recurrenceRule: normalizeRecurrence(item.recurrence ?? parsed.recurrence),
-            anchorAt,
-            anchorTitle,
-            offsetMinutes: offset,
-            groupId,
-            status: 'SCHEDULED',
-          },
-        });
+        const [reminder] = await db.insert(reminders).values({ userId: user.id, title: item.title?.trim() || anchorTitle || 'Reminder', originalMessage: userMessage, scheduledAt: validated.scheduledAtUtc!, timezone: user.timezone, category: normalizeCategory(item.category ?? parsed.category), recurrenceRule: normalizeRecurrence(item.recurrence ?? parsed.recurrence), anchorAt: anchorAt ?? null, anchorTitle: anchorTitle ?? null, offsetMinutes: offset, groupId: groupId ?? null, status: 'SCHEDULED' }).returning();
 
         created.push({
           id: reminder.id,
@@ -993,7 +885,7 @@ export async function processIncomingUserMessage(
 
       await Promise.all([
         ...created.map((c) => scheduleReminderDelivery(c.id, c.scheduledAt)),
-        prisma.conversationState.deleteMany({ where: { userId: user.id } }),
+        db.delete(conversationStates).where(eq(conversationStates.userId, user.id)),
       ]);
       return;
     }
@@ -1030,16 +922,7 @@ export async function processIncomingUserMessage(
     // means the rest of today, not this morning's reminders that already fired.
     const lowerBound = windowStart && windowStart > now ? windowStart : now;
 
-    const upcoming = await prisma.reminder.findMany({
-      where: {
-        userId: user.id,
-        status: 'SCHEDULED',
-        scheduledAt: { gte: lowerBound, ...(windowEnd ? { lte: windowEnd } : {}) },
-        ...(categoryFilter ? { category: { in: categoryFilter } } : {}),
-      },
-      orderBy: { scheduledAt: 'asc' },
-      take: REMINDER_LIST_LIMIT,
-    });
+    const upcoming = await db.query.reminders.findMany({ where: (r, { and, eq, gte, lte, inArray }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gte(r.scheduledAt, lowerBound), windowEnd ? lte(r.scheduledAt, windowEnd) : undefined, categoryFilter ? inArray(r.category, categoryFilter) : undefined), orderBy: (r, { asc }) => asc(r.scheduledAt), limit: REMINDER_LIST_LIMIT });
 
     const noun = describeCategories(categoryFilter);
 
@@ -1062,20 +945,13 @@ export async function processIncomingUserMessage(
 
     // The next message is often "remove the 2nd one", and 2 has to mean the
     // second row the user actually saw — not the second row of some later query.
-    await prisma.conversationState.upsert({
-      where: { userId: user.id },
-      update: {
-        pendingIntent: 'reminder_list',
+    (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'reminder_list',
         pendingData: { reminderIds: upcoming.map((r) => r.id) },
-        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-      },
-      create: {
-        userId: user.id,
-        pendingIntent: 'reminder_list',
+        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'reminder_list',
         pendingData: { reminderIds: upcoming.map((r) => r.id) },
-        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-      },
-    });
+        expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
     const listName = firstName(user);
     await replyToUser(
@@ -1119,23 +995,7 @@ export async function processIncomingUserMessage(
     // Candidates are resolved BEFORE any new time is required. "change the 30
     // mins to 1 hour" names no clock time at all — the new time is derived
     // from the anchor once we know which alert is meant.
-    const candidates = await prisma.reminder.findMany({
-      where: {
-        userId: user.id,
-        status: 'SCHEDULED',
-        scheduledAt: { gte: new Date() },
-        ...(listedIds ? { id: { in: listedIds } } : {}),
-        ...(pendingChoice?.reminderIds?.length
-          ? { id: { in: pendingChoice.reminderIds } }
-          : {}),
-        ...(categoryFilter ? { category: { in: categoryFilter } } : {}),
-        ...(targetOffset ? { offsetMinutes: targetOffset } : {}),
-        ...(titleQuery
-          ? { title: { contains: titleQuery, mode: 'insensitive' as const } }
-          : {}),
-      },
-      orderBy: { scheduledAt: 'asc' },
-    });
+    const candidates = await db.query.reminders.findMany({ where: (r, { and, eq, gte, inArray, ilike }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gte(r.scheduledAt, new Date()), listedIds ? inArray(r.id, listedIds) : undefined, pendingChoice?.reminderIds?.length ? inArray(r.id, pendingChoice.reminderIds) : undefined, categoryFilter ? inArray(r.category, categoryFilter) : undefined, targetOffset ? eq(r.offsetMinutes, targetOffset) : undefined, titleQuery ? ilike(r.title, `%${titleQuery}%`) : undefined), orderBy: (r, { asc }) => asc(r.scheduledAt) });
 
     if (candidates.length === 0) {
       const label = describeOffset(targetOffset) ?? (titleQuery ? `*${titleQuery}*` : null);
@@ -1150,20 +1010,13 @@ export async function processIncomingUserMessage(
 
     if (candidates.length > 1) {
       const iso = parsed.scheduled_iso || pendingChoice?.scheduledIso || null;
-      await prisma.conversationState.upsert({
-        where: { userId: user.id },
-        update: {
-          pendingIntent: 'reschedule_choice',
+      (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'reschedule_choice',
           pendingData: { reminderIds: candidates.map((c) => c.id), scheduledIso: iso },
-          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-        },
-        create: {
-          userId: user.id,
-          pendingIntent: 'reschedule_choice',
+          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'reschedule_choice',
           pendingData: { reminderIds: candidates.map((c) => c.id), scheduledIso: iso },
-          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-        },
-      });
+          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
       const options = candidates
         .map((c, i) => `${i + 1}. ${formatReminderLine(c, user.timezone)}`)
@@ -1226,16 +1079,9 @@ export async function processIncomingUserMessage(
       await cancelScheduledDelivery(target.qstashMessageId);
     }
 
-    await prisma.reminder.update({
-      where: { id: target.id },
-      data: {
-        scheduledAt: newScheduledAt,
-        offsetMinutes: updatedOffset,
-        qstashMessageId: null,
-      },
-    });
+    (await db.update(reminders).set({ scheduledAt: newScheduledAt, offsetMinutes: updatedOffset, qstashMessageId: null }).where(eq(reminders.id, target.id)).returning())[0];
 
-    await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+    await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
 
     console.log(
       `[Remique] rescheduled ${target.id} ${target.scheduledAt.toISOString()} -> ` +
@@ -1245,15 +1091,7 @@ export async function processIncomingUserMessage(
     // Siblings are restated so a group edit reads as a whole schedule, not an
     // isolated row: "...you'll still get the 15-minute heads-up at 8:45 PM".
     const siblings = target.groupId
-      ? await prisma.reminder.findMany({
-          where: {
-            userId: user.id,
-            groupId: target.groupId,
-            status: 'SCHEDULED',
-            id: { not: target.id },
-          },
-          orderBy: { scheduledAt: 'asc' },
-        })
+      ? await db.query.reminders.findMany({ where: (r, { and, eq, not }) => and(eq(r.userId, user.id), eq(r.groupId, target.groupId!), eq(r.status, 'SCHEDULED'), not(eq(r.id, target.id))), orderBy: (r, { asc }) => asc(r.scheduledAt) })
       : [];
 
     await replyToUser(
@@ -1278,17 +1116,7 @@ export async function processIncomingUserMessage(
     const now = new Date();
     const lowerBound = windowStart && windowStart > now ? windowStart : now;
 
-    const where = {
-      userId: user.id,
-      status: 'SCHEDULED' as const,
-      scheduledAt: { gte: lowerBound, ...(windowEnd ? { lte: windowEnd } : {}) },
-      ...(categoryFilter ? { category: { in: categoryFilter } } : {}),
-      ...(cancelOffset ? { offsetMinutes: cancelOffset } : {}),
-      ...(titleQuery
-        ? { title: { contains: titleQuery, mode: 'insensitive' as const } }
-        : {}),
-    };
-
+    
     // A scoped cancel ("all", "the meetings", "tomorrow's", a named one) sweeps
     // every match. Only a bare "cancel that" falls back to the single most
     // recent — which is what this branch used to do for EVERY phrasing, so
@@ -1311,18 +1139,23 @@ export async function processIncomingUserMessage(
       parsed.cancel_all || categoryFilter || windowEnd || titleQuery || cancelOffset
     );
 
+    let baseWhere = [
+        eq(reminders.userId, user.id),
+        eq(reminders.status, 'SCHEDULED')
+    ];
+    if (lowerBound) baseWhere.push(gte(reminders.scheduledAt, lowerBound));
+    if (windowEnd) baseWhere.push(lte(reminders.scheduledAt, windowEnd));
+    if (categoryFilter) baseWhere.push(inArray(reminders.category, categoryFilter));
+    if (cancelOffset) baseWhere.push(eq(reminders.offsetMinutes, cancelOffset));
+    if (titleQuery) baseWhere.push(sql`lower(${reminders.title}) LIKE lower(${'%' + titleQuery + '%'})`);
+
+    const finalWhere = and(...baseWhere);
+
     const targets = picked.kind === 'resolved'
-      ? await prisma.reminder.findMany({
-          where: { id: { in: picked.ids }, userId: user.id, status: 'SCHEDULED' },
-          orderBy: { scheduledAt: 'asc' },
-        })
+      ? await db.query.reminders.findMany({ where: (r, { and, eq, inArray }) => and(inArray(r.id, picked.ids), eq(r.userId, user.id), eq(r.status, 'SCHEDULED')), orderBy: (r, { asc }) => asc(r.scheduledAt) })
       : isScoped
-      ? await prisma.reminder.findMany({ where, orderBy: { scheduledAt: 'asc' } })
-      : await prisma.reminder.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        });
+      ? await db.query.reminders.findMany({ where: finalWhere, orderBy: (r, { asc }) => asc(r.scheduledAt) })
+      : await db.query.reminders.findMany({ where: finalWhere, orderBy: (r, { desc }) => desc(r.createdAt), limit: 1 });
 
     if (targets.length === 0) {
       const noun = describeCategories(categoryFilter);
@@ -1330,10 +1163,7 @@ export async function processIncomingUserMessage(
       return;
     }
 
-    const cancelled = await prisma.reminder.updateMany({
-      where: { id: { in: targets.map((t) => t.id) }, status: 'SCHEDULED' },
-      data: { status: 'CANCELLED' },
-    });
+    const cancelled = await db.update(reminders).set({ status: 'CANCELLED' }).where(and(inArray(reminders.id, targets.map(t => t.id)), eq(reminders.status, 'SCHEDULED')));
 
     console.log(
       `[Remique] cancel byIndex=${JSON.stringify(parsed.reminder_indices ?? null)} ` +
@@ -1349,15 +1179,7 @@ export async function processIncomingUserMessage(
     // What survives in the same event, so removing one alert of two does not
     // read as removing the meeting.
     const survivors = groupIds.length
-      ? await prisma.reminder.findMany({
-          where: {
-            userId: user.id,
-            groupId: { in: groupIds },
-            status: 'SCHEDULED',
-            id: { notIn: targets.map((t) => t.id) },
-          },
-          orderBy: { scheduledAt: 'asc' },
-        })
+      ? await db.query.reminders.findMany({ where: (r, { and, eq, inArray, notInArray }) => and(eq(r.userId, user.id), inArray(r.groupId, groupIds), eq(r.status, 'SCHEDULED'), notInArray(r.id, targets.map(t => t.id))), orderBy: (r, { asc }) => asc(r.scheduledAt) })
       : [];
 
     const name = firstName(user);
@@ -1385,12 +1207,7 @@ export async function processIncomingUserMessage(
 
   // ─── Flow E: Save Note ──────────────────────────────────────────────
   if (parsed.intent === 'save_note' && parsed.note_content) {
-    await prisma.note.create({
-      data: {
-        userId: user.id,
-        content: parsed.note_content,
-      },
-    });
+    (await db.insert(notes).values({ userId: user.id, content: parsed.note_content }).returning())[0];
 
     await replyToUser(
       user,
@@ -1400,15 +1217,9 @@ export async function processIncomingUserMessage(
   }
 
   if (parsed.intent === 'cancel_subscription') {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { planTier: 'free' },
-    });
+    (await db.update(users).set({ planTier: 'free' }).where(eq(users.id, user.id)).returning())[0];
 
-    await prisma.subscription.updateMany({
-      where: { userId: user.id, status: 'ACTIVE' },
-      data: { status: 'CANCELLED', cancelledAt: new Date() },
-    });
+    await db.update(subscriptions).set({ status: 'CANCELLED', cancelledAt: new Date() }).where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')));
 
     await replyToUser(
       user,
@@ -1570,25 +1381,13 @@ async function persistFacts(
     const valueDate = parsedDate?.isValid ? parsedDate.toJSDate() : null;
 
     try {
-      await prisma.fact.upsert({
-        where: { userId_subject_predicate: { userId, subject, predicate } },
-        update: { value, valueDate, recurring: Boolean(fact.recurring), sourceMessageId },
-        create: {
-          userId,
-          subject,
-          predicate,
-          value,
-          valueDate,
-          recurring: Boolean(fact.recurring),
-          sourceMessageId,
-        },
-      });
+      (await db.insert(facts).values({ userId, subject, predicate, value, valueDate, recurring: Boolean(fact.recurring), sourceMessageId }).onConflictDoUpdate({ target: [facts.userId, facts.subject, facts.predicate], set: { value, valueDate, recurring: Boolean(fact.recurring), sourceMessageId } }).returning())[0];
       console.log(`[Remique] fact saved ${subject}/${predicate}=${JSON.stringify(value)}`);
 
       // A name is not just a fact — it is how every later reply addresses
       // them, and `firstName()` reads it off the user row.
       if (predicate === 'name' && (subject === 'me' || subject === 'user' || subject === 'i')) {
-        await prisma.user.update({ where: { id: userId }, data: { name: value } });
+        (await db.update(users).set({ name: value }).where(eq(users.id, userId)).returning())[0];
         console.log(`[Remique] user name set to ${JSON.stringify(value)}`);
       }
     } catch (error: any) {
@@ -1603,7 +1402,7 @@ async function persistFacts(
     if (!subject || !predicate) continue;
 
     try {
-      const removed = await prisma.fact.deleteMany({ where: { userId, subject, predicate } });
+      const removed = await db.delete(facts).where(and(eq(facts.userId, userId), eq(facts.subject, subject), eq(facts.predicate, predicate)));
       console.log(`[Remique] fact forgotten ${subject}/${predicate} rows=${removed.count}`);
     } catch (error: any) {
       console.warn(`[Remique] fact delete failed ${subject}/${predicate}: ${error?.message}`);
@@ -1654,40 +1453,23 @@ async function handleIncomingFile(
 
   const label = parsedLabel?.trim() || null;
 
-  const document = await prisma.document.create({
-    data: {
-      userId: user.id,
-      label,
-      mediaType: message.mediaType || 'document',
-      mimeType,
-      fileName: message.mediaFilename,
-      s3Key: stored.s3Key,
-      sizeBytes,
-    },
-  });
+  const document = (await db.insert(documents).values({ userId: user.id, label, mediaType: message.mediaType || 'document', mimeType, fileName: message.mediaFilename, s3Key: stored.s3Key, sizeBytes }).returning())[0];
 
   if (label) {
-    await prisma.conversationState.deleteMany({ where: { userId: user.id } });
+    await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
     await replyToUser(user, `✅ Saved as *${label}*.`);
     return;
   }
 
   // No caption, or a caption with no usable name in it. Park the document and
   // ask — the reply lands in Flow H.
-  await prisma.conversationState.upsert({
-    where: { userId: user.id },
-    update: {
-      pendingIntent: 'label_document',
+  (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'label_document',
       pendingData: { documentId: document.id },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-    },
-    create: {
-      userId: user.id,
-      pendingIntent: 'label_document',
+      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'label_document',
       pendingData: { documentId: document.id },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-    },
-  });
+      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
   await replyToUser(
     user,
@@ -1726,20 +1508,13 @@ async function handleListDocuments(
     return;
   }
 
-  await prisma.conversationState.upsert({
-    where: { userId: user.id },
-    update: {
-      pendingIntent: 'document_list',
+  (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'document_list',
       pendingData: { documentIds: matched.map((d) => d.id) },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-    },
-    create: {
-      userId: user.id,
-      pendingIntent: 'document_list',
+      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'document_list',
       pendingData: { documentIds: matched.map((d) => d.id) },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-    },
-  });
+      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
   await replyToUser(
     user,
@@ -1758,7 +1533,7 @@ async function handleListDocuments(
 async function handleSendDocuments(
   user: User,
   candidates: Document[],
-  activeState: ConversationState | null,
+  activeState: ConversationState | null | undefined,
   indices: number[],
   suggestions: number[],
   replyText?: string | null
@@ -1789,20 +1564,13 @@ async function handleSendDocuments(
     const suggested = resolveIndices(pool, suggestions);
 
     if (suggested.length > 0) {
-      await prisma.conversationState.upsert({
-        where: { userId: user.id },
-        update: {
-          pendingIntent: 'confirm_documents',
+      (await db.insert(conversationStates).values({ userId: user.id, 
+pendingIntent: 'confirm_documents',
           pendingData: { documentIds: suggested.map((d) => d.id) },
-          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-        },
-        create: {
-          userId: user.id,
-          pendingIntent: 'confirm_documents',
+          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
+pendingIntent: 'confirm_documents',
           pendingData: { documentIds: suggested.map((d) => d.id) },
-          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
-        },
-      });
+          expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
 
       const names = suggested.map((d) => `*${d.label}*`).join(', ');
       await replyToUser(
@@ -1892,10 +1660,7 @@ async function scheduleReminderDelivery(reminderId: string, scheduledAtUtc: Date
       return;
     }
 
-    await prisma.reminder.update({
-      where: { id: reminderId },
-      data: { qstashMessageId: qstashMsgId },
-    });
+    (await db.update(reminders).set({ qstashMessageId: qstashMsgId }).where(eq(reminders.id, reminderId)).returning())[0];
   } catch (schedErr: any) {
     console.error(
       `[Remique] QStash scheduling error for reminder ${reminderId} ` +
@@ -1903,3 +1668,5 @@ async function scheduleReminderDelivery(reminderId: string, scheduledAtUtc: Date
     );
   }
 }
+
+

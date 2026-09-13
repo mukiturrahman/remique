@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,14 +24,9 @@ export async function POST(
   const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : null;
 
   try {
-    await prisma.user.update({
-      where: { id },
-      data: body.blocked
+    await db.update(users).set(body.blocked
         ? { blockedAt: new Date(), blockedReason: reason }
-        : // Clearing blockNoticeSentAt too, so a later re-block notifies the
-          // user again instead of going silently dark on them.
-          { blockedAt: null, blockedReason: null, blockNoticeSentAt: null },
-    });
+        : { blockedAt: null, blockedReason: null, blockNoticeSentAt: null }).where(eq(users.id, id));
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }

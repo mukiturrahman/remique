@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { reminders, messages, users } from '@/db/schema';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import {
   sendWhatsAppButtons,
   sendWhatsAppTemplate,
@@ -42,9 +44,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing reminderId' }, { status: 400 });
     }
 
-    const reminder = await prisma.reminder.findUnique({
-      where: { id: reminderId },
-      include: { user: true },
+    const reminder = await db.query.reminders.findFirst({
+      where: eq(reminders.id, reminderId),
+      with: { user: true },
     });
 
     if (
@@ -70,10 +72,8 @@ export async function POST(request: NextRequest) {
     // Claim the reminder atomically. The sweeper can re-enqueue a delivery that
     // QStash also still holds, so two workers may race for the same row — the
     // conditional update guarantees only one of them sends.
-    const claim = await prisma.reminder.updateMany({
-      where: { id: reminderId, status: 'SCHEDULED' },
-      data: { status: 'PROCESSING', attempts: { increment: 1 } },
-    });
+    const claimResult = await db.update(reminders).set({ status: 'PROCESSING', attempts: sql`${reminders.attempts} + 1` }).where(and(eq(reminders.id, reminderId), eq(reminders.status, 'SCHEDULED')));
+    const claim = { count: claimResult.count };
 
     if (claim.count === 0) {
       return NextResponse.json({ status: 'not_claimable' }, { status: 200 });
@@ -88,17 +88,14 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const isLapsed = reminder.user.planTier !== 'free' && reminder.user.planTier !== 'permanent' && reminder.user.planExpiresAt && reminder.user.planExpiresAt < now;
     if (reminder.user.blockedAt || reminder.user.planTier === 'free' || isLapsed) {
-      await prisma.reminder.update({
-        where: { id: reminderId },
-        data: { status: 'CANCELLED', errorMessage: reminder.user.blockedAt ? 'User is blocked' : 'User is unsubscribed' },
-      });
+      await db.update(reminders).set({ status: 'CANCELLED', errorMessage: reminder.user.blockedAt ? 'User is blocked' : 'User is unsubscribed' }).where(eq(reminders.id, reminderId));
       return NextResponse.json({ status: reminder.user.blockedAt ? 'user_blocked' : 'user_unsubscribed' }, { status: 200 });
     }
 
     // Check 24-Hour Customer Service Window
-    const lastInbound = await prisma.message.findFirst({
-      where: { userId: reminder.userId, direction: 'INBOUND' },
-      orderBy: { createdAt: 'desc' },
+    const lastInbound = await db.query.messages.findFirst({
+      where: and(eq(messages.userId, reminder.userId!), eq(messages.direction, 'INBOUND')),
+      orderBy: [desc(messages.createdAt)],
     });
 
     const isWithin24h =
@@ -139,13 +136,11 @@ export async function POST(request: NextRequest) {
       // failures go back to SCHEDULED so the sweeper can retry them once the
       // rate limit clears or the credentials are fixed. The attempts counter
       // bounds how long that goes on.
-      await prisma.reminder.update({
-        where: { id: reminderId },
-        data:
-          failureClass === 'permanent'
-            ? { status: 'FAILED', errorMessage }
-            : { status: 'SCHEDULED', qstashMessageId: null, errorMessage },
-      });
+      await db.update(reminders).set(
+        failureClass === 'permanent'
+          ? { status: 'FAILED', errorMessage }
+          : { status: 'SCHEDULED', qstashMessageId: null, errorMessage }
+      ).where(eq(reminders.id, reminderId));
 
       if (failureClass === 'operator') {
         console.error(
@@ -163,10 +158,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark as SENT
-    await prisma.reminder.update({
-      where: { id: reminderId },
-      data: { status: 'SENT', sentAt: new Date() },
-    });
+    await db.update(reminders).set({ status: 'SENT', sentAt: new Date() }).where(eq(reminders.id, reminderId));
 
     // A recurring reminder is a chain of one-shots: each delivery lays down the
     // next link. Written with a null qstashMessageId so the sweeper claims it
@@ -184,9 +176,8 @@ export async function POST(request: NextRequest) {
         );
 
         if (next) {
-          const repeat = await prisma.reminder.create({
-            data: {
-              userId: reminder.userId,
+          const [repeat] = await db.insert(reminders).values({
+              userId: reminder.userId!,
               title: reminder.title,
               originalMessage: reminder.originalMessage,
               scheduledAt: next,
@@ -194,8 +185,7 @@ export async function POST(request: NextRequest) {
               category: reminder.category,
               recurrenceRule: reminder.recurrenceRule,
               status: 'SCHEDULED',
-            },
-          });
+            }).returning();
           console.log(
             `[Remique] Recurring reminder ${reminderId} (${reminder.recurrenceRule}) ` +
               `queued next as ${repeat.id} for ${next.toISOString()}`
@@ -216,13 +206,10 @@ export async function POST(request: NextRequest) {
     // Always clean up stuck PROCESSING records in the outer catch
     if (reminderId) {
       try {
-        await prisma.reminder.update({
-          where: { id: reminderId },
-          data: {
+        await db.update(reminders).set({
             status: 'FAILED',
             errorMessage: error.message?.slice(0, 500) ?? 'Unexpected error',
-          },
-        });
+          }).where(eq(reminders.id, reminderId));
       } catch (dbError) {
         console.error('[Remique] Failed to mark reminder as FAILED in DB:', dbError);
       }

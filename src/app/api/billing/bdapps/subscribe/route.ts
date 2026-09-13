@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     
     // Prevent leaking Prisma or developer errors to the UI
     let errorMessage = 'Something went wrong. Please try again.';
-    if (error?.message && !error.message.includes('prisma') && !error.message.includes('invocation')) {
+    if (error?.message && !error.message.includes('duplicate key') && !error.message.includes('invocation')) {
       errorMessage = error.message;
     }
 
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     
     // Prevent leaking Prisma or developer errors to the UI
     let errorMessage = 'Something went wrong. Please try again.';
-    if (error?.message && !error.message.includes('prisma') && !error.message.includes('invocation')) {
+    if (error?.message && !error.message.includes('duplicate key') && !error.message.includes('invocation')) {
       errorMessage = error.message;
     }
     

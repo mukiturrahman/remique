@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { reminders, documents } from '@/db/schema';
+import { eq, and, lte, isNull, lt } from 'drizzle-orm';
 import {
   verifyQStashRequest,
   scheduleDelayedReminder,
@@ -61,11 +63,11 @@ export async function POST(request: NextRequest) {
     // ── 2. Reminders deferred past the QStash window ────────────────────
     // Written with a null qstashMessageId at creation time; claim them once
     // they come into range.
-    const deferred = await prisma.reminder.findMany({
-      where: { status: 'SCHEDULED', qstashMessageId: null },
-      orderBy: { scheduledAt: 'asc' },
-      take: BATCH,
-      select: { id: true, scheduledAt: true },
+    const deferred = await db.query.reminders.findMany({
+      where: and(eq(reminders.status, 'SCHEDULED'), isNull(reminders.qstashMessageId)),
+      orderBy: (reminders, { asc }) => [asc(reminders.scheduledAt)],
+      limit: BATCH,
+      columns: { id: true, scheduledAt: true },
     });
 
     for (const reminder of deferred) {
@@ -78,10 +80,7 @@ export async function POST(request: NextRequest) {
           { replay: true }
         );
         if (qstashMessageId) {
-          await prisma.reminder.update({
-            where: { id: reminder.id },
-            data: { qstashMessageId },
-          });
+          await db.update(reminders).set({ qstashMessageId }).where(eq(reminders.id, reminder.id));
           result.scheduledDeferred++;
         }
       } catch (err: any) {
@@ -91,11 +90,11 @@ export async function POST(request: NextRequest) {
 
     // ── 3. Reminders that are already due but never fired ────────────────
     // QStash dropped or never received the callback. Send now, late.
-    const overdue = await prisma.reminder.findMany({
-      where: { status: 'SCHEDULED', scheduledAt: { lte: now }, attempts: { lt: 5 } },
-      orderBy: { scheduledAt: 'asc' },
-      take: BATCH,
-      select: { id: true },
+    const overdue = await db.query.reminders.findMany({
+      where: and(eq(reminders.status, 'SCHEDULED'), lte(reminders.scheduledAt, now), lt(reminders.attempts, 5)),
+      orderBy: (reminders, { asc }) => [asc(reminders.scheduledAt)],
+      limit: BATCH,
+      columns: { id: true },
     });
 
     for (const reminder of overdue) {
@@ -104,10 +103,7 @@ export async function POST(request: NextRequest) {
           replay: true,
         });
         if (qstashMessageId) {
-          await prisma.reminder.update({
-            where: { id: reminder.id },
-            data: { qstashMessageId },
-          });
+          await db.update(reminders).set({ qstashMessageId }).where(eq(reminders.id, reminder.id));
           result.requeuedOverdue++;
         }
       } catch (err: any) {
@@ -118,27 +114,24 @@ export async function POST(request: NextRequest) {
     // ── 4. Reminders wedged in PROCESSING ────────────────────────────────
     // The worker claimed them and then died. Return them to SCHEDULED so the
     // overdue pass above can pick them up on the next sweep.
-    const reset = await prisma.reminder.updateMany({
-      where: {
-        status: 'PROCESSING',
-        updatedAt: { lte: new Date(now.getTime() - STUCK_PROCESSING_MS) },
-        attempts: { lt: 5 },
-      },
-      data: { status: 'SCHEDULED', qstashMessageId: null },
-    });
+    const resetResult = await db.update(reminders).set({ status: 'SCHEDULED', qstashMessageId: null }).where(
+      and(
+        eq(reminders.status, 'PROCESSING'),
+        lte(reminders.updatedAt, new Date(now.getTime() - STUCK_PROCESSING_MS)),
+        lt(reminders.attempts, 5)
+      )
+    );
+    const reset = { count: resetResult.count };
     result.resetStuckProcessing = reset.count;
 
     // ── 5. Documents uploaded but never named ───────────────────────────
     // The user sent a file, was asked what to call it, and never answered.
     // The bytes were stored before the label existed (Meta media IDs expire),
     // so without this pass every abandoned upload bills S3 forever.
-    const orphans = await prisma.document.findMany({
-      where: {
-        label: null,
-        createdAt: { lte: new Date(now.getTime() - ORPHAN_DOCUMENT_MS) },
-      },
-      take: BATCH,
-      select: { id: true, s3Key: true },
+    const orphans = await db.query.documents.findMany({
+      where: and(isNull(documents.label), lte(documents.createdAt, new Date(now.getTime() - ORPHAN_DOCUMENT_MS))),
+      limit: BATCH,
+      columns: { id: true, s3Key: true },
     });
 
     for (const orphan of orphans) {
@@ -146,7 +139,7 @@ export async function POST(request: NextRequest) {
         // S3 first. A failed delete here leaves the row, so the next sweep
         // retries — the reverse order would orphan the object permanently.
         await deleteDocument(orphan.s3Key);
-        await prisma.document.delete({ where: { id: orphan.id } });
+        await db.delete(documents).where(eq(documents.id, orphan.id));
         result.deletedOrphanDocuments++;
       } catch (err: any) {
         result.errors.push(`orphan document ${orphan.id}: ${err?.message}`);

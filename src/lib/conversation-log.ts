@@ -1,5 +1,7 @@
-import type { User } from '@prisma/client';
-import { prisma } from './db';
+import { db } from '@/db';
+import { users, messages } from '@/db/schema';
+import type { InferSelectModel } from 'drizzle-orm';
+type User = InferSelectModel<typeof users>;
 import {
   sendWhatsAppButtons,
   sendWhatsAppMedia,
@@ -31,15 +33,13 @@ async function logOutbound(
   if (!whatsappMessageId) return;
 
   try {
-    await prisma.message.create({
-      data: {
+    await db.insert(messages).values({
         userId,
         whatsappMessageId,
         direction: 'OUTBOUND',
         messageText: text,
         processedAt: new Date(),
-      },
-    });
+      });
   } catch (error: any) {
     // The message is already delivered. Losing our copy of it degrades future
     // context, but throwing here would fail a turn that actually succeeded.

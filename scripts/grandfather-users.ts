@@ -18,22 +18,21 @@
  *
  * Idempotent — running it twice changes nothing the second time.
  */
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from '../src/db';
+import { users } from '../src/db/schema';
+import { not, eq, sql } from 'drizzle-orm';
 
 export const PERMANENT_TIER = 'permanent';
 
 const apply = process.argv.includes('--apply');
 
 async function main() {
-  const total = await prisma.user.count();
+  const totalRes = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const total = Number(totalRes[0].count);
 
-  // Anyone not already permanent. Restated rather than assumed, so a partial
-  // previous run resumes cleanly.
-  const pending = await prisma.user.findMany({
-    where: { planTier: { not: PERMANENT_TIER } },
-    select: {
+  const pending = await db.query.users.findMany({
+    where: not(eq(users.planTier, PERMANENT_TIER)),
+    columns: {
       id: true,
       name: true,
       phoneNumber: true,
@@ -41,7 +40,7 @@ async function main() {
       planExpiresAt: true,
       createdAt: true,
     },
-    orderBy: { createdAt: 'asc' },
+    orderBy: (u, { asc }) => asc(u.createdAt),
   });
 
   console.log(`\n${total} users in the database.`);
@@ -64,25 +63,21 @@ async function main() {
     return;
   }
 
-  const result = await prisma.user.updateMany({
-    where: { planTier: { not: PERMANENT_TIER } },
-    data: {
+  const result = await db.update(users)
+    .set({
       planTier: PERMANENT_TIER,
-      // A permanent plan has no billing period and no end date. Both are
-      // cleared rather than left stale, so nothing downstream reads a leftover
-      // expiry and treats these users as lapsed.
       planPeriod: null,
       planExpiresAt: null,
       planStartedAt: new Date(),
-    },
-  });
+    })
+    .where(not(eq(users.planTier, PERMANENT_TIER)))
+    .returning({ id: users.id });
 
-  console.log(`\nUpdated ${result.count} users to the permanent plan.`);
+  console.log(`\nUpdated ${result.length} users to the permanent plan.`);
 }
 
 main()
   .catch((e) => {
     console.error(e);
     process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  });

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { users, subscriptions } from '@/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,14 +76,11 @@ export async function POST(
       : { planTier: tier, planPeriod: period, planStartedAt: new Date(), planExpiresAt: expiresAt };
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id }, data });
+    await db.transaction(async (tx) => {
+      await tx.update(users).set(data).where(eq(users.id, id));
 
       if (tier === 'free') {
-        await tx.subscription.updateMany({
-          where: { userId: id, status: { in: ['ACTIVE', 'PENDING'] } },
-          data: { status: 'CANCELLED', cancelledAt: new Date() },
-        });
+        await tx.update(subscriptions).set({ status: 'CANCELLED', cancelledAt: new Date() }).where(and(eq(subscriptions.userId, id), inArray(subscriptions.status, ['ACTIVE', 'PENDING'])));
       }
     });
   } catch {

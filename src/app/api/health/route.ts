@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { messages, reminders } from '@/db/schema';
+import { eq, and, lte, isNull, sql, count } from 'drizzle-orm';
 import { env } from '@/lib/env';
 import { checkWhatsAppToken, type WhatsAppTokenStatus } from '@/lib/whatsapp';
 
@@ -66,7 +68,7 @@ export async function GET(request: NextRequest) {
   let healthy = true;
 
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await db.execute(sql`SELECT 1`);
     checks.database = { status: 'ok' };
   } catch (err: any) {
     healthy = false;
@@ -109,10 +111,8 @@ export async function GET(request: NextRequest) {
   // cause, so it is the single number worth alerting on.
   try {
     const [pendingInbound, overdueReminders] = await Promise.all([
-      prisma.message.count({ where: { direction: 'INBOUND', processedAt: null } }),
-      prisma.reminder.count({
-        where: { status: 'SCHEDULED', scheduledAt: { lte: new Date() } },
-      }),
+      db.select({ count: count() }).from(messages).where(and(eq(messages.direction, 'INBOUND'), isNull(messages.processedAt))).then(r => r[0].count),
+      db.select({ count: count() }).from(reminders).where(and(eq(reminders.status, 'SCHEDULED'), lte(reminders.scheduledAt, new Date()))).then(r => r[0].count),
     ]);
     checks.pendingInbound = pendingInbound;
     checks.overdueReminders = overdueReminders;

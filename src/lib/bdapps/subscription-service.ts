@@ -1,4 +1,6 @@
-import { prisma } from '../db';
+import { db } from '@/db';
+import { users, subscriptions, payments } from '@/db/schema';
+import { eq, or, and } from 'drizzle-orm';
 import { env } from '../env';
 import { buildBdappsAuthorizationUrl, generateRequestId } from './signer';
 import {
@@ -54,42 +56,37 @@ export async function initiateBdappsSubscription(
   let user = null;
 
   if (params.userId) {
-    user = await prisma.user.findUnique({
-      where: { id: params.userId },
+    user = await db.query.users.findFirst({
+      where: eq(users.id, params.userId),
     });
   }
 
   if (!user && params.phoneNumber) {
     const { raw, formatted } = normalizeBdPhoneNumber(params.phoneNumber);
-    user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { whatsappId: raw },
-          { phoneNumber: formatted },
-          { phoneNumber: raw },
-        ],
-      },
+    user = await db.query.users.findFirst({
+      where: or(
+        eq(users.whatsappId, raw),
+        eq(users.phoneNumber, formatted),
+        eq(users.phoneNumber, raw)
+      ),
     });
 
     try {
       if (!user) {
-        user = await prisma.user.create({
-          data: {
-            whatsappId: raw,
-            phoneNumber: formatted,
-            email: params.email || null,
-            timezone: 'Asia/Dhaka',
-            planTier: 'free',
-          },
-        });
+        const [newUser] = await db.insert(users).values({
+          whatsappId: raw,
+          phoneNumber: formatted,
+          email: params.email || null,
+          timezone: 'Asia/Dhaka',
+          planTier: 'free',
+        }).returning();
+        user = newUser;
       } else if (params.email && user.email !== params.email) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { email: params.email },
-        });
+        const [updatedUser] = await db.update(users).set({ email: params.email }).where(eq(users.id, user!.id)).returning();
+        user = updatedUser;
       }
     } catch (dbError: any) {
-      if (dbError.code === 'P2002') {
+      if (dbError.code === '23505') {
         return {
           success: false,
           error: 'ALREADY_SUBSCRIBED',
@@ -107,8 +104,8 @@ export async function initiateBdappsSubscription(
   }
 
   // Check for active subscription regardless of current user.planTier
-  const activeSub = await prisma.subscription.findFirst({
-    where: { userId: user.id, status: 'ACTIVE' },
+  const activeSub = await db.query.subscriptions.findFirst({
+    where: and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')),
   });
 
   if (activeSub) {
@@ -124,24 +121,18 @@ export async function initiateBdappsSubscription(
     const now = new Date();
     const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
     
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        planTier: 'pro',
-        planPeriod: plan.period,
-        planStartedAt: now,
-        planExpiresAt: activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
-      },
-    });
+    await db.update(users).set({
+      planTier: 'pro',
+      planPeriod: plan.period,
+      planStartedAt: now,
+      planExpiresAt: activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
+    }).where(eq(users.id, user!.id));
     
-    await prisma.subscription.update({
-      where: { id: activeSub.id },
-      data: {
-        planPeriod: plan.period,
-        amount: plan.amount,
-        currency: plan.currency,
-      },
-    });
+    await db.update(subscriptions).set({
+      planPeriod: plan.period,
+      amount: plan.amount.toString(),
+      currency: plan.currency,
+    }).where(eq(subscriptions.id, activeSub.id));
 
     return {
       success: true,
@@ -159,44 +150,41 @@ export async function initiateBdappsSubscription(
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
   // Upsert subscription in PENDING state
-  const subscription = await prisma.subscription.upsert({
-    where: { userId: user.id },
-    create: {
-      userId: user.id,
+  const [subscription] = await db.insert(subscriptions).values({
+    userId: user.id,
+    planTier: 'pro',
+    planPeriod: plan.period,
+    amount: plan.amount.toString(),
+    currency: plan.currency,
+    status: 'PENDING',
+    requestId,
+    currentPeriodStart: now,
+    currentPeriodEnd: periodEnd,
+  }).onConflictDoUpdate({
+    target: subscriptions.userId,
+    set: {
       planTier: 'pro',
       planPeriod: plan.period,
-      amount: plan.amount,
+      amount: plan.amount.toString(),
       currency: plan.currency,
       status: 'PENDING',
       requestId,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
     },
-    update: {
-      planTier: 'pro',
-      planPeriod: plan.period,
-      amount: plan.amount,
-      currency: plan.currency,
-      status: 'PENDING',
-      requestId,
-      currentPeriodStart: now,
-      currentPeriodEnd: periodEnd,
-    },
-  });
+  }).returning();
 
   // Track payment attempt
-  await prisma.payment.create({
-    data: {
-      userId: user.id,
-      amount: plan.amount,
-      currency: plan.currency,
-      provider: 'bdapps',
-      externalId: requestId,
-      status: 'PENDING',
-      periodStart: now,
-      periodEnd: periodEnd,
-      subscriptionId: subscription.id,
-    },
+  await db.insert(payments).values({
+    userId: user.id,
+    amount: plan.amount.toString(),
+    currency: plan.currency,
+    provider: 'bdapps',
+    externalId: requestId,
+    status: 'PENDING',
+    periodStart: now,
+    periodEnd: periodEnd,
+    subscriptionId: subscription.id,
   });
 
   const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
@@ -255,19 +243,15 @@ export async function handleBdappsCallback(
 
     if (requestId) {
       // Mark payment as FAILED
-      await prisma.payment
-        .updateMany({
-          where: { externalId: requestId, status: 'PENDING' },
-          data: { status: 'FAILED' },
-        })
+      await db.update(payments)
+        .set({ status: 'FAILED' })
+        .where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING')))
         .catch(() => {});
 
       // If subscription was pending, update it
-      await prisma.subscription
-        .updateMany({
-          where: { requestId, status: 'PENDING' },
-          data: { status: 'CANCELLED' },
-        })
+      await db.update(subscriptions)
+        .set({ status: 'CANCELLED' })
+        .where(and(eq(subscriptions.requestId, requestId), eq(subscriptions.status, 'PENDING')))
         .catch(() => {});
     }
 
@@ -282,28 +266,42 @@ export async function handleBdappsCallback(
   }
 
   // Find subscription by requestId
-  let subscription = null;
+  let subscriptionRecord = null;
+  let userRecord = null;
+  
   if (requestId) {
-    subscription = await prisma.subscription.findUnique({
-      where: { requestId },
-      include: { user: true },
+    const res = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.requestId, requestId),
+      with: { user: true },
     });
+    if (res) {
+      subscriptionRecord = res;
+      userRecord = res.user;
+    }
   }
 
-  // Fallback find by subscriberId if available
-  if (!subscription && subscriberId) {
+  if (!subscriptionRecord && subscriberId) {
     const cleanSub = subscriberId.replace(/^tel:/, '').replace(/\D/g, '');
-    subscription = await prisma.subscription.findFirst({
-      where: {
-        OR: [
-          { subscriberId },
-          { user: { whatsappId: cleanSub } },
-          { user: { phoneNumber: `+${cleanSub}` } },
-        ],
-      },
-      include: { user: true },
-    });
+    const res = await db.select({
+      subscription: subscriptions,
+      user: users
+    })
+    .from(subscriptions)
+    .leftJoin(users, eq(subscriptions.userId, users.id))
+    .where(or(
+      eq(subscriptions.subscriberId, subscriberId),
+      eq(users.whatsappId, cleanSub),
+      eq(users.phoneNumber, `+${cleanSub}`)
+    ))
+    .limit(1);
+
+    if (res.length > 0) {
+      subscriptionRecord = res[0].subscription;
+      userRecord = res[0].user;
+    }
   }
+  
+  const subscription = subscriptionRecord ? { ...subscriptionRecord, user: userRecord } : null;
 
   if (!subscription) {
     return {
@@ -318,44 +316,37 @@ export async function handleBdappsCallback(
   }
 
   const user = subscription.user;
+  if (!user) throw new Error("Subscription has no associated user");
   const planPeriod = (subscription.planPeriod.toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
   const plan = BDAPPS_PLANS[planPeriod];
   const now = new Date();
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
   // Activate Subscription
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: {
-      status: 'ACTIVE',
-      subscriberId: subscriberId || subscription.subscriberId,
-      currentPeriodStart: now,
-      currentPeriodEnd: periodEnd,
-      cancelledAt: null,
-    },
-  });
+  await db.update(subscriptions).set({
+    status: 'ACTIVE',
+    subscriberId: subscriberId || subscription.subscriberId,
+    currentPeriodStart: now,
+    currentPeriodEnd: periodEnd,
+    cancelledAt: null,
+  }).where(eq(subscriptions.id, subscription.id));
 
   // Activate User Pro plan
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      planTier: 'pro',
-      planPeriod: plan.period,
-      planStartedAt: now,
-      planExpiresAt: periodEnd,
-    },
-  });
+  await db.update(users).set({
+    planTier: 'pro',
+    planPeriod: plan.period,
+    planStartedAt: now,
+    planExpiresAt: periodEnd,
+  }).where(eq(users.id, user!.id));
 
   // Mark Payment as PAID
   if (requestId) {
-    await prisma.payment
-      .updateMany({
-        where: { externalId: requestId },
-        data: {
-          status: 'PAID',
-          subscriptionId: subscription.id,
-        },
+    await db.update(payments)
+      .set({
+        status: 'PAID',
+        subscriptionId: subscription.id,
       })
+      .where(eq(payments.externalId, requestId))
       .catch(() => {});
   }
 
@@ -410,37 +401,50 @@ export async function handleBdappsWebhook(
     : undefined;
 
   // Find existing subscription
-  let subscription = null;
+  let subscriptionRecord = null;
+  let userRecord = null;
+  
   if (requestId) {
-    subscription = await prisma.subscription.findUnique({
-      where: { requestId },
-      include: { user: true },
+    const res = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.requestId, requestId),
+      with: { user: true },
     });
+    if (res) {
+      subscriptionRecord = res;
+      userRecord = res.user;
+    }
   }
 
-  if (!subscription && subscriberDigits) {
-    subscription = await prisma.subscription.findFirst({
-      where: {
-        OR: [
-          { subscriberId: rawSubscriberId },
-          { user: { whatsappId: subscriberDigits } },
-          { user: { phoneNumber: `+${subscriberDigits}` } },
-        ],
-      },
-      include: { user: true },
-    });
+  if (!subscriptionRecord && subscriberDigits) {
+    const res = await db.select({
+      subscription: subscriptions,
+      user: users
+    })
+    .from(subscriptions)
+    .leftJoin(users, eq(subscriptions.userId, users.id))
+    .where(or(
+      eq(subscriptions.subscriberId, rawSubscriberId),
+      eq(users.whatsappId, subscriberDigits),
+      eq(users.phoneNumber, `+${subscriberDigits}`)
+    ))
+    .limit(1);
+
+    if (res.length > 0) {
+      subscriptionRecord = res[0].subscription;
+      userRecord = res[0].user;
+    }
   }
+  
+  let subscription = subscriptionRecord ? { ...subscriptionRecord, user: userRecord } : null;
 
   if (rawStatus === 'REGISTERED') {
     if (!subscription && subscriberDigits) {
       // If user exists, create active subscription
-      const user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { whatsappId: subscriberDigits },
-            { phoneNumber: `+${subscriberDigits}` },
-          ],
-        },
+      const user = await db.query.users.findFirst({
+        where: or(
+          eq(users.whatsappId, subscriberDigits),
+          eq(users.phoneNumber, `+${subscriberDigits}`)
+        ),
       });
 
       if (user) {
@@ -448,28 +452,27 @@ export async function handleBdappsWebhook(
         const now = new Date();
         const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-        subscription = await prisma.subscription.upsert({
-          where: { userId: user.id },
-          create: {
-            userId: user.id,
-            planTier: 'pro',
-            planPeriod: plan.period,
-            amount: plan.amount,
-            currency: plan.currency,
+        const [upserted] = await db.insert(subscriptions).values({
+          userId: user.id,
+          planTier: 'pro',
+          planPeriod: plan.period,
+          amount: plan.amount.toString(),
+          currency: plan.currency,
+          status: 'ACTIVE',
+          requestId: requestId || generateRequestId(),
+          subscriberId: rawSubscriberId,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+        }).onConflictDoUpdate({
+          target: subscriptions.userId,
+          set: {
             status: 'ACTIVE',
-            requestId: requestId || generateRequestId(),
             subscriberId: rawSubscriberId,
             currentPeriodStart: now,
             currentPeriodEnd: periodEnd,
           },
-          update: {
-            status: 'ACTIVE',
-            subscriberId: rawSubscriberId,
-            currentPeriodStart: now,
-            currentPeriodEnd: periodEnd,
-          },
-          include: { user: true },
-        });
+        }).returning();
+        subscription = { ...upserted, user };
       }
     }
 
@@ -479,40 +482,32 @@ export async function handleBdappsWebhook(
       const now = new Date();
       const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          status: 'ACTIVE',
-          subscriberId: rawSubscriberId || subscription.subscriberId,
-          currentPeriodStart: now,
-          currentPeriodEnd: periodEnd,
-          cancelledAt: null,
-        },
-      });
+      await db.update(subscriptions).set({
+        status: 'ACTIVE',
+        subscriberId: rawSubscriberId || subscription.subscriberId,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        cancelledAt: null,
+      }).where(eq(subscriptions.id, subscription.id));
 
-      await prisma.user.update({
-        where: { id: subscription.userId },
-        data: {
-          planTier: 'pro',
-          planPeriod: plan.period,
-          planStartedAt: now,
-          planExpiresAt: periodEnd,
-        },
-      });
+      await db.update(users).set({
+        planTier: 'pro',
+        planPeriod: plan.period,
+        planStartedAt: now,
+        planExpiresAt: periodEnd,
+      }).where(eq(users.id, subscription.userId));
 
       // Record renewal or active payment
-      await prisma.payment.create({
-        data: {
-          userId: subscription.userId,
-          amount: plan.amount,
-          currency: plan.currency,
-          provider: 'bdapps',
-          externalId: requestId ? `${requestId}_renew_${Date.now()}` : undefined,
-          status: 'PAID',
-          periodStart: now,
-          periodEnd: periodEnd,
-          subscriptionId: subscription.id,
-        },
+      await db.insert(payments).values({
+        userId: subscription.userId,
+        amount: plan.amount.toString(),
+        currency: plan.currency,
+        provider: 'bdapps',
+        externalId: requestId ? `${requestId}_renew_${Date.now()}` : undefined,
+        status: 'PAID',
+        periodStart: now,
+        periodEnd: periodEnd,
+        subscriptionId: subscription.id,
       });
 
       return {
@@ -535,20 +530,14 @@ export async function handleBdappsWebhook(
 
   if (rawStatus === 'UNREGISTERED') {
     if (subscription) {
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          status: 'CANCELLED',
-          cancelledAt: new Date(),
-        },
-      });
+      await db.update(subscriptions).set({
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+      }).where(eq(subscriptions.id, subscription.id));
 
-      await prisma.user.update({
-        where: { id: subscription.userId },
-        data: {
-          planTier: 'free',
-        },
-      });
+      await db.update(users).set({
+        planTier: 'free',
+      }).where(eq(users.id, subscription.userId));
 
       return {
         success: true,
@@ -573,28 +562,22 @@ export async function handleBdappsWebhook(
  * Cancels a user's subscription in Remique.
  */
 export async function cancelSubscription(userId: string): Promise<{ success: boolean; error?: string }> {
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
+  const subscription = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.userId, userId),
   });
 
   if (!subscription || subscription.status !== 'ACTIVE') {
     return { success: false, error: 'No active subscription found.' };
   }
 
-  await prisma.subscription.update({
-    where: { userId },
-    data: {
-      status: 'CANCELLED',
-      cancelledAt: new Date(),
-    },
-  });
+  await db.update(subscriptions).set({
+    status: 'CANCELLED',
+    cancelledAt: new Date(),
+  }).where(eq(subscriptions.userId, userId));
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      planTier: 'free',
-    },
-  });
+  await db.update(users).set({
+    planTier: 'free',
+  }).where(eq(users.id, userId));
 
   return { success: true };
 }

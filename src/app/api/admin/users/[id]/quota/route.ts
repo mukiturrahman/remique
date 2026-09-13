@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,10 +31,7 @@ export async function POST(
   }
 
   try {
-    await prisma.user.update({
-      where: { id },
-      data: { dailyTokenCap: daily, weeklyTokenCap: weekly },
-    });
+    await db.update(users).set({ dailyTokenCap: daily, weeklyTokenCap: weekly }).where(eq(users.id, id));
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
