@@ -596,59 +596,61 @@ export async function getDashboardTotals(
   const messagesInWindow = start ? gte(messages.createdAt, start) : undefined;
   const paymentsInWindow = start ? gte(payments.createdAt, start) : undefined;
 
-  const [
-    [{ count: totalUsers }],
-    [{ count: newUsersCount }],
-    [{ count: blockedCount }],
-    [{ count: activeCount }],
-    [{ count: unsubscribedCount }],
-    [{ count: messagesCount }],
-    [usageAgg],
-    revenueByCurrency,
-    [{ count: paidEverCount }],
-    topSpender,
-  ] = await Promise.all([
-    db.select({ count: count() }).from(users),
-    db.select({ count: count() }).from(users).where(inWindow),
-    db.select({ count: count() }).from(users).where(isNotNull(users.blockedAt)),
-    db
-      .select({ count: count() })
-      .from(users)
-      .where(gte(users.updatedAt, new Date(now.getTime() - 7 * DAY_MS))),
-    db
-      .select({ count: count() })
-      .from(users)
-      .where(
+const [{ count: totalUsers }] = await db.select({ count: count() }).from(users);
+
+const [{ count: newUsersCount }] = await db.select({ count: count() }).from(users).where(inWindow);
+
+const [{ count: blockedCount }] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(isNotNull(users.blockedAt));
+
+const [{ count: activeCount }] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(gte(users.updatedAt, new Date(now.getTime() - 7 * DAY_MS)));
+
+const [{ count: unsubscribedCount }] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(
         and(
-          isNotNull(users.planExpiresAt),
-          lt(users.planExpiresAt, now),
-          start ? gte(users.planExpiresAt, start) : undefined,
+            isNotNull(users.planExpiresAt),
+            lt(users.planExpiresAt, now),
+            start ? gte(users.planExpiresAt, start) : undefined,
         ),
-      ),
-    db.select({ count: count() }).from(messages).where(messagesInWindow),
-    db
-      .select({
+    );
+
+const [{ count: messagesCount }] = await db
+    .select({ count: count() })
+    .from(messages)
+    .where(messagesInWindow);
+
+const [usageAgg] = await db
+    .select({
         inputTokens: sum(usageEvents.inputTokens).mapWith(Number),
         cachedTokens: sum(usageEvents.cachedTokens).mapWith(Number),
         outputTokens: sum(usageEvents.outputTokens).mapWith(Number),
         costMicros: sum(usageEvents.costMicros).mapWith(Number),
-      })
-      .from(usageEvents)
-      .where(eventsInWindow),
-    db
-      .select({
+    })
+    .from(usageEvents)
+    .where(eventsInWindow);
+
+const revenueByCurrency = await db
+    .select({
         currency: payments.currency,
         amount: sum(payments.amount).mapWith(Number),
-      })
-      .from(payments)
-      .where(and(eq(payments.status, "PAID"), paymentsInWindow))
-      .groupBy(payments.currency),
-    db
-      .select({ count: count() })
-      .from(payments)
-      .where(eq(payments.status, "PAID")),
-    topSpenderIn(start),
-  ]);
+    })
+    .from(payments)
+    .where(and(eq(payments.status, "PAID"), paymentsInWindow))
+    .groupBy(payments.currency);
+
+const [{ count: paidEverCount }] = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(eq(payments.status, "PAID"));
+
+const topSpender = await topSpenderIn(start);
 
   const ranked = revenueByCurrency
     .map((row) => ({ currency: row.currency, amount: Number(row.amount ?? 0) }))

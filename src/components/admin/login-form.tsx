@@ -23,13 +23,10 @@ export function LoginForm() {
       body: JSON.stringify({ password }),
     }).catch(() => null);
 
-    if (response?.ok) {
-      // refresh() first so the server components re-render with the new
-      // cookie; push() alone can land on a cached unauthenticated render.
-      router.refresh();
-      router.push('/admin');
-      return;
-    }
+   if (response?.ok) {
+       window.location.assign("/admin");
+       return;
+   }
 
     if (!response) {
       setError('Could not reach the server. Check your connection and try again.');
