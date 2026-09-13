@@ -40,6 +40,7 @@ export default function PricingPage() {
   const isWeekly = billing === "weekly";
   const price = isWeekly ? weeklyPrice : monthlyPrice;
   const periodLabel = isWeekly ? page.perWeek : page.perMonth;
+  const isAlreadySubscribed = error === "ALREADY_SUBSCRIBED" || error?.includes("already") || error?.includes("registered");
 
   async function handleCheckout(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -140,24 +141,29 @@ export default function PricingPage() {
                 </div>
 
                 {error && (
-                  <p className="text-[13px] text-red-500 font-medium leading-snug">
-                    {error === "ALREADY_SUBSCRIBED" || error.includes("already") || error.includes("registered") ? (
-                      <>
-                        You're already subscribed! If you didn't receive the bot link,{" "}
+                  <div className={`text-[14px] font-medium leading-relaxed rounded-xl ${
+                    isAlreadySubscribed 
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20 p-4" 
+                      : "text-red-500"
+                  }`}>
+                    {isAlreadySubscribed ? (
+                      <div className="flex flex-col gap-2.5">
+                        <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
+                        <p>You're already subscribed. If you didn't receive the bot link, tap the button below to open it.</p>
                         <a 
                           href="https://wa.me/8801895638339?text=Hi" 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="underline hover:text-red-400 font-semibold"
+                          className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-display text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                         >
-                          click here
-                        </a>{" "}
-                        to open the bot.
-                      </>
+                          Open the Bot
+                          <IconArrow className="h-4 w-4" />
+                        </a>
+                      </div>
                     ) : (
-                      error
+                      <p>{error}</p>
                     )}
-                  </p>
+                  </div>
                 )}
 
                 <div className="rounded-xl bg-brand/5 border border-brand/10 p-3 text-[13px] text-ink-2 flex justify-between items-center">
@@ -167,14 +173,16 @@ export default function PricingPage() {
                   </span>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand py-3.5 font-display text-[15px] font-semibold text-white shadow-lift transition-all hover:bg-brand-deep disabled:opacity-60"
-                >
-                  {loading ? page.modal.connecting : page.modal.proceed}
-                  {!loading && <IconArrow className="h-4 w-4" />}
-                </button>
+                {!isAlreadySubscribed && (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand py-3.5 font-display text-[15px] font-semibold text-white shadow-lift transition-all hover:bg-brand-deep disabled:opacity-60"
+                  >
+                    {loading ? page.modal.connecting : page.modal.proceed}
+                    {!loading && <IconArrow className="h-4 w-4" />}
+                  </button>
+                )}
               </form>
             </div>
           </div>
