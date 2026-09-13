@@ -141,25 +141,32 @@ export default function PricingPage() {
                 </div>
 
                 {error && (
-                  <div className={`text-[14px] font-medium leading-relaxed rounded-xl ${
+                  <div className={`relative text-[14px] font-medium leading-relaxed rounded-xl ${
                     isAlreadySubscribed 
-                      ? "bg-green-500/10 text-green-600 border border-green-500/20 p-4" 
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20 p-4 overflow-hidden" 
                       : "text-red-500"
                   }`}>
                     {isAlreadySubscribed ? (
-                      <div className="flex flex-col gap-2.5">
-                        <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
-                        <p>You're already subscribed. If you didn't receive the bot link, tap the button below to open it.</p>
-                        <a 
-                          href="https://wa.me/8801895638339?text=Hi" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-display text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
-                        >
-                          Open Remique
-                          <IconArrow className="h-4 w-4" />
-                        </a>
-                      </div>
+                      <>
+                        <img 
+                          src="/happyRemique.png" 
+                          alt="Happy Remique" 
+                          className="absolute -top-1 -right-2 h-16 w-16 rotate-12 opacity-90 drop-shadow-sm" 
+                        />
+                        <div className="relative z-10 flex flex-col gap-2.5 pr-8">
+                          <p className="font-semibold text-[15px]">🎉 Congratulations!</p>
+                          <p>You're already subscribed. If you didn't receive the bot link, tap the button below to open it.</p>
+                          <a 
+                            href="https://wa.me/8801895638339?text=Hi" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-display text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
+                          >
+                            Open Remique
+                            <IconArrow className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </>
                     ) : (
                       <p>{error}</p>
                     )}
