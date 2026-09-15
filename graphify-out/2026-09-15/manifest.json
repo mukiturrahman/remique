@@ -1,0 +1,957 @@
+{
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.vercel/project.json": {
+    "mtime": 1788279973.8395865,
+    "ast_hash": "c50111d527a1cac15d2a3dbfd87519b5",
+    "semantic_hash": "c50111d527a1cac15d2a3dbfd87519b5"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/next.config.ts": {
+    "mtime": 1788187745.5131319,
+    "ast_hash": "fb2f2291c92589154ce41020507b84fc",
+    "semantic_hash": "fb2f2291c92589154ce41020507b84fc"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/package.json": {
+    "mtime": 1788769435.2041233,
+    "ast_hash": "d5bfe8ef272d7dbf776a1f441d145cef",
+    "semantic_hash": "d5bfe8ef272d7dbf776a1f441d145cef"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/postcss.config.mjs": {
+    "mtime": 1788187745.5188363,
+    "ast_hash": "c735540bb63936a123bc867d950c9f69",
+    "semantic_hash": "c735540bb63936a123bc867d950c9f69"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/skills-lock.json": {
+    "mtime": 1788769467.542064,
+    "ast_hash": "15b82dde3f1eabffba30d41ba7d6e8c6",
+    "semantic_hash": "15b82dde3f1eabffba30d41ba7d6e8c6"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/health/route.ts": {
+    "mtime": 1788378481.8726788,
+    "ast_hash": "aaa98254c0bc28bec63169d65ed5cb69",
+    "semantic_hash": "aaa98254c0bc28bec63169d65ed5cb69"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/jobs/send-reminder/route.ts": {
+    "mtime": 1788863502.6421328,
+    "ast_hash": "d3f3fa40c99d2cbd576f63d3fc30b14c",
+    "semantic_hash": "d3f3fa40c99d2cbd576f63d3fc30b14c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/jobs/sweep/route.ts": {
+    "mtime": 1788613994.9770792,
+    "ast_hash": "6159142bd7247c1aa4cf06a0b89e56d7",
+    "semantic_hash": "6159142bd7247c1aa4cf06a0b89e56d7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/layout.tsx": {
+    "mtime": 1789031014.0330553,
+    "ast_hash": "feb81914bfbbd618448e5e7d2b575f2a",
+    "semantic_hash": "feb81914bfbbd618448e5e7d2b575f2a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/page.tsx": {
+    "mtime": 1788983814.4935193,
+    "ast_hash": "e8193b0a9119f5a3f6a4a3a686f2ec52",
+    "semantic_hash": "e8193b0a9119f5a3f6a4a3a686f2ec52"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/icons.tsx": {
+    "mtime": 1788863502.6438355,
+    "ast_hash": "7d7c269089a5f9a76f53f9f80a6f0d12",
+    "semantic_hash": "7d7c269089a5f9a76f53f9f80a6f0d12"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/live-thread.tsx": {
+    "mtime": 1788794447.381306,
+    "ast_hash": "69f88753dcb3a81ace05e005f010b7a1",
+    "semantic_hash": "69f88753dcb3a81ace05e005f010b7a1"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/date-normalizer.ts": {
+    "mtime": 1788187763.834349,
+    "ast_hash": "31d440bb789a1041384a77806661f2aa",
+    "semantic_hash": "31d440bb789a1041384a77806661f2aa"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/db.ts": {
+    "mtime": 1788187757.7904308,
+    "ast_hash": "488b4acbdb14230146b0d13b285c59cc",
+    "semantic_hash": "488b4acbdb14230146b0d13b285c59cc"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/env.ts": {
+    "mtime": 1788983763.4019094,
+    "ast_hash": "c5e2717905a2066c2325d1976c2a6ae3",
+    "semantic_hash": "c5e2717905a2066c2325d1976c2a6ae3"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/message-pipeline.ts": {
+    "mtime": 1788984685.9427962,
+    "ast_hash": "33eec90e55b4ac1350da63bd92bf6423",
+    "semantic_hash": "33eec90e55b4ac1350da63bd92bf6423"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/qstash.ts": {
+    "mtime": 1788633864.4352582,
+    "ast_hash": "795f0e62b560a8281c3c2f49441552a7",
+    "semantic_hash": "795f0e62b560a8281c3c2f49441552a7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/reminder-service.ts": {
+    "mtime": 1788989325.708125,
+    "ast_hash": "7047ad3252b56864472e51e2082597a8",
+    "semantic_hash": "7047ad3252b56864472e51e2082597a8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/whatsapp.ts": {
+    "mtime": 1788691517.010454,
+    "ast_hash": "5a52922fd38817ac32cede0a3c9afa36",
+    "semantic_hash": "5a52922fd38817ac32cede0a3c9afa36"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/types/whatsapp.types.ts": {
+    "mtime": 1788614011.860842,
+    "ast_hash": "0b0e44722a34a202642a3361437e9367",
+    "semantic_hash": "0b0e44722a34a202642a3361437e9367"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tailwind.config.ts": {
+    "mtime": 1788805667.561831,
+    "ast_hash": "5ef74998121c67b6acce2eef5e59f27d",
+    "semantic_hash": "5ef74998121c67b6acce2eef5e59f27d"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tsconfig.json": {
+    "mtime": 1788517717.951425,
+    "ast_hash": "8a82b81f4a281c5303075cce50cea472",
+    "semantic_hash": "8a82b81f4a281c5303075cce50cea472"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/vercel.json": {
+    "mtime": 1788452305.4632041,
+    "ast_hash": "2c887306f3b5f00570944af880ebf2e2",
+    "semantic_hash": "2c887306f3b5f00570944af880ebf2e2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.vercel/README.txt": {
+    "mtime": 1788279973.8398268,
+    "ast_hash": "2b13c79d37d6ed82a3255b83b6815034",
+    "semantic_hash": "2b13c79d37d6ed82a3255b83b6815034"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/AGENTS.md": {
+    "mtime": 1788587396.7387872,
+    "ast_hash": "d7dacdce8a30967cc597c5e2f7c89448",
+    "semantic_hash": "d7dacdce8a30967cc597c5e2f7c89448"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/CLAUDE.md": {
+    "mtime": 1789107765.6435742,
+    "ast_hash": "03e3d38ba74cf8886d3d8fc322d9da8a",
+    "semantic_hash": "03e3d38ba74cf8886d3d8fc322d9da8a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/DESIGN.md": {
+    "mtime": 1788517352.3302314,
+    "ast_hash": "4debeef1f05cf23700e81a0ee054c828",
+    "semantic_hash": "4debeef1f05cf23700e81a0ee054c828"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/PRODUCT.md": {
+    "mtime": 1789048244.6000144,
+    "ast_hash": "1548782e5a762fe0f1edf428ce1d73f0",
+    "semantic_hash": "1548782e5a762fe0f1edf428ce1d73f0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.claude/launch.json": {
+    "mtime": 1788718983.9774985,
+    "ast_hash": "64f537f85d563f28b9c8624e78157f5c",
+    "semantic_hash": "64f537f85d563f28b9c8624e78157f5c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.claude/settings.local.json": {
+    "mtime": 1788767911.9645076,
+    "ast_hash": "5008567994bc7efaee2ac384cb68c9c8",
+    "semantic_hash": "5008567994bc7efaee2ac384cb68c9c8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.mcp.json": {
+    "mtime": 1788767747.8681855,
+    "ast_hash": "9d5199f11e3c0c51df9e4b2739cf2d88",
+    "semantic_hash": "9d5199f11e3c0c51df9e4b2739cf2d88"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/verified-ddl.sql": {
+    "mtime": 1788815279.4041057,
+    "ast_hash": "10d76395aa56c49878352f13519d4cf0",
+    "semantic_hash": "10d76395aa56c49878352f13519d4cf0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/scripts/build-lambdas.sh": {
+    "mtime": 1788531520.8504925,
+    "ast_hash": "b100247d8a312ef1b7ae708963f0923f",
+    "semantic_hash": "b100247d8a312ef1b7ae708963f0923f"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/scripts/grandfather-users.ts": {
+    "mtime": 1788863502.6398752,
+    "ast_hash": "5bafe3f864888e6573ae1462cb6faf21",
+    "semantic_hash": "5bafe3f864888e6573ae1462cb6faf21"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/scripts/seed-demo.ts": {
+    "mtime": 1788863502.64009,
+    "ast_hash": "83f89326d9bbe0ba7b73947d2a5ef2c0",
+    "semantic_hash": "83f89326d9bbe0ba7b73947d2a5ef2c0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/admin/layout.tsx": {
+    "mtime": 1789107568.6547558,
+    "ast_hash": "dd098c232810b6736c0afbca0d7a7d58",
+    "semantic_hash": "dd098c232810b6736c0afbca0d7a7d58"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/admin/login/page.tsx": {
+    "mtime": 1789107568.6550255,
+    "ast_hash": "ffdd0f511354fbe653a273b3da83b69a",
+    "semantic_hash": "ffdd0f511354fbe653a273b3da83b69a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/admin/page.tsx": {
+    "mtime": 1789107568.655357,
+    "ast_hash": "ada2b51fea4f1b00381e610f21b7d06b",
+    "semantic_hash": "ada2b51fea4f1b00381e610f21b7d06b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/admin/users/[id]/page.tsx": {
+    "mtime": 1789107568.6557052,
+    "ast_hash": "776e390dc1344633d6376766ff17e3e2",
+    "semantic_hash": "776e390dc1344633d6376766ff17e3e2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/admin/login/route.ts": {
+    "mtime": 1788863502.6414557,
+    "ast_hash": "3520c11051cc39e9796c92bf717eca47",
+    "semantic_hash": "3520c11051cc39e9796c92bf717eca47"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/admin/logout/route.ts": {
+    "mtime": 1788863502.6415722,
+    "ast_hash": "af4bbbb1023a57484ad8144d1133a96a",
+    "semantic_hash": "af4bbbb1023a57484ad8144d1133a96a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/admin/users/[id]/block/route.ts": {
+    "mtime": 1788863502.64176,
+    "ast_hash": "1291ad4640047ffae0d658ea7ce09436",
+    "semantic_hash": "1291ad4640047ffae0d658ea7ce09436"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/admin/users/[id]/plan/route.ts": {
+    "mtime": 1789107568.6559165,
+    "ast_hash": "c9c5cec7a3579478e47552d3116a56c9",
+    "semantic_hash": "c9c5cec7a3579478e47552d3116a56c9"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/admin/users/[id]/quota/route.ts": {
+    "mtime": 1788863502.641884,
+    "ast_hash": "5b3759e62255d1e683a221732e3799d4",
+    "semantic_hash": "5b3759e62255d1e683a221732e3799d4"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/billing/bdapps/callback/route.ts": {
+    "mtime": 1788985635.050943,
+    "ast_hash": "55e6e20131c42071f18c8326b39af6eb",
+    "semantic_hash": "55e6e20131c42071f18c8326b39af6eb"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/billing/bdapps/subscribe/route.ts": {
+    "mtime": 1789050663.5880308,
+    "ast_hash": "26f0aca5fa03979cf2cb8ec3a0a959e1",
+    "semantic_hash": "26f0aca5fa03979cf2cb8ec3a0a959e1"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/api/billing/bdapps/webhook/route.ts": {
+    "mtime": 1788889604.4972196,
+    "ast_hash": "f4f39fb4b5efa457fe1407bd70e5ab0c",
+    "semantic_hash": "f4f39fb4b5efa457fe1407bd70e5ab0c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/billing/cancelled/page.tsx": {
+    "mtime": 1788891661.2447245,
+    "ast_hash": "e42551474b78dabc0f6f1d8ba5c2745d",
+    "semantic_hash": "e42551474b78dabc0f6f1d8ba5c2745d"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/billing/success/page.tsx": {
+    "mtime": 1789048225.253652,
+    "ast_hash": "729a1a88b7ed621e2dbf2844b2078470",
+    "semantic_hash": "729a1a88b7ed621e2dbf2844b2078470"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/faq/page.tsx": {
+    "mtime": 1788983814.4926643,
+    "ast_hash": "a678d0d071a08d48f85a5d62daf0a92e",
+    "semantic_hash": "a678d0d071a08d48f85a5d62daf0a92e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/how-it-works/page.tsx": {
+    "mtime": 1788983814.4932215,
+    "ast_hash": "5608f7164c487e1a5babe5fcbcbbbd58",
+    "semantic_hash": "5608f7164c487e1a5babe5fcbcbbbd58"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/pricing/page.tsx": {
+    "mtime": 1788984498.5640357,
+    "ast_hash": "88bc2f29bc0e9c755853326b4b897f81",
+    "semantic_hash": "88bc2f29bc0e9c755853326b4b897f81"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/privacy/page.tsx": {
+    "mtime": 1789031184.8499517,
+    "ast_hash": "8f4b5bbf5a83f58d07d4674a7f2956ba",
+    "semantic_hash": "8f4b5bbf5a83f58d07d4674a7f2956ba"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/robots.ts": {
+    "mtime": 1789030374.0119267,
+    "ast_hash": "af39d12a69ec951b01d2675f928fb73b",
+    "semantic_hash": "af39d12a69ec951b01d2675f928fb73b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/sitemap.ts": {
+    "mtime": 1789030968.92799,
+    "ast_hash": "82d8770c24195852b9e81957b71fdfc9",
+    "semantic_hash": "82d8770c24195852b9e81957b71fdfc9"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/terms/page.tsx": {
+    "mtime": 1789030963.2367918,
+    "ast_hash": "dd2801132e9fedef6a01ba612055a107",
+    "semantic_hash": "dd2801132e9fedef6a01ba612055a107"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/app/use-cases/page.tsx": {
+    "mtime": 1788983814.4947915,
+    "ast_hash": "a3a964edb7cc8bafc3f22f26dca08637",
+    "semantic_hash": "a3a964edb7cc8bafc3f22f26dca08637"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/aws/webhook/index.ts": {
+    "mtime": 1788691535.4155993,
+    "ast_hash": "085d3a3e54bf0b4f78d898629e9532f9",
+    "semantic_hash": "085d3a3e54bf0b4f78d898629e9532f9"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/aws/worker/index.ts": {
+    "mtime": 1788691535.4162073,
+    "ast_hash": "082b4d791bb647decb89da9efb41087d",
+    "semantic_hash": "082b4d791bb647decb89da9efb41087d"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/block-toggle.tsx": {
+    "mtime": 1789107568.6562023,
+    "ast_hash": "4df099cd86cd227caa84cf0ed1d7bcf5",
+    "semantic_hash": "4df099cd86cd227caa84cf0ed1d7bcf5"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/controls.ts": {
+    "mtime": 1789107568.6563394,
+    "ast_hash": "c284c4201fd9021333e81a64f5ef784e",
+    "semantic_hash": "c284c4201fd9021333e81a64f5ef784e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/icons.tsx": {
+    "mtime": 1789107568.6565242,
+    "ast_hash": "6082fdb47dc26ccc9d2df1213ad50484",
+    "semantic_hash": "6082fdb47dc26ccc9d2df1213ad50484"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/login-form.tsx": {
+    "mtime": 1789107568.6567318,
+    "ast_hash": "6196db05142540f6a16b25a993c12b1e",
+    "semantic_hash": "6196db05142540f6a16b25a993c12b1e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/period-control.tsx": {
+    "mtime": 1789107568.6569002,
+    "ast_hash": "eaed6a2d52a8f8ec3e2473c2fa6073a0",
+    "semantic_hash": "eaed6a2d52a8f8ec3e2473c2fa6073a0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/plan-badge.tsx": {
+    "mtime": 1789107568.657092,
+    "ast_hash": "e92065f011e9eebf65da937e2c713c19",
+    "semantic_hash": "e92065f011e9eebf65da937e2c713c19"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/plan-form.tsx": {
+    "mtime": 1789107568.657315,
+    "ast_hash": "65f0e0a9b065d4ae4922fd5e2a7f4708",
+    "semantic_hash": "65f0e0a9b065d4ae4922fd5e2a7f4708"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/quota-form.tsx": {
+    "mtime": 1789107568.6577656,
+    "ast_hash": "e0fa9ef5993c3505b61473ae99a627b2",
+    "semantic_hash": "e0fa9ef5993c3505b61473ae99a627b2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/usage-chart.tsx": {
+    "mtime": 1789107568.6579943,
+    "ast_hash": "3c1021a67b3715fc9a9f1a8863d0a60c",
+    "semantic_hash": "3c1021a67b3715fc9a9f1a8863d0a60c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/admin/user-search.tsx": {
+    "mtime": 1789107568.65828,
+    "ast_hash": "211ba16207226f028c0176b90d9a1dc8",
+    "semantic_hash": "211ba16207226f028c0176b90d9a1dc8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/chat-bubble.tsx": {
+    "mtime": 1788807238.1594493,
+    "ast_hash": "4e05198339d512f9ed7db3a8feccd95b",
+    "semantic_hash": "4e05198339d512f9ed7db3a8feccd95b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/chat-player.tsx": {
+    "mtime": 1788807496.7851522,
+    "ast_hash": "65d1f4770319044846abf3a00c79b434",
+    "semantic_hash": "65d1f4770319044846abf3a00c79b434"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/faq-accordion.tsx": {
+    "mtime": 1788798081.244528,
+    "ast_hash": "607392879087637abd52abf825ec9dcc",
+    "semantic_hash": "607392879087637abd52abf825ec9dcc"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/hero-rotator.tsx": {
+    "mtime": 1788983763.4162717,
+    "ast_hash": "52d4709cd12822ba6b326832c01d679d",
+    "semantic_hash": "52d4709cd12822ba6b326832c01d679d"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/hero-video.tsx": {
+    "mtime": 1788796339.9493897,
+    "ast_hash": "2fe05dc5ae2e60fc8529de2f9fe40e97",
+    "semantic_hash": "2fe05dc5ae2e60fc8529de2f9fe40e97"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/home-faq.tsx": {
+    "mtime": 1788863502.6434972,
+    "ast_hash": "50cfb359f37f7717a6581eb53c4168cd",
+    "semantic_hash": "50cfb359f37f7717a6581eb53c4168cd"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/home-pricing.tsx": {
+    "mtime": 1788863502.6436512,
+    "ast_hash": "9f0f7df69ec35bdeb80d68c46066314a",
+    "semantic_hash": "9f0f7df69ec35bdeb80d68c46066314a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/lang-provider.tsx": {
+    "mtime": 1788891501.737918,
+    "ast_hash": "dc7d5ac21a042433c06d679661ad3f7b",
+    "semantic_hash": "dc7d5ac21a042433c06d679661ad3f7b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/lang-toggle.tsx": {
+    "mtime": 1788983814.49501,
+    "ast_hash": "f52ac07c2cab753e367ed436c9b7cb14",
+    "semantic_hash": "f52ac07c2cab753e367ed436c9b7cb14"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/navbar.tsx": {
+    "mtime": 1788983814.495222,
+    "ast_hash": "f7a076022f48047a4501053173e9d748",
+    "semantic_hash": "f7a076022f48047a4501053173e9d748"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/phone-frame.tsx": {
+    "mtime": 1788863502.6443079,
+    "ast_hash": "99703144c825bd13e531d65ab52646e8",
+    "semantic_hash": "99703144c825bd13e531d65ab52646e8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/pricing-section.tsx": {
+    "mtime": 1788983814.4955268,
+    "ast_hash": "bd06584f7ab433c6bdc40fcb9667e9c6",
+    "semantic_hash": "bd06584f7ab433c6bdc40fcb9667e9c6"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/site-footer.tsx": {
+    "mtime": 1788983763.4165711,
+    "ast_hash": "585d5ef7e74678d81cffb9ab0fc7e0ee",
+    "semantic_hash": "585d5ef7e74678d81cffb9ab0fc7e0ee"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/components/whatsapp-mockup.tsx": {
+    "mtime": 1788863502.6445882,
+    "ast_hash": "19e6daf673a648740cf0eb2f286a6d4b",
+    "semantic_hash": "19e6daf673a648740cf0eb2f286a6d4b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/admin-auth.ts": {
+    "mtime": 1788863502.6446877,
+    "ast_hash": "5bc315f30ef8776db0a409048cff8e39",
+    "semantic_hash": "5bc315f30ef8776db0a409048cff8e39"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/admin-queries.ts": {
+    "mtime": 1789107568.6590035,
+    "ast_hash": "74459330feea411419988c96f49b2ca0",
+    "semantic_hash": "74459330feea411419988c96f49b2ca0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/bdapps/index.ts": {
+    "mtime": 1788983763.4008265,
+    "ast_hash": "e7dc2c818d1fff767836309d6f1e5213",
+    "semantic_hash": "e7dc2c818d1fff767836309d6f1e5213"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/bdapps/signer.ts": {
+    "mtime": 1788983763.4010215,
+    "ast_hash": "bb7e58b9b170c3814b5e0fa079ae3343",
+    "semantic_hash": "bb7e58b9b170c3814b5e0fa079ae3343"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/bdapps/subscription-service.ts": {
+    "mtime": 1789050643.5217674,
+    "ast_hash": "81046106f1efa9167023749c2d074565",
+    "semantic_hash": "81046106f1efa9167023749c2d074565"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/bdapps/types.ts": {
+    "mtime": 1788984544.3223152,
+    "ast_hash": "7bd9fd13e8fd44f82c2d790b265d647f",
+    "semantic_hash": "7bd9fd13e8fd44f82c2d790b265d647f"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/conversation-log.ts": {
+    "mtime": 1788691517.0109985,
+    "ast_hash": "8d321394d87be4b9d5398445018a141c",
+    "semantic_hash": "8d321394d87be4b9d5398445018a141c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/i18n/copy.ts": {
+    "mtime": 1789030831.7342167,
+    "ast_hash": "223d989d3a31b28692e2bbfadbc77a5e",
+    "semantic_hash": "223d989d3a31b28692e2bbfadbc77a5e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/llm.ts": {
+    "mtime": 1789051442.1674237,
+    "ast_hash": "4fcc79f4fae29f39fc041d856d01c217",
+    "semantic_hash": "4fcc79f4fae29f39fc041d856d01c217"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/recurrence.ts": {
+    "mtime": 1788632104.1931696,
+    "ast_hash": "3c95604951eb25d405ef1bf59c5ef6c5",
+    "semantic_hash": "3c95604951eb25d405ef1bf59c5ef6c5"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/reminder-voice.ts": {
+    "mtime": 1788900808.0179884,
+    "ast_hash": "4949f0415788abc8740af9c88624bc70",
+    "semantic_hash": "4949f0415788abc8740af9c88624bc70"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/storage.ts": {
+    "mtime": 1788615567.3473256,
+    "ast_hash": "e760b12af139bb22c4b972e35fa7f299",
+    "semantic_hash": "e760b12af139bb22c4b972e35fa7f299"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/usage-pricing.ts": {
+    "mtime": 1788863502.6458268,
+    "ast_hash": "697970a63c696b604d8d763a51cebe35",
+    "semantic_hash": "697970a63c696b604d8d763a51cebe35"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/usage.ts": {
+    "mtime": 1788903369.9390357,
+    "ast_hash": "8081327c43956ce7fa91d44d8adf434a",
+    "semantic_hash": "8081327c43956ce7fa91d44d8adf434a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/lib/whatsapp-media.ts": {
+    "mtime": 1788616527.404664,
+    "ast_hash": "38483e5fa49aadd10424e75e95fe2478",
+    "semantic_hash": "38483e5fa49aadd10424e75e95fe2478"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/middleware.ts": {
+    "mtime": 1788863502.6460354,
+    "ast_hash": "9e46382d7eeeea9d32bdd97dc5975630",
+    "semantic_hash": "9e46382d7eeeea9d32bdd97dc5975630"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/types/llm.types.ts": {
+    "mtime": 1788984595.5988731,
+    "ast_hash": "06d8f478cd717dd9738de6a1f3317e9e",
+    "semantic_hash": "06d8f478cd717dd9738de6a1f3317e9e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/admin-auth.test.ts": {
+    "mtime": 1788863502.6461217,
+    "ast_hash": "b7743f28a283d119d14e16a711bec785",
+    "semantic_hash": "b7743f28a283d119d14e16a711bec785"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/bdapps-billing.test.ts": {
+    "mtime": 1788983763.4173102,
+    "ast_hash": "7d34e1b7ce56819f45457ad4ad4cbd17",
+    "semantic_hash": "7d34e1b7ce56819f45457ad4ad4cbd17"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/buttons.test.ts": {
+    "mtime": 1788691606.5638046,
+    "ast_hash": "b71cae677c49bcb4eb487bbfd8cd3a6b",
+    "semantic_hash": "b71cae677c49bcb4eb487bbfd8cd3a6b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/conflict-detection.test.ts": {
+    "mtime": 1788900875.8156762,
+    "ast_hash": "1dd83dc2071784477b3e2775ec6e2477",
+    "semantic_hash": "1dd83dc2071784477b3e2775ec6e2477"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/context-window.test.ts": {
+    "mtime": 1788903482.3909907,
+    "ast_hash": "ff78790964576dccce1b457ef247e035",
+    "semantic_hash": "ff78790964576dccce1b457ef247e035"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/documents.test.ts": {
+    "mtime": 1788616542.0489068,
+    "ast_hash": "229309df63cb48e65b9af6b5494c6f87",
+    "semantic_hash": "229309df63cb48e65b9af6b5494c6f87"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/i18n-copy.test.ts": {
+    "mtime": 1788891489.5994363,
+    "ast_hash": "1fbfd388952aa1189ff40a8fabb4e261",
+    "semantic_hash": "1fbfd388952aa1189ff40a8fabb4e261"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/positions.test.ts": {
+    "mtime": 1788635648.462327,
+    "ast_hash": "d2cce200ee442e2b7fe80e22d2c53209",
+    "semantic_hash": "d2cce200ee442e2b7fe80e22d2c53209"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/reminder-voice.test.ts": {
+    "mtime": 1788695434.0638144,
+    "ast_hash": "508ecf29a63abae6039ddc8ece9d4af7",
+    "semantic_hash": "508ecf29a63abae6039ddc8ece9d4af7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/schedule-format.test.ts": {
+    "mtime": 1788688006.8079872,
+    "ast_hash": "4fab46db928934c88504c8dc48348457",
+    "semantic_hash": "4fab46db928934c88504c8dc48348457"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/tests/usage-pricing.test.ts": {
+    "mtime": 1788901783.6557171,
+    "ast_hash": "6c66124990f8d0317f57b046c5f89244",
+    "semantic_hash": "6c66124990f8d0317f57b046c5f89244"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/CHANGELOG.md": {
+    "mtime": 1788767755.4010787,
+    "ast_hash": "ec7c44c2b44de9f2802e6ba565acd78f",
+    "semantic_hash": "ec7c44c2b44de9f2802e6ba565acd78f"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/SKILL.md": {
+    "mtime": 1788767755.4006433,
+    "ast_hash": "ea86e326638c57d05050456a9f6d89c1",
+    "semantic_hash": "ea86e326638c57d05050456a9f6d89c1"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/_contributing.md": {
+    "mtime": 1788767755.4017236,
+    "ast_hash": "19edd365b47667a9b81108cacfd75775",
+    "semantic_hash": "19edd365b47667a9b81108cacfd75775"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/_sections.md": {
+    "mtime": 1788767755.401725,
+    "ast_hash": "7cc4829a3718c745dfdbec554c30485f",
+    "semantic_hash": "7cc4829a3718c745dfdbec554c30485f"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/_template.md": {
+    "mtime": 1788767755.401727,
+    "ast_hash": "384ee769a417d3001e81d81b139acbf6",
+    "semantic_hash": "384ee769a417d3001e81d81b139acbf6"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/advanced-full-text-search.md": {
+    "mtime": 1788767755.4019506,
+    "ast_hash": "f32a27eab306ad2a29db0a2a8a55b03c",
+    "semantic_hash": "f32a27eab306ad2a29db0a2a8a55b03c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/advanced-jsonb-indexing.md": {
+    "mtime": 1788767755.401783,
+    "ast_hash": "5b4fbcc451879892d366fa02194bb536",
+    "semantic_hash": "5b4fbcc451879892d366fa02194bb536"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/conn-idle-timeout.md": {
+    "mtime": 1788767755.402006,
+    "ast_hash": "c73ea45eecdb007786cd3b3e08e31640",
+    "semantic_hash": "c73ea45eecdb007786cd3b3e08e31640"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/conn-limits.md": {
+    "mtime": 1788767755.4019065,
+    "ast_hash": "59025fe12439048e81296f28feca4ce1",
+    "semantic_hash": "59025fe12439048e81296f28feca4ce1"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/conn-pooling.md": {
+    "mtime": 1788767755.4020467,
+    "ast_hash": "8561b805a5e0bdfa348840266861de66",
+    "semantic_hash": "8561b805a5e0bdfa348840266861de66"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/conn-prepared-statements.md": {
+    "mtime": 1788767755.4021435,
+    "ast_hash": "fe941145678825d273baac1fe66d4dce",
+    "semantic_hash": "fe941145678825d273baac1fe66d4dce"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/data-batch-inserts.md": {
+    "mtime": 1788767755.4020483,
+    "ast_hash": "75a4e92f80b90818221fae51f8b994f1",
+    "semantic_hash": "75a4e92f80b90818221fae51f8b994f1"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/data-n-plus-one.md": {
+    "mtime": 1788767755.402161,
+    "ast_hash": "4fc111bb51121f5181910b3759061ada",
+    "semantic_hash": "4fc111bb51121f5181910b3759061ada"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/data-pagination.md": {
+    "mtime": 1788767755.402234,
+    "ast_hash": "0e9b3211df99b3d35f7083c984b03ccb",
+    "semantic_hash": "0e9b3211df99b3d35f7083c984b03ccb"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/data-upsert.md": {
+    "mtime": 1788767755.4022613,
+    "ast_hash": "51a26138848f5fec547cd56b9bcb33d4",
+    "semantic_hash": "51a26138848f5fec547cd56b9bcb33d4"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/lock-advisory.md": {
+    "mtime": 1788767755.40277,
+    "ast_hash": "3f3523b7b0a812a6906f92a6610a5a9b",
+    "semantic_hash": "3f3523b7b0a812a6906f92a6610a5a9b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/lock-deadlock-prevention.md": {
+    "mtime": 1788767755.4023092,
+    "ast_hash": "07eae98867b47074d82528df59d2135e",
+    "semantic_hash": "07eae98867b47074d82528df59d2135e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/lock-short-transactions.md": {
+    "mtime": 1788767755.4024286,
+    "ast_hash": "aea973297ac14bba2586a2ff57fd8ff7",
+    "semantic_hash": "aea973297ac14bba2586a2ff57fd8ff7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/lock-skip-locked.md": {
+    "mtime": 1788767755.4024756,
+    "ast_hash": "26e9bd402801299afce06ee506a9f864",
+    "semantic_hash": "26e9bd402801299afce06ee506a9f864"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/monitor-explain-analyze.md": {
+    "mtime": 1788767755.4024665,
+    "ast_hash": "93d5998318098652ac380cd354718924",
+    "semantic_hash": "93d5998318098652ac380cd354718924"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/monitor-pg-stat-statements.md": {
+    "mtime": 1788767755.4026942,
+    "ast_hash": "ee51d9586cf18c848563799c14dcc638",
+    "semantic_hash": "ee51d9586cf18c848563799c14dcc638"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/monitor-vacuum-analyze.md": {
+    "mtime": 1788767755.4028203,
+    "ast_hash": "e3d1e4f8831a37bdb1c7f364b911f7a6",
+    "semantic_hash": "e3d1e4f8831a37bdb1c7f364b911f7a6"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/query-composite-indexes.md": {
+    "mtime": 1788767755.4026418,
+    "ast_hash": "bd959891036289cfaf3d54e49599b2d0",
+    "semantic_hash": "bd959891036289cfaf3d54e49599b2d0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/query-covering-indexes.md": {
+    "mtime": 1788767755.4032655,
+    "ast_hash": "5e62afcfe9289405caec1f32f351dd29",
+    "semantic_hash": "5e62afcfe9289405caec1f32f351dd29"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/query-index-types.md": {
+    "mtime": 1788767755.4029083,
+    "ast_hash": "ef0d4ad9d1eb0466a0bde542ade59de2",
+    "semantic_hash": "ef0d4ad9d1eb0466a0bde542ade59de2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/query-missing-indexes.md": {
+    "mtime": 1788767755.4032385,
+    "ast_hash": "1bd5f85a9c930219dd479825986bd6ad",
+    "semantic_hash": "1bd5f85a9c930219dd479825986bd6ad"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/query-partial-indexes.md": {
+    "mtime": 1788767755.403313,
+    "ast_hash": "a6c64f9136f8a7880e53df3e259d90c9",
+    "semantic_hash": "a6c64f9136f8a7880e53df3e259d90c9"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-constraints.md": {
+    "mtime": 1788767755.4035149,
+    "ast_hash": "e7362385f5b79c28f5e495d7c45a7a52",
+    "semantic_hash": "e7362385f5b79c28f5e495d7c45a7a52"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-data-types.md": {
+    "mtime": 1788767755.403637,
+    "ast_hash": "a10f1ec17bd499622d9201af3d00e0d4",
+    "semantic_hash": "a10f1ec17bd499622d9201af3d00e0d4"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-foreign-key-indexes.md": {
+    "mtime": 1788767755.4037645,
+    "ast_hash": "6bc02b38edd88e56c89bab863f5c789b",
+    "semantic_hash": "6bc02b38edd88e56c89bab863f5c789b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-lowercase-identifiers.md": {
+    "mtime": 1788767755.403959,
+    "ast_hash": "1df2eae336d542d365f99abdfa968367",
+    "semantic_hash": "1df2eae336d542d365f99abdfa968367"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-partitioning.md": {
+    "mtime": 1788767755.4038033,
+    "ast_hash": "e95568857288b614ba0d4b8cd1b4fb72",
+    "semantic_hash": "e95568857288b614ba0d4b8cd1b4fb72"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/schema-primary-keys.md": {
+    "mtime": 1788767755.4038656,
+    "ast_hash": "63412819d632d8cbe39f14630e5de085",
+    "semantic_hash": "63412819d632d8cbe39f14630e5de085"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/security-privileges.md": {
+    "mtime": 1788767755.4038892,
+    "ast_hash": "212beb5d93e7c02cb61c95e117af3aaa",
+    "semantic_hash": "212beb5d93e7c02cb61c95e117af3aaa"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/security-rls-basics.md": {
+    "mtime": 1788767755.404146,
+    "ast_hash": "2349e490ff266b1c2b81a2368c054baa",
+    "semantic_hash": "2349e490ff266b1c2b81a2368c054baa"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase-postgres-best-practices/references/security-rls-performance.md": {
+    "mtime": 1788767755.4042158,
+    "ast_hash": "6c87b7d050ba714a95a2b88eb0b6caf0",
+    "semantic_hash": "6c87b7d050ba714a95a2b88eb0b6caf0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase/CHANGELOG.md": {
+    "mtime": 1788767755.2712197,
+    "ast_hash": "419da285e98f313fc14f5d85f17b8d4c",
+    "semantic_hash": "419da285e98f313fc14f5d85f17b8d4c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase/SKILL.md": {
+    "mtime": 1788767755.2712405,
+    "ast_hash": "44e2daf8cfb32f6410599dcf8c96b2ee",
+    "semantic_hash": "44e2daf8cfb32f6410599dcf8c96b2ee"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase/assets/feedback-issue-template.md": {
+    "mtime": 1788767755.2714343,
+    "ast_hash": "a38bcf7c09794faf287d91a992830b47",
+    "semantic_hash": "a38bcf7c09794faf287d91a992830b47"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.agents/skills/supabase/references/skill-feedback.md": {
+    "mtime": 1788767755.271477,
+    "ast_hash": "38a53e95ded880782190ddf2f2810317",
+    "semantic_hash": "38a53e95ded880782190ddf2f2810317"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/final-fix-report.md": {
+    "mtime": 1788814947.7884185,
+    "ast_hash": "68af13890a28aca545c29bb151862bc7",
+    "semantic_hash": "68af13890a28aca545c29bb151862bc7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/progress.md": {
+    "mtime": 1788815279.4135077,
+    "ast_hash": "8e188d35c9d9d887eb81f29ca879cbd8",
+    "semantic_hash": "8e188d35c9d9d887eb81f29ca879cbd8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-1-brief.md": {
+    "mtime": 1788811581.5779345,
+    "ast_hash": "51ec32a691a3551d163069352650edde",
+    "semantic_hash": "51ec32a691a3551d163069352650edde"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-1-report.md": {
+    "mtime": 1788811698.2799687,
+    "ast_hash": "702c23428a934b187cb534e95a8938b2",
+    "semantic_hash": "702c23428a934b187cb534e95a8938b2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-10-brief.md": {
+    "mtime": 1788813967.4921546,
+    "ast_hash": "c56ec3dc752c9e9d9c2e49247175a35a",
+    "semantic_hash": "c56ec3dc752c9e9d9c2e49247175a35a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-10-report.md": {
+    "mtime": 1788814132.4118223,
+    "ast_hash": "174834f8dd1c342e63361dc4c8046e4a",
+    "semantic_hash": "174834f8dd1c342e63361dc4c8046e4a"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-2-brief.md": {
+    "mtime": 1788811844.4020414,
+    "ast_hash": "4283cc4f65d75b35d0a25acd03b55bb0",
+    "semantic_hash": "4283cc4f65d75b35d0a25acd03b55bb0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-2-report.md": {
+    "mtime": 1788811958.9794676,
+    "ast_hash": "202b1b46024ab2d507daa60c1442fb7c",
+    "semantic_hash": "202b1b46024ab2d507daa60c1442fb7c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-3-brief.md": {
+    "mtime": 1788812076.9266255,
+    "ast_hash": "bdd707f04bad5fe7dd3b9333d8b08208",
+    "semantic_hash": "bdd707f04bad5fe7dd3b9333d8b08208"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-3-report.md": {
+    "mtime": 1788812159.111527,
+    "ast_hash": "df4e0220020d656d4f0c0a5e2c2a6a3b",
+    "semantic_hash": "df4e0220020d656d4f0c0a5e2c2a6a3b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-4-brief.md": {
+    "mtime": 1788812267.1946683,
+    "ast_hash": "9d2e2b696689f764b131c91070afe42f",
+    "semantic_hash": "9d2e2b696689f764b131c91070afe42f"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-4-report.md": {
+    "mtime": 1788812402.4291587,
+    "ast_hash": "66739682dfa3fb05bdd4cad31e0c2d09",
+    "semantic_hash": "66739682dfa3fb05bdd4cad31e0c2d09"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-5-brief.md": {
+    "mtime": 1788812501.1421502,
+    "ast_hash": "c7363bc2f5bf793da7d9c1a7ae8859b7",
+    "semantic_hash": "c7363bc2f5bf793da7d9c1a7ae8859b7"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-5-report.md": {
+    "mtime": 1788812621.519873,
+    "ast_hash": "7935cb518c1076f282767e420d335b7e",
+    "semantic_hash": "7935cb518c1076f282767e420d335b7e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-6-brief.md": {
+    "mtime": 1788812707.8088925,
+    "ast_hash": "b988883ff36284aec702a930505159c8",
+    "semantic_hash": "b988883ff36284aec702a930505159c8"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-6-report.md": {
+    "mtime": 1788812805.053648,
+    "ast_hash": "3370bba08a494569306b4f469419c646",
+    "semantic_hash": "3370bba08a494569306b4f469419c646"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-7-brief.md": {
+    "mtime": 1788812984.4796357,
+    "ast_hash": "b7e2df9ccfd336573e4c4a285abe471c",
+    "semantic_hash": "b7e2df9ccfd336573e4c4a285abe471c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-7-report.md": {
+    "mtime": 1788813221.3975499,
+    "ast_hash": "4f32c8c788c9a9ca8bbc259cdf8f4cd2",
+    "semantic_hash": "4f32c8c788c9a9ca8bbc259cdf8f4cd2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-8-brief.md": {
+    "mtime": 1788813524.1401436,
+    "ast_hash": "ea3a49a046afe4fbb9a9e99941444796",
+    "semantic_hash": "ea3a49a046afe4fbb9a9e99941444796"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-8-report.md": {
+    "mtime": 1788813614.0185118,
+    "ast_hash": "7919d48a3ced8bd54e33ca1878243f19",
+    "semantic_hash": "7919d48a3ced8bd54e33ca1878243f19"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-9-brief.md": {
+    "mtime": 1788813757.193941,
+    "ast_hash": "5f2150850c7893e25dc24fb07168719b",
+    "semantic_hash": "5f2150850c7893e25dc24fb07168719b"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/.superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-9-report.md": {
+    "mtime": 1788813868.0177367,
+    "ast_hash": "0b8b29b7908c86947ddc1980d78183d2",
+    "semantic_hash": "0b8b29b7908c86947ddc1980d78183d2"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/BDAPPS_BKASH_SUBSCRIPTION_INTEGRATION.md": {
+    "mtime": 1788983763.4158728,
+    "ast_hash": "e27cfd9e4e2d139a5f9752648416b14c",
+    "semantic_hash": "e27cfd9e4e2d139a5f9752648416b14c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/superpowers/plans/2026-09-08-usage-metering-and-admin-dashboard.md": {
+    "mtime": 1788983771.1801217,
+    "ast_hash": "391e9a32611ae46e02c446aeca9fa30e",
+    "semantic_hash": "391e9a32611ae46e02c446aeca9fa30e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/superpowers/specs/2026-09-05-document-storage-design.md": {
+    "mtime": 1788983771.180555,
+    "ast_hash": "8d133d9b460f3f2b24596906e8f8a435",
+    "semantic_hash": "8d133d9b460f3f2b24596906e8f8a435"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/superpowers/specs/2026-09-06-conversational-assistant-design.md": {
+    "mtime": 1788983771.1806703,
+    "ast_hash": "eba282e0fd4db59424889149062b73af",
+    "semantic_hash": "eba282e0fd4db59424889149062b73af"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/superpowers/specs/2026-09-08-landing-language-toggle-design.md": {
+    "mtime": 1788983771.1807742,
+    "ast_hash": "32f161c69dbaad5a955efbcf1a82e22c",
+    "semantic_hash": "32f161c69dbaad5a955efbcf1a82e22c"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/docs/superpowers/specs/2026-09-08-usage-metering-and-admin-design.md": {
+    "mtime": 1788983771.181087,
+    "ast_hash": "387c2b71dc2a503a4ed784dd3ffacb52",
+    "semantic_hash": "387c2b71dc2a503a4ed784dd3ffacb52"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/src/aws/README.md": {
+    "mtime": 1788769454.6508667,
+    "ast_hash": "d847c76c7edbe7964817465b3d279011",
+    "semantic_hash": "d847c76c7edbe7964817465b3d279011"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/bKash-Logo.png": {
+    "mtime": 1788719228.5742385,
+    "ast_hash": "f2e5ac30c269d3673d8e9cea51fb36a0",
+    "semantic_hash": "f2e5ac30c269d3673d8e9cea51fb36a0"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/buriedProblem.png": {
+    "mtime": 1788863502.628339,
+    "ast_hash": "21da0d14353ea728cde0b50d87ce2133",
+    "semantic_hash": "21da0d14353ea728cde0b50d87ce2133"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/buriedSolution.png": {
+    "mtime": 1788863502.635494,
+    "ast_hash": "8884c57f9f332bb58d8e65820824731e",
+    "semantic_hash": "8884c57f9f332bb58d8e65820824731e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/heroBg.jpg": {
+    "mtime": 1788779405.2964962,
+    "ast_hash": "5382044b791937d2596f5a98cd6524db",
+    "semantic_hash": "5382044b791937d2596f5a98cd6524db"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/logo.png": {
+    "mtime": 1788779338.3137312,
+    "ast_hash": "a7e34f105991a95c619633f27f5de95e",
+    "semantic_hash": "a7e34f105991a95c619633f27f5de95e"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/noise.svg": {
+    "mtime": 1788795896.6419406,
+    "ast_hash": "76ae8352840f0b446cead6703e22d2f3",
+    "semantic_hash": "76ae8352840f0b446cead6703e22d2f3"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/openGraphBannerImage.jpg": {
+    "mtime": 1789030632.0898523,
+    "ast_hash": "d2e87ffd24dfa76121f52be6d82c5e72",
+    "semantic_hash": "d2e87ffd24dfa76121f52be6d82c5e72"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/overload.png": {
+    "mtime": 1788863502.6378598,
+    "ast_hash": "8cd27757b6cd66ab4328474bf614beb4",
+    "semantic_hash": "8cd27757b6cd66ab4328474bf614beb4"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/whatsappBg.jpg": {
+    "mtime": 1788863502.6397119,
+    "ast_hash": "58a12a566a798d8ccbe48629ba569504",
+    "semantic_hash": "58a12a566a798d8ccbe48629ba569504"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/heroBg.mp4": {
+    "mtime": 1788793272.3037963,
+    "ast_hash": "724cd4ea8e590dfedeaa6b3d04a5e841",
+    "semantic_hash": "724cd4ea8e590dfedeaa6b3d04a5e841"
+  },
+  "/Users/mukiturrahman/Vibe Coded Projects/remique/public/heroBgMobile.mp4": {
+    "mtime": 1788793152.5070112,
+    "ast_hash": "92ca4feb9a48dd23604ef0f477801164",
+    "semantic_hash": "92ca4feb9a48dd23604ef0f477801164"
+  }
+}
