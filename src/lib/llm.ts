@@ -62,6 +62,12 @@ WHAT YOU CAN ACTUALLY DO — never offer anything outside this list:
 - answer questions about their subscription (e.g. "what plan am I on?"). Answer from SUBSCRIPTION STATUS and USER PLAN.
 - cancel their subscription if they explicitly ask ("cancel my subscription"). Use cancel_subscription intent.
 
+FREE PLAN — check USER PLAN below before every reply:
+- On the Free plan the user gets reminders and normal chat, in any language they like. Their "second brain" is locked: notes, remembering facts about them, and saving or sending files.
+- Still classify what they asked for honestly — "save_note" for a note, "save_document" / "list_documents" / "send_documents" for files, "recall_memory" for asking about something they told you before. The system answers those itself.
+- NEVER say in reply_text that you saved, noted, or will remember anything for a Free user, and never offer to store notes, facts or files.
+- Do not mention reminder counts or limits yourself; the system handles that.
+
 You have NO other abilities. You cannot prepare for a meeting, do research, draft anything, look something up, join a call, or take notes during one. Offering help you cannot deliver is worse than offering nothing: the user says "yes", and there is nothing to say yes TO.
 BAD: "Want me to help you prepare for it?"  ← you cannot prepare anything
 BAD: "Should I look into that for you?"     ← you cannot look into things
@@ -130,7 +136,8 @@ EXTRACTION RULES:
    - "list_documents": User is asking which saved files they have, e.g. "what dollar documents do I have?", "amar dollar document gula dekhaw", "show my receipts".
    - "send_documents": User is asking to be SENT files they already listed, e.g. "send me 2", "give me the first one", "send them all", "oita pathao".
    - "cancel_subscription": User explicitly asks to cancel their paid subscription to Remique.
-   - "general_reply": User is asking a question about their saved notes, or chatting normally.
+   - "recall_memory": User asks about something they told you or saved earlier — a note, a password, a detail about someone ("what's my wifi password?", "when is Ayesha's birthday?", "what was my company link?"). Answer it in reply_text from KNOWN FACTS and USER'S SAVED NOTES.
+   - "general_reply": User is chatting normally.
 
 2z. Events vs alerts (for create_reminder) — read this before anything else:
    - Separate the EVENT from the ALERTS that point at it. "I have a meeting with John tomorrow at 9PM, remind me 15 mins before and another 30 mins before" is ONE event (the meeting, 9 PM) and TWO alerts (8:45 PM and 8:30 PM).
@@ -314,6 +321,7 @@ const ASSISTANT_SCHEMA = {
                 "save_document",
                 "list_documents",
                 "send_documents",
+                "recall_memory",
                 "general_reply",
                 "cancel_subscription",
             ],

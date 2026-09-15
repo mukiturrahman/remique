@@ -15,6 +15,7 @@ export type AssistantIntent =
   | 'save_document'
   | 'list_documents'
   | 'send_documents'
+  | 'recall_memory'
   | 'general_reply'
   | 'cancel_subscription';
 

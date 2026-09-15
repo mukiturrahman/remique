@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "src/app/api/jobs/send-reminder/route.ts": {
-    "mtime": 1789320042.3798153,
-    "ast_hash": "5b0a6725a03b39ac418c5f3b3644ec5c",
+    "mtime": 1789502553.5210917,
+    "ast_hash": "24b682424a6f9b6d3d71bebdde7196b1",
     "semantic_hash": ""
   },
   "src/app/api/jobs/sweep/route.ts": {
@@ -80,8 +80,8 @@
     "semantic_hash": "795f0e62b560a8281c3c2f49441552a7"
   },
   "src/lib/reminder-service.ts": {
-    "mtime": 1789322225.3076513,
-    "ast_hash": "50c17a4be81740f0feb6d645522f3519",
+    "mtime": 1789502731.4889343,
+    "ast_hash": "df5f6e3689f791fb760e0cbfe4a960d0",
     "semantic_hash": ""
   },
   "src/lib/whatsapp.ts": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/lib/llm.ts": {
-    "mtime": 1789122216.3607767,
-    "ast_hash": "b883d16bcaf009e6919be5f20b21d35c",
+    "mtime": 1789502562.0207465,
+    "ast_hash": "93723778e66baf25fce674f10953a1a4",
     "semantic_hash": ""
   },
   "src/lib/recurrence.ts": {
@@ -485,9 +485,9 @@
     "semantic_hash": "9e46382d7eeeea9d32bdd97dc5975630"
   },
   "src/types/llm.types.ts": {
-    "mtime": 1788984595.5988731,
-    "ast_hash": "06d8f478cd717dd9738de6a1f3317e9e",
-    "semantic_hash": "06d8f478cd717dd9738de6a1f3317e9e"
+    "mtime": 1789502544.8899941,
+    "ast_hash": "20914643a769fc8bf6620ba0e0ddf400",
+    "semantic_hash": ""
   },
   "tests/admin-auth.test.ts": {
     "mtime": 1788863502.6461217,
@@ -965,8 +965,8 @@
     "semantic_hash": ""
   },
   "src/db/schema.ts": {
-    "mtime": 1789329582.7864509,
-    "ast_hash": "a026fff7dd65ca7c7263f7fc60566f37",
+    "mtime": 1789502534.077301,
+    "ast_hash": "691d8398a8004c88011a20a085828858",
     "semantic_hash": ""
   },
   ".agents/rules/graphify.md": {
@@ -992,6 +992,26 @@
   "public/officerRemi.png": {
     "mtime": 1789152712.058704,
     "ast_hash": "82c6c2cacc546b711629524b5ea8fe2e",
+    "semantic_hash": ""
+  },
+  "scripts/sql/2026-09-16-reminder-source.sql": {
+    "mtime": 1789502527.573875,
+    "ast_hash": "13b4306fed6cbef015c364c8d7bebda4",
+    "semantic_hash": ""
+  },
+  "src/lib/plan-voice.ts": {
+    "mtime": 1789502522.6412513,
+    "ast_hash": "864b27c087cbdcf2a77869b47c7aec37",
+    "semantic_hash": ""
+  },
+  "src/lib/plan.ts": {
+    "mtime": 1789502505.945599,
+    "ast_hash": "00a43e9b3d75ce6d126a1f9433e446d0",
+    "semantic_hash": ""
+  },
+  "tests/free-plan.test.ts": {
+    "mtime": 1789502609.9701157,
+    "ast_hash": "4a58e267a00ce75c219e96cec4fb003e",
     "semantic_hash": ""
   }
 }

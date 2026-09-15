@@ -212,6 +212,9 @@ export const reminders = pgTable(
     offsetMinutes: integer('offset_minutes'),
     groupId: text('group_id'),
     recurrenceRule: text('recurrence_rule'),
+    // user | snooze | recurrence. Only 'user' counts toward the Free plan's
+    // monthly limit (see src/lib/plan.ts).
+    source: text('source').default('user').notNull(),
     status: text('status').default('SCHEDULED').notNull(),
     qstashMessageId: text('qstash_message_id'),
     attempts: integer('attempts').default(0).notNull(),

@@ -1,16 +1,16 @@
-# Graph Report - remique  (2026-09-15)
+# Graph Report - remique  (2026-09-16)
 
 ## Corpus Check
-- 185 files · ~565,565 words
+- 189 files · ~568,511 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1298 nodes · 2002 edges · 104 communities (92 shown, 12 thin omitted)
+- 1321 nodes · 2066 edges · 109 communities (97 shown, 12 thin omitted)
 - Extraction: 95% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 90 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4798900a`
+- Built from commit: `56336ad2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -114,9 +114,14 @@
 - [[_COMMUNITY_Community 100|Community 100]]
 - [[_COMMUNITY_Community 101|Community 101]]
 - [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 104|Community 104]]
+- [[_COMMUNITY_Community 105|Community 105]]
+- [[_COMMUNITY_Community 106|Community 106]]
+- [[_COMMUNITY_Community 107|Community 107]]
+- [[_COMMUNITY_Community 108|Community 108]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `processIncomingUserMessage()` - 34 edges
+1. `processIncomingUserMessage()` - 41 edges
 2. `useCopy()` - 30 edges
 3. `Section Definitions` - 18 edges
 4. `compilerOptions` - 16 edges
@@ -130,14 +135,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `SHA-512 Authorization Signature Formula` --semantically_similar_to--> `hmacHex()`  [INFERRED] [semantically similar]
   docs/BDAPPS_BKASH_SUBSCRIPTION_INTEGRATION.md → src/lib/admin-auth.ts
-- `Money as Integer Micros` --rationale_for--> `formatCost()`  [INFERRED]
-  docs/superpowers/specs/2026-09-08-usage-metering-and-admin-design.md → src/lib/admin-queries.ts
 - `WhatsApp Interactive Reply Buttons (Done / Snooze)` --conceptually_related_to--> `processIncomingUserMessage()`  [INFERRED]
   docs/superpowers/specs/2026-09-06-conversational-assistant-design.md → src/lib/reminder-service.ts
+- `Supabase Security Checklist` --semantically_similar_to--> `Accepted-As-Is Findings (Ship Without Fixing)`  [INFERRED] [semantically similar]
+  .agents/skills/supabase/SKILL.md → .superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/progress.md
 - `listUsers()` --shares_data_with--> `Denormalized User Counters Avoid usage_events GroupBy`  [EXTRACTED]
   src/lib/admin-queries.ts → .superpowers/sdd/2026-09-08-usage-metering-and-admin-dashboard/task-8-brief.md
-- `Bangladeshi Temporal Idiom Model` --conceptually_related_to--> `parseUserMessage()`  [INFERRED]
-  PRODUCT.md → src/lib/llm.ts
+- `Money as Integer Micros` --rationale_for--> `formatCost()`  [INFERRED]
+  docs/superpowers/specs/2026-09-08-usage-metering-and-admin-design.md → src/lib/admin-queries.ts
 
 ## Import Cycles
 - None detected.
@@ -161,15 +166,15 @@
 - **Remique Marketing Narrative: Overload Problem to WhatsApp-Native Relief** — public_overload_tool_fragmentation, public_overload_cognitive_load_metaphor, public_opengraphbannerimage_tagline, public_opengraphbannerimage_whatsapp_ai_assistant, public_opengraphbannerimage_no_apps_to_install [INFERRED 0.85]
 - **WhatsApp-Native Visual Asset System** — public_whatsappbg_chat_mimicry, public_opengraphbannerimage_mint_gradient_identity, public_opengraphbannerimage_whatsapp_ai_assistant, public_opengraphbannerimage_roveup_parent_brand [INFERRED 0.75]
 
-## Communities (104 total, 12 thin omitted)
+## Communities (109 total, 12 thin omitted)
 
 ### Community 0 - "Reminder Service and Date Parsing"
-Cohesion: 0.17
-Nodes (20): CONFLICT_CONFIRMED_LINES, CONFLICT_DECLINED_LINES, CONFLICT_WARNING_LINES, conflictConfirmedMessage(), conflictDeclinedMessage(), conflictWarningMessage(), deliveryMessage(), DONE_LINES (+12 more)
+Cohesion: 0.15
+Nodes (22): handleButtonTap(), scheduleReminderDelivery(), CONFLICT_CONFIRMED_LINES, CONFLICT_DECLINED_LINES, CONFLICT_WARNING_LINES, conflictConfirmedMessage(), conflictDeclinedMessage(), conflictWarningMessage() (+14 more)
 
 ### Community 1 - "Admin Auth and AWS Webhook Topology"
-Cohesion: 0.14
-Nodes (24): Constant-Time Password Comparison via HMAC Digests, Read process.env at Call Time, Never via env.ts, HMAC-Signed Admin Session Token, Unconfigured Admin Surface Returns 404, Web Crypto Instead of node:crypto, Admin Middleware Gate, API Admin Routes 401 Rather Than Redirect, Per-Instance In-Memory Login Rate Limiter (+16 more)
+Cohesion: 0.13
+Nodes (24): Constant-Time Password Comparison via HMAC Digests, Read process.env at Call Time, Never via env.ts, HMAC-Signed Admin Session Token, Web Crypto Instead of node:crypto, Admin Middleware Gate, API Admin Routes 401 Rather Than Redirect, BellMark(), SignOutIcon() (+16 more)
 
 ### Community 2 - "Postgres Connections and Indexing"
 Cohesion: 0.12
@@ -180,8 +185,8 @@ Cohesion: 0.04
 Nodes (45): dependencies, @aws-sdk/client-s3, @aws-sdk/client-sqs, @aws-sdk/s3-request-presigner, clsx, dotenv, drizzle-orm, luxon (+37 more)
 
 ### Community 4 - "Token Pricing and Parser Usage"
-Cohesion: 0.20
-Nodes (13): The No-Parsable-Text Under-Billing Trap, ASSISTANT_SCHEMA, buildInputText(), client, ParseOptions, parseUserMessage(), supportsReasoningEffort(), SYSTEM_INSTRUCTIONS (+5 more)
+Cohesion: 0.17
+Nodes (17): hasSecondBrain(), LockedFeature, lockedFeatureFor(), monthWindow(), reminderAllowance(), ReminderSource, SELF_SUBJECTS, FEATURE_OPENERS (+9 more)
 
 ### Community 5 - "Query Plans, Indexes and Vacuum"
 Cohesion: 0.17
@@ -205,31 +210,31 @@ Nodes (11): LangContext, LangContextValue, NO_PROVIDER, bn, Copy, en, isLang(), 
 
 ### Community 10 - "Admin Icon System"
 Cohesion: 0.11
-Nodes (18): AlertIcon(), BackIcon(), BellMark(), CalendarIcon(), ChevronDownIcon(), ClockIcon(), FileIcon(), IconProps (+10 more)
+Nodes (16): AlertIcon(), BackIcon(), CalendarIcon(), ChevronDownIcon(), ClockIcon(), FileIcon(), IconProps, PeopleIcon() (+8 more)
 
 ### Community 11 - "Block, Quota and Plan Controls"
-Cohesion: 0.25
-Nodes (5): Null-vs-Zero Quota Semantics, button, ArrowIcon(), LoginForm(), QuotaForm()
+Cohesion: 0.33
+Nodes (3): button, ArrowIcon(), LoginForm()
 
 ### Community 12 - "Admin Query Layer"
-Cohesion: 0.11
-Nodes (22): Next 15 searchParams Is a Promise, Next.js Agent Rules Block, AttentionItem, AttentionKind, composeWhere(), countListedUsers(), DashboardTotals, formatDateTime() (+14 more)
+Cohesion: 0.13
+Nodes (19): Next 15 searchParams Is a Promise, Next.js Agent Rules Block, AttentionItem, AttentionKind, composeWhere(), countListedUsers(), DashboardTotals, getDashboardTotals() (+11 more)
 
 ### Community 13 - "Marketing Pages and Site Chrome"
 Cohesion: 0.20
 Nodes (8): BillingCancelledInner(), IconArrow(), MarkWhatsApp(), Navbar(), SiteFooter(), HowItWorksPage(), STEP_ICONS, BillingSuccessInner()
 
 ### Community 14 - "Admin Overview Page"
-Cohesion: 0.17
-Nodes (12): AdminOverviewPage(), isSort(), KIND_NOTE, PERIOD_PHRASE, PERIODS, SORTS, View, PeriodControl() (+4 more)
+Cohesion: 0.16
+Nodes (14): AdminOverviewPage(), isSort(), KIND_NOTE, PERIOD_PHRASE, PERIODS, SORTS, View, PeriodControl() (+6 more)
 
 ### Community 15 - "TypeScript Compiler Config"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 16 - "Inbound Message Pipeline"
-Cohesion: 0.31
-Nodes (8): Seven-Check Pipeline Gate Ordering, normalizePhoneNumber(), claimInboundMessage(), recordFailure(), runMessagePipeline(), Block Enforcement Gate, ACCEPTED_MESSAGE_TYPES, handler()
+Cohesion: 0.21
+Nodes (10): Seven-Check Pipeline Gate Ordering, normalizePhoneNumber(), claimInboundMessage(), recordFailure(), runMessagePipeline(), Block Enforcement Gate, WhatsAppMediaObject, WhatsAppWebhookPayload (+2 more)
 
 ### Community 17 - "Prisma Client and Environment"
 Cohesion: 0.18
@@ -240,8 +245,8 @@ Cohesion: 0.15
 Nodes (17): bKash Logo Asset, bKash Mobile Financial Service Brand, bKash Payment Method Option, Buried Problem Marketing Image, Files App (document silo), Gmail (document silo), Google Drive (document silo), Notes App (document silo) (+9 more)
 
 ### Community 19 - "QStash Scheduled Delivery"
-Cohesion: 0.23
-Nodes (14): Vercel Project Link (remique), documents, reminders, cancelScheduledDelivery(), getQStashClient(), getReceiver(), isWithinQStashWindow(), minuteBucket() (+6 more)
+Cohesion: 0.10
+Nodes (32): Vercel Project Link (remique), Env, envSchema, _parsed, cancelScheduledDelivery(), getQStashClient(), getReceiver(), isWithinQStashWindow() (+24 more)
 
 ### Community 20 - "Brand Positioning Imagery"
 Cohesion: 0.23
@@ -256,44 +261,44 @@ Cohesion: 0.32
 Nodes (4): FaqAccordion(), FaqItem, HomeFaq(), FaqPage()
 
 ### Community 23 - "Supabase Agent Skill"
-Cohesion: 0.04
-Nodes (44): Accepted-As-Is Findings (Ship Without Fixing), Fix suggestion, Source, What happened, Skill Feedback, Steps, [0.1.3](https://github.com/supabase/agent-skills/compare/v0.1.2...v0.1.3) (2026-06-02), [0.1.4](https://github.com/supabase/agent-skills/compare/v0.1.3...v0.1.4) (2026-06-05) (+36 more)
+Cohesion: 0.13
+Nodes (15): [0.1.3](https://github.com/supabase/agent-skills/compare/v0.1.2...v0.1.3) (2026-06-02), [0.1.4](https://github.com/supabase/agent-skills/compare/v0.1.3...v0.1.4) (2026-06-05), [0.1.5](https://github.com/supabase/agent-skills/compare/v0.1.4...v0.1.5) (2026-07-10), [0.1.6](https://github.com/supabase/agent-skills/compare/v0.1.5...supabase-v0.1.6) (2026-07-30), [0.1.7](https://github.com/supabase/agent-skills/compare/v0.1.6...supabase-v0.1.7) (2026-08-12), Bug Fixes, Bug Fixes, Bug Fixes (+7 more)
 
 ### Community 24 - "WhatsApp Send and Logging"
-Cohesion: 0.27
-Nodes (13): logOutbound(), replyToUser(), replyWithButtons(), replyWithMedia(), User, deliverDocuments(), handleSendDocuments(), markReadAndShowTyping() (+5 more)
+Cohesion: 0.29
+Nodes (12): logOutbound(), replyToUser(), replyWithButtons(), replyWithMedia(), User, deliverDocuments(), handleSendDocuments(), markReadAndShowTyping() (+4 more)
 
 ### Community 25 - "Recurrence and Reply Buttons"
-Cohesion: 0.24
-Nodes (6): nextOccurrence(), RECURRENCE_RULES, STEP, sendWhatsAppButtons(), WhatsAppApiError, POST()
+Cohesion: 0.31
+Nodes (7): nextOccurrence(), RECURRENCE_RULES, STEP, reminderActionButtons(), sendWhatsAppButtons(), sendWhatsAppTemplate(), POST()
 
 ### Community 26 - "User Detail Page Build"
-Cohesion: 0.25
-Nodes (7): Blocked Users Must Not Receive Reminders, Deployment, Follow-ups, deliberately not in this plan, Next 15 Async params/searchParams Promise, Task 10: User detail page, block toggle and quota override, Pipeline Block Gate, BlockToggle()
+Cohesion: 0.12
+Nodes (15): Blocked Users Must Not Receive Reminders, Deployment, Follow-ups, deliberately not in this plan, Next 15 Async params/searchParams Promise, Null-vs-Zero Quota Semantics, Task 10: User detail page, block toggle and quota override, Pipeline Block Gate, Denormalized User Counters Avoid usage_events GroupBy (+7 more)
 
 ### Community 27 - "Live Thread Panel"
 Cohesion: 0.29
 Nodes (6): LiveThread(), ORDER, Phase, rank(), Turn, TURNS
 
 ### Community 28 - "Health Check Endpoint"
-Cohesion: 0.31
-Nodes (8): messages, Backlog depth as the single alertable symptom, Free anonymous liveness, paid checks behind a secret, GET(), getTokenStatus(), isAuthorized(), checkWhatsAppToken(), WhatsAppTokenStatus
+Cohesion: 0.27
+Nodes (9): messages, reminders, Backlog depth as the single alertable symptom, Free anonymous liveness, paid checks behind a secret, GET(), getTokenStatus(), isAuthorized(), checkWhatsAppToken() (+1 more)
 
 ### Community 29 - "Demo Seed Script"
-Cohesion: 0.04
-Nodes (40): Task 6: Admin session auth (pure), Task 7: Middleware, login page, login and logout routes, 1. `npx tsc --noEmit`, 2. `npm test`, 3. `npx next build`, 4. Runtime probes against the dev server, Commit, Concerns (+32 more)
+Cohesion: 0.12
+Nodes (16): Deployment, Follow-ups, deliberately not in this plan, Global Constraints, Operational notes, Task 0: Branch, Task 10: User detail page, block toggle and quota override, Task 1: Schema and environment, Task 2: Pricing and quota logic (pure) (+8 more)
 
 ### Community 30 - "Final Fix Wave Findings"
-Cohesion: 0.22
-Nodes (9): MAX_TRACKED_IPS Bound on the Attempts Map, Lambda Freeze Silently Loses Fire-and-Forget Usage Rows, positiveIntOr Guard for Hand-Entered Token Caps, PUBLIC_ADMIN_PATHS Must Include Logout, Brute-Force Limiter Keyed on a Spoofable Header, Deployment Checklist (Lambda Zips, Env Vars, DDL Review), Admin Routes Are Gated Only by Middleware, Unknown Models Charge at the Most Expensive Rate (+1 more)
+Cohesion: 0.33
+Nodes (6): MAX_TRACKED_IPS Bound on the Attempts Map, positiveIntOr Guard for Hand-Entered Token Caps, PUBLIC_ADMIN_PATHS Must Include Logout, Brute-Force Limiter Keyed on a Spoofable Header, Admin Routes Are Gated Only by Middleware, Unknown Models Charge at the Most Expensive Rate
 
 ### Community 31 - "Migration Safety Rulings"
-Cohesion: 0.40
-Nodes (5): Print the DDL With prisma migrate diff Before Any Write, Ruling: Never Run db push Against the Live Supabase Instance, Pre-flight Cross-Task Interface Conflict Scan, Do Not Use apply_migration to Iterate Locally, Declarative Schemas vs Imperative Migrations
+Cohesion: 0.29
+Nodes (7): Accepted-As-Is Findings (Ship Without Fixing), Print the DDL With prisma migrate diff Before Any Write, Ruling: Never Run db push Against the Live Supabase Instance, Pre-flight Cross-Task Interface Conflict Scan, Deployment Checklist (Lambda Zips, Env Vars, DDL Review), Do Not Use apply_migration to Iterate Locally, Declarative Schemas vs Imperative Migrations
 
 ### Community 32 - "Usage Schema and Money Model"
-Cohesion: 0.25
-Nodes (6): Deliberately Unused Billing Scaffolding Columns, Cost Stored as Integer USD Micros, Denormalised Usage Totals on User, Task 1: Schema and environment, UsageEvent Model (One Row Per Paid API Call), Single Transaction Keeps Counters From Drifting
+Cohesion: 0.17
+Nodes (10): Task 8: Admin queries, Commits created, Concerns, Exported interfaces and functions, Files changed, Self-review findings, Status, Task 8 Report: Admin queries (+2 more)
 
 ### Community 33 - "Pricing Section Component"
 Cohesion: 0.33
@@ -308,20 +313,20 @@ Cohesion: 0.06
 Nodes (32): 1.1 Deployment topology, 1.2 Inbound message — step by step, with timing, 1.3 Scheduled delivery and recovery — the Vercel routes, 1.4 What does not exist today, 3.1 Schema changes, 3.2 New module: `src/lib/usage.ts`, 3.3 Threading usage out of the LLM call, 3.4 Enforcement points in the pipeline (+24 more)
 
 ### Community 36 - "Blocking and Quota Enforcement"
-Cohesion: 0.29
-Nodes (5): Quota Notice Suppression Must Match the Quota Window, User Blocking Columns (blockedAt, blockNoticeSentAt), Notify Once, Then Drop Silently, Pipeline Quota Gate, Task 5: Enforce blocking and quota in the pipeline
+Cohesion: 0.18
+Nodes (11): 1. `npx tsc --noEmit`, 2. `npm test`, 3. `npx next build`, 4. Runtime probes against the dev server, Commit, Concerns, Dev server shutdown, Files created (+3 more)
 
 ### Community 37 - "Usage Bucketing for Detail Page"
-Cohesion: 0.14
-Nodes (14): Inline SVG Chart Instead of a Charting Library, Denormalized User Counters Avoid usage_events GroupBy, 30-Day UTC Usage Bucketing With Empty Days, usageWindow Key Naming Avoids Shadowing DOM window, Task 9: User list page, UsageChart(), AdminUserDetailPage(), Window() (+6 more)
+Cohesion: 0.18
+Nodes (8): Inline SVG Chart Instead of a Charting Library, Task 9: User list page, UsageChart(), AdminUserDetailPage(), formatCost(), formatDate(), UsageDay, Money as Integer Micros
 
 ### Community 38 - "Plan Badge"
 Cohesion: 0.40
 Nodes (5): LOOK, PlanBadge(), planLabel(), PlanLook, PlanShape
 
 ### Community 39 - "Usage Chart and Formatting"
-Cohesion: 0.17
-Nodes (11): Report the Daily Window First When Both Caps Are Crossed, Longest-Prefix Model Price Resolution, Task 2: Pricing and quota logic (pure), Pure Module With Zero Imports for Testability, costMicrosFor(), FALLBACK_PRICE, priceFor(), PRICES (+3 more)
+Cohesion: 0.25
+Nodes (6): Longest-Prefix Model Price Resolution, Task 2: Pricing and quota logic (pure), Pure Module With Zero Imports for Testability, costMicrosFor(), priceFor(), Tests Must Not Transitively Import db.ts
 
 ### Community 40 - "Use Cases Personas"
 Cohesion: 0.07
@@ -333,27 +338,27 @@ Nodes (12): Alert groupId Scopes Group Edits, Anchor + Offset Reminder Model, Co
 
 ### Community 42 - "Usage Persistence"
 Cohesion: 0.29
-Nodes (5): Cached Tokens Are a Subset of Input Tokens, Task 3: Persist usage, FIFO Ordering by Sender With Meta Message-ID Dedup, checkQuota(), Retry Storm Burns Quota on Undelivered Replies
+Nodes (5): Lambda Freeze Silently Loses Fire-and-Forget Usage Rows, Metering Must Never Fail a User's Turn, Task 3: Persist usage, recordUsage(), Int4 Ceiling on Lifetime Cost and Token Counters
 
 ### Community 43 - "WhatsApp API Error Class"
 Cohesion: 0.11
-Nodes (18): CATEGORY_NOUNS, ConversationState, Document, Fact, formatDocumentList(), handleListDocuments(), IndexResolution, isTransientFact() (+10 more)
+Nodes (20): isOwnNameFact(), CATEGORY_NOUNS, ConversationState, Document, Fact, formatDocumentList(), handleListDocuments(), IndexResolution (+12 more)
 
 ### Community 44 - "Grandfather Users Script"
 Cohesion: 0.10
-Nodes (19): conversationStates, conversationStatesRelations, documentsRelations, facts, factsRelations, messagesRelations, notes, notesRelations (+11 more)
+Nodes (20): conversationStates, conversationStatesRelations, documents, documentsRelations, facts, factsRelations, messagesRelations, notes (+12 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.10
-Nodes (21): 1. Web Crypto over `node:crypto`, 2. Process.env read at call time, not import time, 3. Token format: `<expiryMs>.<hmacSig>`, 4. Constant-time password comparison, Code Quality, Commit Information, Concerns, Dependencies (+13 more)
+Cohesion: 0.17
+Nodes (12): Commit Information, Concerns, Exported Interfaces, Files Created, GREEN: All tests pass after implementation, Implementation Summary, RED: Tests fail before implementation, Security Checklist (+4 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.14
-Nodes (18): cancelSubscription(), buildCreationConfirmation(), buildGroupedList(), buildRescheduleConfirmation(), describeCategories(), describeOffset(), firstName(), formatReminderLine() (+10 more)
+Cohesion: 0.18
+Nodes (14): cancelSubscription(), Scheduling Horizon Guard (30s past buffer, 3-year ceiling), validateAndNormalizeDate(), ValidatedDateResult, buildCreationConfirmation(), buildRescheduleConfirmation(), describeCategories(), firstName() (+6 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.10
-Nodes (18): AWS Guidance, Secret Safety, This is NOT the Next.js you know, 1. Create SQS Queues, 2. Deploy Webhook Lambda (`remique-webhook`), 3. Deploy Worker Lambda (`remique-worker`), 4. Reconfigure Meta Webhook, Architecture (+10 more)
+Cohesion: 0.20
+Nodes (9): AWS Guidance, Secret Safety, This is NOT the Next.js you know, /api/billing/bdapps/callback Route, 15-Digit requestId Format, Server-Side Secret Never Reaches the Browser, SHA-512 Authorization Signature Formula, /api/billing/bdapps/subscribe Route (+1 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.12
@@ -364,12 +369,12 @@ Cohesion: 0.12
 Nodes (16): Concerns, Final fix wave — usage metering, blocking, admin dashboard, Fix 1 — `src/app/api/admin/login/route.ts`: brute-force limiter keyed on a spoofable header, Fix 2 — same file: bound the `attempts` Map, Fix 3 — `src/middleware.ts`: `/api/admin/logout` must be publicly reachable, Fix 4 — `src/lib/message-pipeline.ts`: quota notice fired hourly for up to a week, Fix 5 — `src/app/api/jobs/send-reminder/route.ts`: blocked users keep receiving reminders, Fix 6 — `src/lib/env.ts`: hand-entered cap typo 500s the whole site (+8 more)
 
 ### Community 62 - "Community 62"
-Cohesion: 0.12
-Nodes (16): 1. Prisma Schema (`prisma/schema.prisma`), 2. Environment Configuration (`src/lib/env.ts`), Added to envSchema, Added to Fallback Object, Added UsageEvent Model, Changes Made, Command Executions, Commit (+8 more)
+Cohesion: 0.05
+Nodes (34): Quota Notice Suppression Must Match the Quota Window, Deliberately Unused Billing Scaffolding Columns, User Blocking Columns (blockedAt, blockNoticeSentAt), Cost Stored as Integer USD Micros, Denormalised Usage Totals on User, Task 1: Schema and environment, UsageEvent Model (One Row Per Paid API Call), 1. Prisma Schema (`prisma/schema.prisma`) (+26 more)
 
 ### Community 63 - "Community 63"
-Cohesion: 0.12
-Nodes (14): Null Usage Rather Than a Zero Row on Provider Failure, ParseResult { parsed, usage }, Task 4: Return usage from the parser and write it, Changes, Commands run, Commit, Concerns, Files changed (+6 more)
+Cohesion: 0.07
+Nodes (33): Null Usage Rather Than a Zero Row on Provider Failure, ParseResult { parsed, usage }, Task 4: Return usage from the parser and write it, The No-Parsable-Text Under-Billing Trap, Changes, Commands run, Commit, Concerns (+25 more)
 
 ### Community 64 - "Community 64"
 Cohesion: 0.14
@@ -400,12 +405,12 @@ Cohesion: 0.21
 Nodes (8): Use UPSERT for Insert-or-Update Operations, Use Advisory Locks for Application-Level Locking, Prevent Deadlocks with Consistent Lock Ordering, Keep Transactions Short to Reduce Lock Contention, statement_timeout Guardrail, Atomic Claim-and-Update Queue Pattern, Use SKIP LOCKED for Non-Blocking Queue Processing, Concurrency & Locking Section (lock)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.20
-Nodes (11): remique-inbound.fifo SQS Queue, remique-webhook Lambda, remique-worker Lambda, Lambda Must Use Supabase Transaction-Mode Pooler, Model Returns Indices, Never UUIDs, Label-Only Document Matching, Retrieval Lists Before It Sends, Unlabeled Document Orphan Sweep (+3 more)
+Cohesion: 0.25
+Nodes (8): remique-worker Lambda, Lambda Must Use Supabase Transaction-Mode Pooler, Model Returns Indices, Never UUIDs, Label-Only Document Matching, Retrieval Lists Before It Sends, Unlabeled Document Orphan Sweep, Document Bytes Live in Private S3, Ordinals Resolve Against Remembered Display Order
 
 ### Community 72 - "Community 72"
-Cohesion: 0.32
-Nodes (9): buildDocumentKey(), deleteDocument(), extensionForMimeType(), getDocumentUrl(), getS3Client(), putDocument(), requireBucket(), StoredDocument (+1 more)
+Cohesion: 0.20
+Nodes (10): Core Principles, Debugging, Making and Committing Schema Changes, Option A: Declarative schemas, Option B: Imperative migrations, Reference Guides, Supabase, Supabase CLI (+2 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.17
@@ -440,8 +445,8 @@ Cohesion: 0.22
 Nodes (9): The Fired-Moment Rule, Live Thread Panel (Signature Component), The One Panel Rule, The Parsed-Data Rule, The Server-Complete Rule, Bangladeshi Temporal Idiom Model, The Language Wedge (Bangla / Banglish Parsing), Client-Side Toggle on One URL (+1 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.31
-Nodes (8): handleIncomingFile(), downloadMedia(), fetchMedia(), getMediaHandle(), graphError(), MediaHandle, MediaTooLargeError, readBounded()
+Cohesion: 0.25
+Nodes (3): Task 6: Admin session auth (pure), Task 7: Middleware, login page, login and logout routes, No New npm Dependencies Constraint
 
 ### Community 82 - "Community 82"
 Cohesion: 0.24
@@ -468,12 +473,12 @@ Cohesion: 0.25
 Nodes (8): Cross-task: shared files and interfaces, Final whole-branch review (opus), Fix wave + verification, Per-task: internal self-consistency, Pre-flight conflict scan, Progress, Rulings made before execution, SDD ledger — plan: docs/superpowers/plans/2026-09-08-usage-metering-and-admin-dashboard.md
 
 ### Community 88 - "Community 88"
-Cohesion: 0.29
-Nodes (7): Commands run and output, Concerns, Files changed, Final ordering of the seven checks (verbatim from the edited file), Self-review findings (read the final file, not just the diff), Task 5 Report: Enforce blocking and quota in the pipeline, What changed
+Cohesion: 0.25
+Nodes (8): Unconfigured Admin Surface Returns 404, Per-Instance In-Memory Login Rate Limiter, FIFO Ordering by Sender With Meta Message-ID Dedup, remique-inbound.fifo SQS Queue, remique-webhook Lambda, Retry Storm Burns Quota on Undelivered Replies, Single-Password Admin Threat Model, Rolling Token Quota Enforcement
 
 ### Community 89 - "Community 89"
-Cohesion: 0.33
-Nodes (4): usageEvents, Env, envSchema, _parsed
+Cohesion: 0.29
+Nodes (6): Supabase CLI Version Gotchas, Exposing a Table to the Data API, Fetch Monitoring and Debugging Docs Before Diagnosing, Supabase MCP Server Troubleshooting, RLS in Exposed Schemas, Verify Supabase Behaviour Against the Changelog
 
 ### Community 90 - "Community 90"
 Cohesion: 0.33
@@ -481,7 +486,7 @@ Nodes (5): Generated tsvector Column with GIN Index, Use tsvector for Full-Text 
 
 ### Community 91 - "Community 91"
 Cohesion: 0.29
-Nodes (6): AssistantIntent, ExtractedFact, ExtractedReminder, ForgetFactTarget, ParseOptions, ReminderCategoryValue
+Nodes (5): Fix suggestion, Source, What happened, Skill Feedback, Steps
 
 ### Community 92 - "Community 92"
 Cohesion: 0.33
@@ -500,16 +505,36 @@ Cohesion: 0.50
 Nodes (4): 1. Initiate Subscription (`POST` or `GET`), 2. Browser Callback (`GET`), 3. IPN / Webhook Notification (`POST`), 5. Endpoints in Remique
 
 ### Community 96 - "Community 96"
-Cohesion: 0.67
-Nodes (3): Scheduling Horizon Guard (30s past buffer, 3-year ceiling), validateAndNormalizeDate(), ValidatedDateResult
+Cohesion: 0.38
+Nodes (7): auth.role() Deprecation in Favour of the TO Clause, TO authenticated Alone Is BOLA/IDOR, Supabase Security Checklist, SECURITY DEFINER Bypasses RLS, UPDATE Requires a SELECT Policy, user_metadata Is Unsafe for Authorization, Views Bypass RLS by Default
 
 ### Community 97 - "Community 97"
-Cohesion: 0.50
-Nodes (4): ParseResult, TokenUsage, RecordUsageParams, ParsedAssistantResponse
+Cohesion: 0.22
+Nodes (10): Report the Daily Window First When Both Caps Are Crossed, Cached Tokens Are a Subset of Input Tokens, usageEvents, ParseResult, checkQuota(), FALLBACK_PRICE, PRICES, quotaVerdict (+2 more)
 
 ### Community 98 - "Community 98"
 Cohesion: 0.50
 Nodes (4): Code Example Standards, Comments, Language Tags, SQL Formatting
+
+### Community 99 - "Community 99"
+Cohesion: 0.33
+Nodes (5): Architecture, Cleanup, Remique AWS Webhook & SQS Migration, Testing the Migration, Two-Cloud Deployment Topology (AWS + Vercel)
+
+### Community 104 - "Community 104"
+Cohesion: 0.40
+Nodes (3): buildGroupedList(), describeOffset(), formatReminderLine()
+
+### Community 105 - "Community 105"
+Cohesion: 0.40
+Nodes (5): 1. Web Crypto over `node:crypto`, 2. Process.env read at call time, not import time, 3. Token format: `<expiryMs>.<hmacSig>`, 4. Constant-time password comparison, Design Decisions
+
+### Community 106 - "Community 106"
+Cohesion: 0.40
+Nodes (5): 1. Create SQS Queues, 2. Deploy Webhook Lambda (`remique-webhook`), 3. Deploy Worker Lambda (`remique-worker`), 4. Reconfigure Meta Webhook, Deployment Instructions
+
+### Community 107 - "Community 107"
+Cohesion: 0.50
+Nodes (4): Code Quality, Dependencies, Style Compliance, Test Quality
 
 ## Ambiguous Edges - Review These
 - `BDAPPS_BKASH_SUBSCRIPTION_INTEGRATION.md` → `Remique Product Definition`  [AMBIGUOUS]
@@ -522,7 +547,7 @@ Nodes (4): Code Example Standards, Comments, Language Tags, SQL Formatting
   public/openGraphBannerImage.jpg · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **542 isolated node(s):** `supabase`, `nextConfig`, `name`, `version`, `private` (+537 more)
+- **548 isolated node(s):** `supabase`, `nextConfig`, `name`, `version`, `private` (+543 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -537,9 +562,9 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **What is the exact relationship between `Mint Green Gradient Visual Identity` and `Native WhatsApp Chat Surface Mimicry`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `runMessagePipeline()` connect `Inbound Message Pipeline` to `Blocking and Quota Enforcement`, `Community 58`, `Community 71`, `Usage Persistence`, `Grandfather Users Script`, `WhatsApp Send and Logging`, `User Detail Page Build`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
-- **Why does `processIncomingUserMessage()` connect `Community 58` to `Community 96`, `Reminder Service and Date Parsing`, `Token Pricing and Parser Usage`, `bKash bdApps Subscription`, `Anchored Reminders Spec`, `WhatsApp API Error Class`, `Grandfather Users Script`, `Inbound Message Pipeline`, `Community 81`, `QStash Scheduled Delivery`, `WhatsApp Send and Logging`?**
+- **Why does `runMessagePipeline()` connect `Inbound Message Pipeline` to `Community 97`, `Community 58`, `Community 71`, `Grandfather Users Script`, `WhatsApp Send and Logging`, `User Detail Page Build`, `Community 62`?**
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+- **Why does `remique-worker Lambda` connect `Community 71` to `Community 88`, `Inbound Message Pipeline`, `Community 99`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+- **Why does `processIncomingUserMessage()` connect `Community 58` to `Reminder Service and Date Parsing`, `Token Pricing and Parser Usage`, `bKash bdApps Subscription`, `Community 104`, `Usage Persistence`, `WhatsApp API Error Class`, `Grandfather Users Script`, `Anchored Reminders Spec`, `Inbound Message Pipeline`, `QStash Scheduled Delivery`, `WhatsApp Send and Logging`, `Community 63`?**
   _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Why does `recordUsage()` connect `Community 58` to `Usage Schema and Money Model`, `Usage Bucketing for Detail Page`, `Usage Chart and Formatting`, `Usage Persistence`, `WhatsApp API Error Class`, `Community 89`, `Final Fix Wave Findings`, `Community 63`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._

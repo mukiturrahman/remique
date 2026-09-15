@@ -26,6 +26,15 @@ import {
   shortName,
   snoozeMessage,
 } from './reminder-voice';
+import {
+  FREE_MONTHLY_REMINDER_LIMIT,
+  hasSecondBrain,
+  isOwnNameFact,
+  lockedFeatureFor,
+  monthWindow,
+  reminderAllowance,
+} from './plan';
+import { lockedFeatureMessage, reminderLimitMessage } from './plan-voice';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -284,7 +293,7 @@ async function handleButtonTap(user: User, buttonReplyId: string): Promise<void>
     return;
   }
 
-  const snoozed = (await db.insert(reminders).values({ userId: user.id, title: reminder.title, originalMessage: reminder.originalMessage, scheduledAt: snoozeTo.toJSDate(), timezone: user.timezone, category: reminder.category, anchorAt: reminder.anchorAt, anchorTitle: reminder.anchorTitle, offsetMinutes: reminder.offsetMinutes, groupId: reminder.groupId, status: 'SCHEDULED' }).returning())[0];
+  const snoozed = (await db.insert(reminders).values({ userId: user.id, title: reminder.title, originalMessage: reminder.originalMessage, scheduledAt: snoozeTo.toJSDate(), timezone: user.timezone, category: reminder.category, anchorAt: reminder.anchorAt, anchorTitle: reminder.anchorTitle, offsetMinutes: reminder.offsetMinutes, groupId: reminder.groupId, source: 'snooze', status: 'SCHEDULED' }).returning())[0];
 
   console.log(
     `[Remique] reminder ${reminder.id} snoozed -> ${snoozed.id} at ${snoozeTo.toISO()}`
@@ -447,7 +456,7 @@ export async function processIncomingUserMessage(
       `🌟 *Remique Pro Plans* 🌟\n\n` +
         `• *Weekly:* ৳49 / week\n` +
         `• *Monthly:* ৳190 / month\n\n` +
-        `Unlimited reminders, zero token caps, and priority queue.\n\n` +
+        `Unlimited reminders, your full second brain (notes, memory and saved files), zero token caps, and priority queue.\n\n` +
         `Subscribe securely with bKash Auto-Pay:\n${checkoutUrl}`
     );
     return;
@@ -467,21 +476,39 @@ export async function processIncomingUserMessage(
     return;
   }
 
+  const secondBrain = hasSecondBrain(user);
+
   if (/^(subscription status|my plan|billing status|account status)\b/i.test(normalized)) {
     const isPro = user.planTier === 'pro';
     const expires = user.planExpiresAt
       ? user.planExpiresAt.toLocaleDateString('en-GB')
       : 'N/A';
 
+    let features: string;
+    if (secondBrain) {
+      features = `• Features: Unlimited reminders and your full second brain\n\nTo cancel anytime, reply "cancel subscription".`;
+    } else {
+      const used = await countUserRemindersThisMonth(db, user);
+      features =
+        `• Reminders: ${Math.min(used, FREE_MONTHLY_REMINDER_LIMIT)} of ${FREE_MONTHLY_REMINDER_LIMIT} used this month\n` +
+        `• Notes, memory and saved files: locked\n\n` +
+        `To unlock your full second brain, just type *subscribe*.`;
+    }
+
     await replyToUser(
       user,
       `📋 *Your Account Status*\n\n` +
-        `• Plan: *${isPro ? 'Pro' : 'Free'}*\n` +
+        `• Plan: *${secondBrain ? 'Pro' : 'Free'}*\n` +
         (isPro ? `• Active until: ${expires}\n` : '') +
-        (isPro
-          ? `• Features: Unlimited reminders\n\nTo cancel anytime, reply "cancel subscription".`
-          : `• Features: Standard daily allowance\n\nTo upgrade to Pro, reply "upgrade".`)
+        features
     );
+    return;
+  }
+
+  // A file from a Free user is refused before the model call and before the
+  // download: storing it would cost S3 and tokens for something we then decline.
+  if (!secondBrain && message.mediaId) {
+    await replyToUser(user, lockedFeatureMessage('files', user.name));
     return;
   }
 
@@ -496,10 +523,13 @@ export async function processIncomingUserMessage(
   const dayEnd = DateTime.now().setZone(user.timezone).endOf('day').toJSDate();
   const sessionCutoff = new Date(Date.now() - RECENT_TURNS_MAX_AGE_MS);
 
+  // A Free user's notes, facts and files are not loaded at all. The rows stay
+  // in the database (they come back on resubscribing), but the model must not
+  // answer from data the plan has locked.
   const [userNotes, userFacts, recentMessages, todayReminders, upcomingContext, userDocuments] =
     await Promise.all([
-    db.query.notes.findMany({ where: (n, { eq }) => eq(n.userId, user.id), orderBy: (n, { desc }) => desc(n.createdAt), limit: NOTE_LIMIT }),
-    db.query.facts.findMany({ where: (f, { eq }) => eq(f.userId, user.id), orderBy: (f, { desc }) => desc(f.updatedAt), limit: FACT_LIMIT }),
+    secondBrain ? db.query.notes.findMany({ where: (n, { eq }) => eq(n.userId, user.id), orderBy: (n, { desc }) => desc(n.createdAt), limit: NOTE_LIMIT }) : Promise.resolve([]),
+    secondBrain ? db.query.facts.findMany({ where: (f, { eq }) => eq(f.userId, user.id), orderBy: (f, { desc }) => desc(f.updatedAt), limit: FACT_LIMIT }) : Promise.resolve([]),
     // The message being answered is already persisted, so it is excluded here —
     // otherwise the model sees the current question twice and treats its own
     // input as prior context. Messages older than the session cutoff are
@@ -511,7 +541,7 @@ export async function processIncomingUserMessage(
     // offer the useful extra ("the only thing you've got is...").
     db.query.reminders.findMany({ where: (r, { and, eq, gte, lte }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gte(r.scheduledAt, dayStart), lte(r.scheduledAt, dayEnd)), orderBy: (r, { asc }) => asc(r.scheduledAt) }),
     db.query.reminders.findMany({ where: (r, { and, eq, gt }) => and(eq(r.userId, user.id), eq(r.status, 'SCHEDULED'), gt(r.scheduledAt, dayEnd)), orderBy: (r, { asc }) => asc(r.scheduledAt), limit: UPCOMING_CONTEXT_LIMIT }),
-    db.query.documents.findMany({ where: (d, { and, eq, isNotNull }) => and(eq(d.userId, user.id), isNotNull(d.label)), orderBy: (d, { desc }) => desc(d.createdAt), limit: DOCUMENT_CANDIDATE_LIMIT }),
+    secondBrain ? db.query.documents.findMany({ where: (d, { and, eq, isNotNull }) => and(eq(d.userId, user.id), isNotNull(d.label)), orderBy: (d, { desc }) => desc(d.createdAt), limit: DOCUMENT_CANDIDATE_LIMIT }) : Promise.resolve([]),
   ]);
 
   const notesText = userNotes.map((n) => n.content);
@@ -520,8 +550,8 @@ export async function processIncomingUserMessage(
     pendingContext: activeState?.pendingData,
     savedNotes: notesText,
     userName: user.name,
-    userPlan: user.planTier === 'free' ? 'Free' : `Pro (${user.planPeriod || 'monthly'})`,
-    isSubscribed: user.planTier !== 'free',
+    userPlan: secondBrain ? `Pro (${user.planPeriod || 'monthly'})` : 'Free',
+    isSubscribed: secondBrain,
     remindersToday: todayReminders.map(toScheduleEntry),
     upcomingReminders: upcomingContext.map(toScheduleEntry),
     recentTurns: recentMessages
@@ -578,7 +608,17 @@ export async function processIncomingUserMessage(
 
   // Runs for every intent, before any branch returns. A message that creates a
   // reminder can also teach a birthday, and the fact must survive either way.
-  await persistFacts(user.id, message.id, parsed);
+  await persistFacts(user.id, message.id, parsed, secondBrain);
+
+  // ─── Free plan: second-brain requests get a friendly refusal ────────
+  // Before any flow runs, so the model's own reply ("saved it!") is never
+  // sent for something that was not saved.
+  const locked = secondBrain ? null : lockedFeatureFor(parsed);
+  if (locked) {
+    console.log(`[Remique] free plan refused feature=${locked} intent=${parsed.intent}`);
+    await replyToUser(user, lockedFeatureMessage(locked, user.name));
+    return;
+  }
 
   // ─── Flow G: An actual file arrived ─────────────────────────────────
   // Runs before every other branch. An uncaptioned image sets
@@ -590,7 +630,10 @@ export async function processIncomingUserMessage(
   }
 
   // ─── Flow H: The answer to "what should I call this?" ───────────────
-  if (activeState?.pendingIntent === 'label_document') {
+  // Document flows below need the second brain. A Free user can only have one
+  // of these states parked if they downgraded mid-conversation; the message
+  // then falls through to ordinary handling instead.
+  if (secondBrain && activeState?.pendingIntent === 'label_document') {
     const pending = activeState.pendingData as { documentId?: string } | null;
 
     if (pending?.documentId) {
@@ -609,7 +652,7 @@ export async function processIncomingUserMessage(
   }
 
   // ─── Flow J: "Yes, send that one" after a near-match offer ──────────
-  if (activeState?.pendingIntent === 'confirm_documents') {
+  if (secondBrain && activeState?.pendingIntent === 'confirm_documents') {
     const pending = activeState.pendingData as { documentIds?: string[] } | null;
     const ids = pending?.documentIds ?? [];
     const agreed = parsed.intent === 'send_documents' || AFFIRMATIVE.test(userMessage.trim());
@@ -656,7 +699,15 @@ export async function processIncomingUserMessage(
 
       if (isAffirmative) {
         const item = pending.pendingReminder;
-        const [reminder] = await db.insert(reminders).values({ userId: user.id, title: item.title, originalMessage: item.originalMessage, scheduledAt: new Date(item.scheduledAt), timezone: user.timezone, category: normalizeCategory(item.category), recurrenceRule: item.recurrenceRule, anchorAt: item.anchorAt ? new Date(item.anchorAt) : null, anchorTitle: item.anchorTitle, offsetMinutes: item.offsetMinutes, groupId: item.groupId, status: 'SCHEDULED' }).returning();
+        const result = await insertUserReminders(user, secondBrain, [{ userId: user.id, title: item.title, originalMessage: item.originalMessage, scheduledAt: new Date(item.scheduledAt), timezone: user.timezone, category: normalizeCategory(item.category), recurrenceRule: item.recurrenceRule, anchorAt: item.anchorAt ? new Date(item.anchorAt) : null, anchorTitle: item.anchorTitle, offsetMinutes: item.offsetMinutes, groupId: item.groupId, status: 'SCHEDULED' }]);
+
+        if (!result.ok) {
+          await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
+          await replyToUser(user, limitReply(user, 1, result.remaining));
+          return;
+        }
+
+        const [reminder] = result.rows;
 
         await Promise.all([
           scheduleReminderDelivery(reminder.id, reminder.scheduledAt),
@@ -763,6 +814,17 @@ pendingIntent: 'create_reminder',
         : [];
 
     if (requested.length > 0) {
+      // Checked up front as well as at insert, so a Free user who has run out
+      // is not asked "keep both?" about a clash only to be refused after "yes".
+      if (!secondBrain) {
+        const used = await countUserRemindersThisMonth(db, user);
+        const allowance = reminderAllowance(used, requested.length);
+        if (!allowance.allowed) {
+          await replyToUser(user, limitReply(user, requested.length, allowance.remaining));
+          return;
+        }
+      }
+
       const anchorParsed = parsed.anchor_iso
         ? DateTime.fromISO(parsed.anchor_iso, { zone: user.timezone })
         : null;
@@ -844,6 +906,8 @@ pendingIntent: 'confirm_conflict',
       }> = [];
       const rejected: string[] = [];
 
+      const rows: NewReminder[] = [];
+
       for (const item of requested) {
         const validated = validateAndNormalizeDate(item.scheduled_iso, user.timezone);
 
@@ -857,8 +921,22 @@ pendingIntent: 'confirm_conflict',
             ? item.offset_minutes
             : null;
 
-        const [reminder] = await db.insert(reminders).values({ userId: user.id, title: item.title?.trim() || anchorTitle || 'Reminder', originalMessage: userMessage, scheduledAt: validated.scheduledAtUtc!, timezone: user.timezone, category: normalizeCategory(item.category ?? parsed.category), recurrenceRule: normalizeRecurrence(item.recurrence ?? parsed.recurrence), anchorAt: anchorAt ?? null, anchorTitle: anchorTitle ?? null, offsetMinutes: offset, groupId: groupId ?? null, status: 'SCHEDULED' }).returning();
+        rows.push({ userId: user.id, title: item.title?.trim() || anchorTitle || 'Reminder', originalMessage: userMessage, scheduledAt: validated.scheduledAtUtc!, timezone: user.timezone, category: normalizeCategory(item.category ?? parsed.category), recurrenceRule: normalizeRecurrence(item.recurrence ?? parsed.recurrence), anchorAt: anchorAt ?? null, anchorTitle: anchorTitle ?? null, offsetMinutes: offset, groupId: groupId ?? null, status: 'SCHEDULED' });
+      }
 
+      if (rows.length === 0) {
+        await replyToUser(user, `⚠️ ${rejected[0] || 'Invalid reminder time.'}`);
+        return;
+      }
+
+      const result = await insertUserReminders(user, secondBrain, rows);
+
+      if (!result.ok) {
+        await replyToUser(user, limitReply(user, rows.length, result.remaining));
+        return;
+      }
+
+      for (const reminder of result.rows) {
         created.push({
           id: reminder.id,
           title: reminder.title,
@@ -866,11 +944,6 @@ pendingIntent: 'confirm_conflict',
           anchorAt: reminder.anchorAt,
           offsetMinutes: reminder.offsetMinutes,
         });
-      }
-
-      if (created.length === 0) {
-        await replyToUser(user, `⚠️ ${rejected[0] || 'Invalid reminder time.'}`);
-        return;
       }
 
       console.log(
@@ -1229,15 +1302,20 @@ pendingIntent: 'reschedule_choice',
   }
 
   // ─── Flow F: General Reply / Knowledge Base Answer ───────────────────
-  if (parsed.intent === 'general_reply' && parsed.reply_text) {
+  if ((parsed.intent === 'general_reply' || parsed.intent === 'recall_memory') && parsed.reply_text) {
     await replyToUser(user, parsed.reply_text);
     return;
   }
 
   // ─── Fallback ────────────────────────────────────────────────────────
+  // A Free user is only shown examples their plan actually includes.
+  const examples = secondBrain
+    ? `• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"My wifi password is password123"_\n• _"What is my wifi password?"_\n• _"Cancel my last reminder"_\n• 📁 Send me a file with a caption like _"save this as a dollar document"_\n• _"What dollar documents do I have?"_`
+    : `• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"What do I have this week?"_\n• _"Move my dentist reminder to 5 PM"_\n• _"Cancel my last reminder"_`;
+
   await replyToUser(
     user,
-    `Hi! I'm *Remique* 🔔 — your AI personal assistant.\n\nTry sending:\n• _"Remind me tomorrow at 10 AM to call Aovin"_\n• _"My wifi password is password123"_\n• _"What is my wifi password?"_\n• _"Cancel my last reminder"_\n• 📁 Send me a file with a caption like _"save this as a dollar document"_\n• _"What dollar documents do I have?"_`
+    `Hi! I'm *Remique* 🔔 — your AI personal assistant.\n\nTry sending:\n${examples}`
   );
 }
 
@@ -1363,7 +1441,8 @@ function isTransientFact(predicate: string): boolean {
 async function persistFacts(
   userId: string,
   sourceMessageId: string,
-  parsed: ParsedAssistantResponse
+  parsed: ParsedAssistantResponse,
+  secondBrain: boolean
 ): Promise<void> {
   for (const fact of parsed.facts ?? []) {
     const subject = fact?.subject?.trim().toLowerCase();
@@ -1371,6 +1450,13 @@ async function persistFacts(
     const value = fact?.value?.trim();
 
     if (!subject || !predicate || !value) continue;
+
+    // Memory is part of the second brain. A Free user keeps only their own
+    // name, which is how every reply addresses them.
+    if (!secondBrain && !isOwnNameFact(subject, predicate)) {
+      console.log(`[Remique] fact skipped (free plan) ${subject}/${predicate}`);
+      continue;
+    }
 
     if (isTransientFact(predicate)) {
       console.log(`[Remique] fact rejected (transient) ${subject}/${predicate}`);
@@ -1638,6 +1724,63 @@ export function resolveIndices<T>(items: T[], indices: number[]): T[] {
   }
 
   return out;
+}
+
+type NewReminder = typeof reminders.$inferInsert;
+
+/** Reminders the user asked for this calendar month. Snoozes and repeats are excluded. */
+async function countUserRemindersThisMonth(
+  executor: Pick<typeof db, 'select'>,
+  user: User
+): Promise<number> {
+  const { start } = monthWindow(user.timezone);
+  const [row] = await executor
+    .select({ count: sql<number>`count(*)` })
+    .from(reminders)
+    .where(and(eq(reminders.userId, user.id), eq(reminders.source, 'user'), gte(reminders.createdAt, start)));
+  return Number(row?.count ?? 0);
+}
+
+type InsertRemindersResult =
+  | { ok: true; rows: Reminder[] }
+  | { ok: false; remaining: number };
+
+/**
+ * Writes reminders the user asked for, enforcing the Free plan limit.
+ *
+ * For a Free user the count and the insert share one transaction behind a
+ * per-user advisory lock. Without it, two messages processed at the same
+ * moment would both read "4 used" and both succeed, creating a 6th.
+ */
+async function insertUserReminders(
+  user: User,
+  secondBrain: boolean,
+  rows: NewReminder[]
+): Promise<InsertRemindersResult> {
+  if (secondBrain) {
+    return { ok: true, rows: await db.insert(reminders).values(rows).returning() };
+  }
+
+  return db.transaction(async (tx): Promise<InsertRemindersResult> => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${user.id}))`);
+
+    const used = await countUserRemindersThisMonth(tx, user);
+    const allowance = reminderAllowance(used, rows.length);
+
+    if (!allowance.allowed) {
+      console.log(
+        `[Remique] free plan reminder limit userId=${user.id} used=${used} requested=${rows.length}`
+      );
+      return { ok: false, remaining: allowance.remaining };
+    }
+
+    return { ok: true, rows: await tx.insert(reminders).values(rows).returning() };
+  });
+}
+
+function limitReply(user: User, requested: number, remaining: number): string {
+  const { monthName, resetsOnLabel } = monthWindow(user.timezone);
+  return reminderLimitMessage(user.name, { requested, remaining, monthName, resetsOnLabel });
 }
 
 /**
