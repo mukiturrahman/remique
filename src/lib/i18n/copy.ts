@@ -23,7 +23,7 @@ const en = {
         useCases: "Use cases",
         pricing: "Pricing",
         faq: "FAQ",
-        getStarted: "Start remembering",
+        getStarted: "Unlock 2nd Brain 🧠",
         openMenu: "Open menu",
         closeMenu: "Close menu",
         logoAlt: "Remique Logo",
@@ -55,7 +55,7 @@ const en = {
         subAfter: ". It confirms, schedules, and reminds. You move on.",
         worksOnWhatsApp: "Works on WhatsApp",
         noApp: "No app to install",
-        ctaPrimary: "Start remembering..",
+        ctaPrimary: "Unlock 2nd Brain 🧠",
         ctaSecondary: "See it work",
         botAlt: "Remique Bot",
     },
@@ -73,6 +73,48 @@ const en = {
         body: "Science is clear: when your brain tries to hold more than its capacity, forgetting is the normal result. You are not lazy. Your memory is not bad. Your brain is simply overloaded.",
         fix: "The fix is not complicated. Give your brain some room, and let Remique hold the small things. Just say it on WhatsApp.",
         imageAlt: "An overloaded brain trying to hold everything at once",
+    },
+
+    quotesSection: {
+        eyebrow: "The Science of Memory",
+        headline: 'Albert Einstein famously said, "Never memorize something that you can look up"',
+        quotes: [
+            {
+                quote: "Your mind is for having ideas, not holding them.",
+                author: "David Allen",
+                source: "Getting Things Done",
+            },
+            {
+                quote: "The fewer you hold in mind at once, the better.",
+                author: "David Rock",
+                source: "Your Brain at Work",
+            },
+            {
+                quote: "The most fundamental principle of the organized mind... is to shift the burden of organizing from our brains to the external world.",
+                author: "Daniel J. Levitin",
+                source: "The Organized Mind",
+            },
+            {
+                quote: "Forgetting happens. If you stress about it, it'll happen even more.",
+                author: "Lisa Genova",
+                source: "Remember",
+            },
+            {
+                quote: "If you wish to forget anything on the spot, make a note that this thing is to be remembered.",
+                author: "Edgar Allan Poe",
+                source: "Poet & Writer",
+            },
+            {
+                quote: "Working memory holds about 7 (±2) items at once.",
+                author: "George A. Miller",
+                source: "1956 study",
+            },
+            {
+                quote: "Your ability to make great decisions is a limited resource. Conserve this resource at every opportunity.",
+                author: "David Rock",
+                source: "Your Brain at Work",
+            },
+        ],
     },
 
     privacySection: {
@@ -218,7 +260,7 @@ const en = {
     banner: {
         title: "Your memory has a backup now.",
         body: "Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.",
-        cta: "Get Remique now",
+        cta: "Unlock 2nd Brain 🧠",
         priceNote: "Starts at ৳49/week",
         cardNote: "No card needed",
     },
@@ -319,7 +361,7 @@ const en = {
         cta: {
             title: "Ready to stop forgetting?",
             sub: "Pick a plan, open WhatsApp, and start texting. That is the whole onboarding.",
-            button: "Start remembering",
+            button: "Unlock 2nd Brain 🧠",
         },
     },
 
@@ -480,7 +522,7 @@ const en = {
         cta: {
             title: "Still have questions?",
             sub: "Text Remique on WhatsApp. It answers those too.",
-            button: "Start remembering",
+            button: "Unlock 2nd Brain 🧠",
         },
     },
 
@@ -515,7 +557,7 @@ const bn: Copy = {
         useCases: "কী কাজে লাগে",
         pricing: "প্রাইসিং",
         faq: "সাধারণ প্রশ্ন",
-        getStarted: "মনে রাখা শুরু করুন",
+        getStarted: "আনলক সেকেন্ড ব্রেইন 🧠",
         openMenu: "মেনু খুলুন",
         closeMenu: "মেনু বন্ধ করুন",
         logoAlt: "Remique লোগো",
@@ -543,7 +585,7 @@ const bn: Copy = {
             "য়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। আপনি নিশ্চিন্ত।",
         worksOnWhatsApp: "WhatsApp-এই চলে",
         noApp: "কোনো অ্যাপ লাগবে না",
-        ctaPrimary: "মনে রাখা শুরু করুন..",
+        ctaPrimary: "আনলক সেকেন্ড ব্রেইন 🧠",
         ctaSecondary: "চোখে দেখে নিন",
         botAlt: "Remique বট",
     },
@@ -563,6 +605,48 @@ const bn: Copy = {
         body: "Science বলে, ব্রেইন যখন capacity-র বেশি জিনিস ধরে রাখার চেষ্টা করে, তখন ভুলে যাওয়াটাই স্বাভাবিক। আপনি অলস না, আপনার memory খারাপ না, আপনার ব্রেইন শুধু ওভারলোডেড।",
         fix: "সমাধান জটিল কিছু না। ব্রেইনরে একটু জায়গা দিন, আর ছোট ছোট জিনিসগুলা Remique-কে মনে রাখতে দিন। WhatsApp-এই বলে দিলেই হবে।",
         imageAlt: "ওভারলোডেড ব্রেইন একসাথে সবকিছু ধরে রাখার চেষ্টা করছে",
+    },
+
+    quotesSection: {
+        eyebrow: "স্মৃতি ও বিজ্ঞানের কথা",
+        headline: 'আলবার্ট আইনস্টাইন বিখ্যাতভাবে বলেছিলেন, "যা কোথাও খুঁজে পাওয়া যায়, তা কখনোই মুখস্থ করতে যেও না"',
+        quotes: [
+            {
+                quote: "আপনার মন আইডিয়া তৈরি করার জন্য, সেগুলো ধরে রাখার জন্য না।",
+                author: "ডেভিড অ্যালেন",
+                source: "Getting Things Done",
+            },
+            {
+                quote: "একসাথে যত কম জিনিস মনে রাখবেন, তত ভালো।",
+                author: "ডেভিড রক",
+                source: "Your Brain at Work",
+            },
+            {
+                quote: "গোছানো মাথার সবচেয়ে বড় নিয়ম হলো — মনে রাখার কাজটা মাথা থেকে সরিয়ে বাইরের কোথাও রাখা।",
+                author: "ড্যানিয়েল জে. লেভিতিন",
+                source: "The Organized Mind",
+            },
+            {
+                quote: "ভুলে যাওয়া স্বাভাবিক। এটা নিয়ে বেশি চিন্তা করলে আরও বেশি ভুলে যাবেন।",
+                author: "লিসা জেনোভা",
+                source: "Remember",
+            },
+            {
+                quote: "কোনো কিছু মনে রাখতে চাইলে, সেটা লিখে রাখুন — তাহলে মাথা থেকে চিন্তাটা সরে যাবে।",
+                author: "এডগার অ্যালান পো",
+                source: "কবি ও লেখক",
+            },
+            {
+                quote: "একসাথে মাত্র ৭টার মতো জিনিস মনে রাখতে পারে মাথা এর বেশি হলেই ভুল হতে শুরু করে।",
+                author: "জর্জ এ. মিলার",
+                source: "১৯৫৬ সালের গবেষণা",
+            },
+            {
+                quote: "ভালো সিদ্ধান্ত নেওয়ার ক্ষমতা সীমিত। যতটা পারা যায়, এটা বাঁচিয়ে রাখুন।",
+                author: "ডেভিড রক",
+                source: "Your Brain at Work",
+            },
+        ],
     },
 
     privacySection: {
@@ -705,7 +789,7 @@ const bn: Copy = {
     banner: {
         title: "আপনার মেমোরির এখন একটা ব্যাকআপ আছে।",
         body: "একটা প্ল্যান বাছুন, bKash-এ পে করুন, আর Remique-কে মেসেজ দেওয়া শুরু করুন। সেটআপ বলতে এটুকুই।",
-        cta: "এখনই Remique নিন",
+        cta: "আনলক সেকেন্ড ব্রেইন 🧠",
         priceNote: "শুরু ৳49/সপ্তাহ থেকে",
         cardNote: "কার্ড লাগবে না",
     },
@@ -806,7 +890,7 @@ const bn: Copy = {
         cta: {
             title: "ভুলে যাওয়া বন্ধ করতে প্রস্তুত?",
             sub: "প্ল্যান বাছুন, WhatsApp খুলুন, আর মেসেজ দেওয়া শুরু করুন। অনবোর্ডিং এটুকুই।",
-            button: "মনে রাখা শুরু করুন",
+            button: "আনলক সেকেন্ড ব্রেইন 🧠",
         },
     },
 
@@ -967,7 +1051,7 @@ const bn: Copy = {
         cta: {
             title: "আরও কিছু জানার আছে?",
             sub: "WhatsApp-এ Remique-কে মেসেজ দিন। ও এগুলোরও উত্তর দিয়ে দেবে।",
-            button: "মনে রাখা শুরু করুন",
+            button: "আনলক সেকেন্ড ব্রেইন 🧠",
         },
     },
 

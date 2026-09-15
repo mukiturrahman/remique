@@ -19,6 +19,12 @@ const SHARED_PATHS = new Set([
   'pricingPage.tier',
   'pricingPage.planName',
   'pricingPage.modal.phonePlaceholder',
+  'pricingPage.modal.emailPlaceholder',
+  'quotesSection.quotes.0.source',
+  'quotesSection.quotes.1.source',
+  'quotesSection.quotes.2.source',
+  'quotesSection.quotes.3.source',
+  'quotesSection.quotes.6.source',
 ]);
 
 type Node = unknown;

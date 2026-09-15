@@ -10,6 +10,7 @@ import { WhatsAppMockup, type ChatMessage } from "@/components/whatsapp-mockup";
 import { PhoneFrame } from "@/components/phone-frame";
 import { HomeFaq } from "@/components/home-faq";
 import { HomePricing } from "@/components/home-pricing";
+import { ScrollingQuotations } from "@/components/scrolling-quotations";
 import { useCopy, useLang } from "@/components/lang-provider";
 import {
     IconArrow,
@@ -400,6 +401,9 @@ function HomeContent() {
                         </div>
                     </div>
                 </section>
+
+                {/* ── 3.25 SCROLLING QUOTATIONS ─────────────────────────────────── */}
+                <ScrollingQuotations />
 
                 {/* ── 3.5 PRIVACY ──────────────────────────────────────────────── */}
                 <section>
