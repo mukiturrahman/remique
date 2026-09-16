@@ -19,6 +19,10 @@ export type AssistantIntent =
   | 'general_reply'
   | 'cancel_subscription';
 
+export type LabelReply = 'name' | 'other_request' | 'unclear';
+
+export type LabelChoice = 'do_request' | 'name_file' | 'use_as_name' | 'something_else';
+
 /** One durable thing the model learned from this message. */
 export interface ExtractedFact {
   subject: string;
@@ -117,6 +121,24 @@ export interface ParsedAssistantResponse {
    */
   document_suggestions?: number[] | null;
   /**
+   * Set only while the bot is waiting for a file's name. Says whether the
+   * reply IS that name, or something else the user wants. Without it every
+   * reply — "remind me to repair my watch" included — became the filename.
+   */
+  label_reply?: LabelReply | null;
+  /**
+   * Set only after the bot asked "do that, name the file, or something else?".
+   * Which of those the user picked.
+   */
+  label_choice?: LabelChoice | null;
+  /**
+   * The request the user seems to be making, restated as they would say it
+   * ("remind me to repair my watch"). Replayed if they confirm it.
+   */
+  request_restatement?: string | null;
+  /** Short button title for that request, e.g. "Set reminder". */
+  request_button_title?: string | null;
+  /**
    * Facts stated in this message. Populated independently of `intent` — one
    * message can both create a reminder and teach a birthday.
    */
@@ -143,6 +165,7 @@ export interface ConversationTurn {
 
 export interface ParseOptions {
   pendingContext?: unknown;
+  pendingIntent?: string | null;
   savedNotes?: string[];
   knownFacts?: KnownFact[];
   recentTurns?: ConversationTurn[];

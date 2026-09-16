@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import OpenAI from "openai";
 import { env } from "./env";
+import { describePendingContext } from "./label-intent";
 import type { TokenUsage } from "./usage-pricing";
 import {
     ConversationTurn,
@@ -236,6 +237,25 @@ EXTRACTION RULES:
    - If the user says "the second one" / "2", return just that number.
    - Never invent a number that is not in the list.
 
+4e. Naming a file — read PENDING CONTEXT before anything else:
+   - When PENDING CONTEXT says you are waiting for a file's name, work out what USER MESSAGE actually is and set "label_reply". You asked for a name, but that does NOT make every reply a name.
+     "name"          — plainly a name: a short label or noun phrase ("passport", "watch pic", "eta amar NID", "electricity bill sept"), or an explicit naming ("call it watch pic", "name it receipt", "save it as passport"). Put the cleaned name in "document_label".
+     "other_request" — a command or a different request: setting a reminder, saving a note, asking a question, listing or sending files ("remind me to repair my watch", "what's on today?", "cancel my 5pm"). Classify "intent" and fill its fields exactly as you would with nothing pending. The system asks before doing it.
+     "unclear"       — neither is plain ("i will repair it tomorrow", "hmm the watch one", a sentence about their day).
+   - A message phrased as an instruction is never a name, even if it contains a good title. "remind me to repair my watch" is NEVER a filename.
+   - For "other_request" and "unclear", write "clarification_question": mirror their actual words back, name the likely options, always including naming the file and something else, and ask it as ONE question, in their language and script.
+     GOOD: "Got it, you said to set a reminder to repair your watch. Do you want me to set that reminder, name the image you shared, or something else?"
+     GOOD (unclear): "You said you'll repair it tomorrow. Want a reminder for that, want to name the image you sent, or something else?"
+     BAD: "What time should I remind you?" ← skips past the question of what they meant
+   - Also set "request_restatement" to that request as the user would say it to you ("remind me to repair my watch", "remind me to repair my watch tomorrow"), and "request_button_title" to a button label of at most 20 characters ("Set reminder", "Save note", "Show my schedule"). If there is no real request to offer, set both to null.
+   - Unless label_reply is "name", NEVER say in reply_text that anything was saved, named or scheduled.
+   - When PENDING CONTEXT says you asked them to choose, set "label_choice":
+     "do_request"     — they want what they originally said done ("set the reminder", "yes do that", "Set reminder", "haa koro"). Put the request in "request_restatement", including anything they just added ("yes, at 6pm" -> "remind me to repair my watch at 6pm").
+     "name_file"      — they want to name the file ("name the image", "call it watch pic"). Put the name in "document_label" if they gave one, otherwise null.
+     "use_as_name"    — they want their earlier message itself used as the name ("use that as the name", "name it that").
+     "something_else" — anything else, including a brand-new request. Classify "intent" and its fields normally for USER MESSAGE.
+   - In every other situation set "label_reply", "label_choice", "request_restatement" and "request_button_title" to null.
+
 4d. Conversation Context:
    - RECENT CONVERSATION below is what was just said, oldest first. "You:" lines are your own earlier replies.
    - Use it to resolve references that only make sense in context: "another one", "10 minutes before that", "the second one", "no, make it 9pm", "cancel that".
@@ -291,6 +311,10 @@ const ASSISTANT_SCHEMA = {
         "document_label",
         "document_indices",
         "document_suggestions",
+        "label_reply",
+        "label_choice",
+        "request_restatement",
+        "request_button_title",
         "category",
         "anchor_iso",
         "anchor_title",
@@ -337,6 +361,16 @@ const ASSISTANT_SCHEMA = {
         document_label: { type: ["string", "null"] },
         document_indices: { type: ["array", "null"], items: { type: "integer" } },
         document_suggestions: { type: ["array", "null"], items: { type: "integer" } },
+        label_reply: {
+            type: ["string", "null"],
+            enum: ["name", "other_request", "unclear", null],
+        },
+        label_choice: {
+            type: ["string", "null"],
+            enum: ["do_request", "name_file", "use_as_name", "something_else", null],
+        },
+        request_restatement: { type: ["string", "null"] },
+        request_button_title: { type: ["string", "null"] },
         category: {
             type: ["string", "null"],
             enum: [...["MEETING", "BIRTHDAY", "TASK", "HABIT", "GENERAL"], null],
@@ -410,6 +444,8 @@ function supportsReasoningEffort(model: string): boolean {
 
 export interface ParseOptions {
     pendingContext?: unknown;
+    /** What the parked state is waiting for; turns raw pending data into words. */
+    pendingIntent?: string | null;
     savedNotes?: string[];
     /** Everything already known about the user, rendered as KNOWN FACTS. */
     knownFacts?: KnownFact[];
@@ -462,6 +498,7 @@ export function buildInputText(
 ): string {
     const {
         pendingContext,
+        pendingIntent = null,
         savedNotes = [],
         knownFacts = [],
         recentTurns = [],
@@ -558,6 +595,8 @@ export function buildInputText(
               ]
             : [];
 
+    const pendingLine = describePendingContext(pendingIntent, pendingContext);
+
     const attachmentSection = attachedFile
         ? [
               `ATTACHED FILE: the user just sent a ${attachedFile.mediaType}` +
@@ -583,7 +622,7 @@ export function buildInputText(
         ...scheduleSection,
         ...historySection,
         ...attachmentSection,
-        pendingContext ? `PENDING CONTEXT: ${JSON.stringify(pendingContext)}\n` : null,
+        pendingLine ? `${pendingLine}\n` : null,
         ...temporalSection,
         `USER MESSAGE: "${userMessage}"`,
     ]

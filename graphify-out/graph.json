@@ -3104,7 +3104,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "db_schema_documents",
-      "community": 44,
+      "community": 19,
       "norm_label": "documents"
     },
     {
@@ -3174,7 +3174,7 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "db_schema_reminders",
-      "community": 28,
+      "community": 25,
       "norm_label": "reminders"
     },
     {
@@ -3964,7 +3964,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "lib_conversation_log_replytouser",
-      "community": 24,
+      "community": 58,
       "norm_label": "replytouser()"
     },
     {
@@ -3994,7 +3994,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_date_normalizer",
-      "community": 58,
+      "community": 16,
       "norm_label": "date-normalizer.ts"
     },
     {
@@ -4004,7 +4004,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "lib_date_normalizer_validateddateresult",
-      "community": 58,
+      "community": 16,
       "norm_label": "validateddateresult"
     },
     {
@@ -4014,7 +4014,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_date_normalizer_validateandnormalizedate",
-      "community": 58,
+      "community": 16,
       "norm_label": "validateandnormalizedate()"
     },
     {
@@ -4148,6 +4148,176 @@
       "norm_label": "bn"
     },
     {
+      "label": "label-intent.ts",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "lib_label_intent",
+      "community": 59,
+      "norm_label": "label-intent.ts"
+    },
+    {
+      "label": "LABEL_BUTTON_ACTIONS",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "lib_label_intent_label_button_actions",
+      "community": 59,
+      "norm_label": "label_button_actions"
+    },
+    {
+      "label": "LabelButtonAction",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "lib_label_intent_labelbuttonaction",
+      "community": 59,
+      "norm_label": "labelbuttonaction"
+    },
+    {
+      "label": "INTENT_BUTTON_TITLES",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L60",
+      "_origin": "ast",
+      "id": "lib_label_intent_intent_button_titles",
+      "community": 59,
+      "norm_label": "intent_button_titles"
+    },
+    {
+      "label": "fileNoun()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "lib_label_intent_filenoun",
+      "community": 59,
+      "norm_label": "filenoun()"
+    },
+    {
+      "label": "stripLabelFiller()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "lib_label_intent_striplabelfiller",
+      "community": 59,
+      "norm_label": "striplabelfiller()"
+    },
+    {
+      "label": "hasCommandSignal()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L89",
+      "_origin": "ast",
+      "id": "lib_label_intent_hascommandsignal",
+      "community": 59,
+      "norm_label": "hascommandsignal()"
+    },
+    {
+      "label": "looksLikeLabel()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "lib_label_intent_lookslikelabel",
+      "community": 59,
+      "norm_label": "lookslikelabel()"
+    },
+    {
+      "label": "LabelDecision",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L104",
+      "_origin": "ast",
+      "id": "lib_label_intent_labeldecision",
+      "community": 59,
+      "norm_label": "labeldecision"
+    },
+    {
+      "label": "decideLabelReply()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L113",
+      "_origin": "ast",
+      "id": "lib_label_intent_decidelabelreply",
+      "community": 59,
+      "norm_label": "decidelabelreply()"
+    },
+    {
+      "label": "resolveLabelChoice()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L142",
+      "_origin": "ast",
+      "id": "lib_label_intent_resolvelabelchoice",
+      "community": 59,
+      "norm_label": "resolvelabelchoice()"
+    },
+    {
+      "label": "requestButtonTitle()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L153",
+      "_origin": "ast",
+      "id": "lib_label_intent_requestbuttontitle",
+      "community": 59,
+      "norm_label": "requestbuttontitle()"
+    },
+    {
+      "label": "labelChoiceButtons()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L162",
+      "_origin": "ast",
+      "id": "lib_label_intent_labelchoicebuttons",
+      "community": 59,
+      "norm_label": "labelchoicebuttons()"
+    },
+    {
+      "label": "parseLabelButton()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L180",
+      "_origin": "ast",
+      "id": "lib_label_intent_parselabelbutton",
+      "community": 59,
+      "norm_label": "parselabelbutton()"
+    },
+    {
+      "label": "chosenLabel()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L192",
+      "_origin": "ast",
+      "id": "lib_label_intent_chosenlabel",
+      "community": 59,
+      "norm_label": "chosenlabel()"
+    },
+    {
+      "label": "labelClarificationFallback()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L202",
+      "_origin": "ast",
+      "id": "lib_label_intent_labelclarificationfallback",
+      "community": 59,
+      "norm_label": "labelclarificationfallback()"
+    },
+    {
+      "label": "describePendingContext()",
+      "file_type": "code",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L221",
+      "_origin": "ast",
+      "id": "lib_label_intent_describependingcontext",
+      "community": 59,
+      "norm_label": "describependingcontext()"
+    },
+    {
       "label": "llm.ts",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
@@ -4161,7 +4331,7 @@
       "label": "client",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L13",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "lib_llm_client",
       "community": 63,
@@ -4171,7 +4341,7 @@
       "label": "SYSTEM_INSTRUCTIONS",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L19",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "lib_llm_system_instructions",
       "community": 63,
@@ -4181,7 +4351,7 @@
       "label": "ASSISTANT_SCHEMA",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L278",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "lib_llm_assistant_schema",
       "community": 63,
@@ -4191,7 +4361,7 @@
       "label": "supportsReasoningEffort()",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L407",
+      "source_location": "L441",
       "_origin": "ast",
       "id": "lib_llm_supportsreasoningeffort",
       "community": 63,
@@ -4201,7 +4371,7 @@
       "label": "ParseOptions",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L411",
+      "source_location": "L445",
       "_origin": "ast",
       "id": "lib_llm_parseoptions",
       "community": 63,
@@ -4211,7 +4381,7 @@
       "label": "ParseResult",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L434",
+      "source_location": "L470",
       "_origin": "ast",
       "id": "lib_llm_parseresult",
       "community": 97,
@@ -4221,7 +4391,7 @@
       "label": "buildInputText()",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L457",
+      "source_location": "L493",
       "_origin": "ast",
       "id": "lib_llm_buildinputtext",
       "community": 63,
@@ -4231,7 +4401,7 @@
       "label": "parseUserMessage()",
       "file_type": "code",
       "source_file": "src/lib/llm.ts",
-      "source_location": "L594",
+      "source_location": "L633",
       "_origin": "ast",
       "id": "lib_llm_parseusermessage",
       "community": 63,
@@ -4464,7 +4634,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "lib_plan_reminderallowance",
-      "community": 4,
+      "community": 58,
       "norm_label": "reminderallowance()"
     },
     {
@@ -4484,7 +4654,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "lib_plan_isownnamefact",
-      "community": 43,
+      "community": 4,
       "norm_label": "isownnamefact()"
     },
     {
@@ -4594,7 +4764,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "lib_qstash_cancelscheduleddelivery",
-      "community": 19,
+      "community": 58,
       "norm_label": "cancelscheduleddelivery()"
     },
     {
@@ -4701,7 +4871,7 @@
       "label": "REMINDER_CATEGORIES",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L101",
+      "source_location": "L117",
       "_origin": "ast",
       "id": "lib_reminder_service_reminder_categories",
       "community": 43,
@@ -4711,7 +4881,7 @@
       "label": "RECURRENCE_RULES",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L102",
+      "source_location": "L118",
       "_origin": "ast",
       "id": "lib_reminder_service_recurrence_rules",
       "community": 43,
@@ -4721,7 +4891,7 @@
       "label": "ReminderCategory",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L104",
+      "source_location": "L120",
       "_origin": "ast",
       "id": "lib_reminder_service_remindercategory",
       "community": 43,
@@ -4731,7 +4901,7 @@
       "label": "CATEGORY_NOUNS",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L107",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "lib_reminder_service_category_nouns",
       "community": 43,
@@ -4741,7 +4911,7 @@
       "label": "normalizeCategory()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L119",
+      "source_location": "L135",
       "_origin": "ast",
       "id": "lib_reminder_service_normalizecategory",
       "community": 58,
@@ -4751,7 +4921,7 @@
       "label": "normalizeCategoryFilter()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L133",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "lib_reminder_service_normalizecategoryfilter",
       "community": 58,
@@ -4761,7 +4931,7 @@
       "label": "describeCategories()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L151",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "lib_reminder_service_describecategories",
       "community": 58,
@@ -4771,7 +4941,7 @@
       "label": "normalizeRecurrence()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L162",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "lib_reminder_service_normalizerecurrence",
       "community": 58,
@@ -4781,7 +4951,7 @@
       "label": "IndexResolution",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L176",
+      "source_location": "L192",
       "_origin": "ast",
       "id": "lib_reminder_service_indexresolution",
       "community": 43,
@@ -4791,7 +4961,7 @@
       "label": "resolveListedReminderIds()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L182",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "lib_reminder_service_resolvelistedreminderids",
       "community": 43,
@@ -4801,17 +4971,17 @@
       "label": "positionProblemMessage()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L205",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "lib_reminder_service_positionproblemmessage",
-      "community": 43,
+      "community": 58,
       "norm_label": "positionproblemmessage()"
     },
     {
       "label": "parseFilterBound()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L223",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "lib_reminder_service_parsefilterbound",
       "community": 58,
@@ -4821,7 +4991,7 @@
       "label": "reminderActionButtons()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L238",
+      "source_location": "L254",
       "_origin": "ast",
       "id": "lib_reminder_service_reminderactionbuttons",
       "community": 25,
@@ -4831,17 +5001,17 @@
       "label": "handleButtonTap()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L254",
+      "source_location": "L270",
       "_origin": "ast",
       "id": "lib_reminder_service_handlebuttontap",
-      "community": 0,
+      "community": 58,
       "norm_label": "handlebuttontap()"
     },
     {
       "label": "toScheduleEntry()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L311",
+      "source_location": "L327",
       "_origin": "ast",
       "id": "lib_reminder_service_toscheduleentry",
       "community": 43,
@@ -4851,7 +5021,7 @@
       "label": "firstName()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L329",
+      "source_location": "L345",
       "_origin": "ast",
       "id": "lib_reminder_service_firstname",
       "community": 58,
@@ -4861,7 +5031,7 @@
       "label": "friendlyWhen()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L339",
+      "source_location": "L355",
       "_origin": "ast",
       "id": "lib_reminder_service_friendlywhen",
       "community": 58,
@@ -4871,47 +5041,77 @@
       "label": "describeOffset()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L354",
+      "source_location": "L370",
       "_origin": "ast",
       "id": "lib_reminder_service_describeoffset",
-      "community": 104,
+      "community": 58,
       "norm_label": "describeoffset()"
     },
     {
       "label": "buildGroupedList()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L371",
+      "source_location": "L387",
       "_origin": "ast",
       "id": "lib_reminder_service_buildgroupedlist",
-      "community": 104,
+      "community": 58,
       "norm_label": "buildgroupedlist()"
     },
     {
       "label": "formatReminderLine()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L416",
+      "source_location": "L432",
       "_origin": "ast",
       "id": "lib_reminder_service_formatreminderline",
-      "community": 104,
+      "community": 58,
       "norm_label": "formatreminderline()"
+    },
+    {
+      "label": "TurnContext",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L451",
+      "_origin": "ast",
+      "id": "lib_reminder_service_turncontext",
+      "community": 43,
+      "norm_label": "turncontext"
+    },
+    {
+      "label": "LabelOrRequestData",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L460",
+      "_origin": "ast",
+      "id": "lib_reminder_service_labelorrequestdata",
+      "community": 43,
+      "norm_label": "labelorrequestdata"
     },
     {
       "label": "processIncomingUserMessage()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L431",
+      "source_location": "L467",
       "_origin": "ast",
       "id": "lib_reminder_service_processincomingusermessage",
       "community": 58,
       "norm_label": "processincomingusermessage()"
     },
     {
+      "label": "handleTurn()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L488",
+      "_origin": "ast",
+      "id": "lib_reminder_service_handleturn",
+      "community": 58,
+      "norm_label": "handleturn()"
+    },
+    {
       "label": "buildRescheduleConfirmation()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1329",
+      "source_location": "L1443",
       "_origin": "ast",
       "id": "lib_reminder_service_buildrescheduleconfirmation",
       "community": 58,
@@ -4921,7 +5121,7 @@
       "label": "buildCreationConfirmation()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1371",
+      "source_location": "L1485",
       "_origin": "ast",
       "id": "lib_reminder_service_buildcreationconfirmation",
       "community": 58,
@@ -4931,7 +5131,7 @@
       "label": "isTransientFact()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1436",
+      "source_location": "L1550",
       "_origin": "ast",
       "id": "lib_reminder_service_istransientfact",
       "community": 43,
@@ -4941,7 +5141,7 @@
       "label": "persistFacts()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1441",
+      "source_location": "L1555",
       "_origin": "ast",
       "id": "lib_reminder_service_persistfacts",
       "community": 43,
@@ -4951,17 +5151,77 @@
       "label": "handleIncomingFile()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1507",
+      "source_location": "L1621",
       "_origin": "ast",
       "id": "lib_reminder_service_handleincomingfile",
-      "community": 19,
+      "community": 58,
       "norm_label": "handleincomingfile()"
+    },
+    {
+      "label": "loadActiveState()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1678",
+      "_origin": "ast",
+      "id": "lib_reminder_service_loadactivestate",
+      "community": 58,
+      "norm_label": "loadactivestate()"
+    },
+    {
+      "label": "parkState()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1685",
+      "_origin": "ast",
+      "id": "lib_reminder_service_parkstate",
+      "community": 58,
+      "norm_label": "parkstate()"
+    },
+    {
+      "label": "saveDocumentLabel()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1702",
+      "_origin": "ast",
+      "id": "lib_reminder_service_savedocumentlabel",
+      "community": 58,
+      "norm_label": "savedocumentlabel()"
+    },
+    {
+      "label": "handleLabelButton()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1717",
+      "_origin": "ast",
+      "id": "lib_reminder_service_handlelabelbutton",
+      "community": 58,
+      "norm_label": "handlelabelbutton()"
+    },
+    {
+      "label": "applyLabelChoice()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1760",
+      "_origin": "ast",
+      "id": "lib_reminder_service_applylabelchoice",
+      "community": 58,
+      "norm_label": "applylabelchoice()"
+    },
+    {
+      "label": "followUpDeferredDocument()",
+      "file_type": "code",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1822",
+      "_origin": "ast",
+      "id": "lib_reminder_service_followupdeferreddocument",
+      "community": 58,
+      "norm_label": "followupdeferreddocument()"
     },
     {
       "label": "formatDocumentList()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1566",
+      "source_location": "L1856",
       "_origin": "ast",
       "id": "lib_reminder_service_formatdocumentlist",
       "community": 43,
@@ -4971,7 +5231,7 @@
       "label": "handleListDocuments()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1582",
+      "source_location": "L1872",
       "_origin": "ast",
       "id": "lib_reminder_service_handlelistdocuments",
       "community": 43,
@@ -4981,27 +5241,27 @@
       "label": "handleSendDocuments()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1619",
+      "source_location": "L1909",
       "_origin": "ast",
       "id": "lib_reminder_service_handlesenddocuments",
-      "community": 24,
+      "community": 58,
       "norm_label": "handlesenddocuments()"
     },
     {
       "label": "deliverDocuments()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1681",
+      "source_location": "L1971",
       "_origin": "ast",
       "id": "lib_reminder_service_deliverdocuments",
-      "community": 24,
+      "community": 58,
       "norm_label": "deliverdocuments()"
     },
     {
       "label": "resolveIndices()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1713",
+      "source_location": "L2003",
       "_origin": "ast",
       "id": "lib_reminder_service_resolveindices",
       "community": 43,
@@ -5011,7 +5271,7 @@
       "label": "NewReminder",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1729",
+      "source_location": "L2019",
       "_origin": "ast",
       "id": "lib_reminder_service_newreminder",
       "community": 43,
@@ -5021,17 +5281,17 @@
       "label": "countUserRemindersThisMonth()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1732",
+      "source_location": "L2022",
       "_origin": "ast",
       "id": "lib_reminder_service_countuserremindersthismonth",
-      "community": 4,
+      "community": 58,
       "norm_label": "countuserremindersthismonth()"
     },
     {
       "label": "InsertRemindersResult",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1744",
+      "source_location": "L2034",
       "_origin": "ast",
       "id": "lib_reminder_service_insertremindersresult",
       "community": 43,
@@ -5041,17 +5301,17 @@
       "label": "insertUserReminders()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1755",
+      "source_location": "L2045",
       "_origin": "ast",
       "id": "lib_reminder_service_insertuserreminders",
-      "community": 4,
+      "community": 58,
       "norm_label": "insertuserreminders()"
     },
     {
       "label": "limitReply()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1781",
+      "source_location": "L2071",
       "_origin": "ast",
       "id": "lib_reminder_service_limitreply",
       "community": 4,
@@ -5061,10 +5321,10 @@
       "label": "scheduleReminderDelivery()",
       "file_type": "code",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1795",
+      "source_location": "L2085",
       "_origin": "ast",
       "id": "lib_reminder_service_schedulereminderdelivery",
-      "community": 0,
+      "community": 58,
       "norm_label": "schedulereminderdelivery()"
     },
     {
@@ -5404,7 +5664,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "lib_usage_pricing_pricefor",
-      "community": 39,
+      "community": 97,
       "norm_label": "pricefor()"
     },
     {
@@ -5414,7 +5674,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "lib_usage_pricing_costmicrosfor",
-      "community": 39,
+      "community": 97,
       "norm_label": "costmicrosfor()"
     },
     {
@@ -5454,7 +5714,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "lib_usage_recordusage",
-      "community": 42,
+      "community": 58,
       "norm_label": "recordusage()"
     },
     {
@@ -5464,7 +5724,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "lib_usage_checkquota",
-      "community": 97,
+      "community": 42,
       "norm_label": "checkquota()"
     },
     {
@@ -5664,7 +5924,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "lib_whatsapp_sendwhatsappbuttons",
-      "community": 25,
+      "community": 24,
       "norm_label": "sendwhatsappbuttons()"
     },
     {
@@ -5674,7 +5934,7 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "lib_whatsapp_sendwhatsapptemplate",
-      "community": 25,
+      "community": 24,
       "norm_label": "sendwhatsapptemplate()"
     },
     {
@@ -5768,10 +6028,30 @@
       "norm_label": "assistantintent"
     },
     {
+      "label": "LabelReply",
+      "file_type": "code",
+      "source_file": "src/types/llm.types.ts",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "types_llm_types_labelreply",
+      "community": 63,
+      "norm_label": "labelreply"
+    },
+    {
+      "label": "LabelChoice",
+      "file_type": "code",
+      "source_file": "src/types/llm.types.ts",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "types_llm_types_labelchoice",
+      "community": 63,
+      "norm_label": "labelchoice"
+    },
+    {
       "label": "ExtractedFact",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L23",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "types_llm_types_extractedfact",
       "community": 63,
@@ -5781,7 +6061,7 @@
       "label": "ForgetFactTarget",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L34",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "types_llm_types_forgetfacttarget",
       "community": 63,
@@ -5791,7 +6071,7 @@
       "label": "ExtractedReminder",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L40",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "types_llm_types_extractedreminder",
       "community": 63,
@@ -5801,7 +6081,7 @@
       "label": "ParsedAssistantResponse",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L49",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "types_llm_types_parsedassistantresponse",
       "community": 4,
@@ -5811,7 +6091,7 @@
       "label": "ScheduleEntry",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L129",
+      "source_location": "L151",
       "_origin": "ast",
       "id": "types_llm_types_scheduleentry",
       "community": 63,
@@ -5821,7 +6101,7 @@
       "label": "ConversationTurn",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L139",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "types_llm_types_conversationturn",
       "community": 63,
@@ -5831,7 +6111,7 @@
       "label": "ParseOptions",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L144",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "types_llm_types_parseoptions",
       "community": 63,
@@ -5841,7 +6121,7 @@
       "label": "KnownFact",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L159",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "types_llm_types_knownfact",
       "community": 63,
@@ -5851,7 +6131,7 @@
       "label": "DocumentCandidate",
       "file_type": "code",
       "source_file": "src/types/llm.types.ts",
-      "source_location": "L168",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "types_llm_types_documentcandidate",
       "community": 63,
@@ -6036,6 +6316,16 @@
       "id": "tests_i18n_copy_test_walk",
       "community": 9,
       "norm_label": "walk()"
+    },
+    {
+      "label": "label-intent.test.ts",
+      "file_type": "code",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_label_intent_test",
+      "community": 59,
+      "norm_label": "label-intent.test.ts"
     },
     {
       "label": "positions.test.ts",
@@ -7974,7 +8264,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_verification",
-      "community": 61,
+      "community": 95,
       "norm_label": "verification"
     },
     {
@@ -7984,7 +8274,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_npx_tsc_noemit",
-      "community": 61,
+      "community": 95,
       "norm_label": "`npx tsc --noemit`"
     },
     {
@@ -7994,7 +8284,7 @@
       "source_location": "L262",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_npm_test",
-      "community": 61,
+      "community": 95,
       "norm_label": "`npm test`"
     },
     {
@@ -8004,7 +8294,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_npx_next_build",
-      "community": 61,
+      "community": 95,
       "norm_label": "`npx next build`"
     },
     {
@@ -8124,7 +8414,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief",
-      "community": 62,
+      "community": 79,
       "norm_label": "task-1-brief.md"
     },
     {
@@ -8134,7 +8424,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_task_1_schema_and_environment",
-      "community": 62,
+      "community": 79,
       "norm_label": "task 1: schema and environment"
     },
     {
@@ -8144,7 +8434,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report",
-      "community": 62,
+      "community": 79,
       "norm_label": "task-1-report.md"
     },
     {
@@ -8174,7 +8464,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_changes_made",
-      "community": 62,
+      "community": 88,
       "norm_label": "changes made"
     },
     {
@@ -8184,7 +8474,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_1_prisma_schema_prisma_schema_prisma",
-      "community": 62,
+      "community": 88,
       "norm_label": "1. prisma schema (`prisma/schema.prisma`)"
     },
     {
@@ -8194,7 +8484,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_added_usageevent_model",
-      "community": 62,
+      "community": 88,
       "norm_label": "added usageevent model"
     },
     {
@@ -8204,7 +8494,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_updated_user_model",
-      "community": 62,
+      "community": 88,
       "norm_label": "updated user model"
     },
     {
@@ -8214,7 +8504,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_2_environment_configuration_src_lib_env_ts",
-      "community": 62,
+      "community": 88,
       "norm_label": "2. environment configuration (`src/lib/env.ts`)"
     },
     {
@@ -8224,7 +8514,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_added_to_envschema",
-      "community": 62,
+      "community": 88,
       "norm_label": "added to envschema"
     },
     {
@@ -8234,7 +8524,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_report_added_to_fallback_object",
-      "community": 62,
+      "community": 88,
       "norm_label": "added to fallback object"
     },
     {
@@ -8774,7 +9064,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_brief",
-      "community": 63,
+      "community": 71,
       "norm_label": "task-4-brief.md"
     },
     {
@@ -8784,7 +9074,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_brief_task_4_return_usage_from_the_parser_and_write_it",
-      "community": 63,
+      "community": 71,
       "norm_label": "task 4: return usage from the parser and write it"
     },
     {
@@ -8794,7 +9084,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report",
-      "community": 63,
+      "community": 71,
       "norm_label": "task-4-report.md"
     },
     {
@@ -8804,7 +9094,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_task_4_report_return_usage_from_the_parser_and_write_it",
-      "community": 63,
+      "community": 71,
       "norm_label": "task 4 report: return usage from the parser and write it"
     },
     {
@@ -8814,7 +9104,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_summary",
-      "community": 63,
+      "community": 71,
       "norm_label": "summary"
     },
     {
@@ -8824,7 +9114,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_pre_work_call_site_count_verification",
-      "community": 63,
+      "community": 71,
       "norm_label": "pre-work: call-site count verification"
     },
     {
@@ -8834,7 +9124,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_changes",
-      "community": 63,
+      "community": 71,
       "norm_label": "changes"
     },
     {
@@ -8844,7 +9134,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_src_lib_llm_ts_double_quotes_4_space_indent_matched_existing_style",
-      "community": 63,
+      "community": 71,
       "norm_label": "`src/lib/llm.ts` (double quotes, 4-space indent \u2014 matched existing style)"
     },
     {
@@ -8854,7 +9144,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_src_lib_reminder_service_ts_single_quotes_2_space_indent_matched_existing_style",
-      "community": 63,
+      "community": 71,
       "norm_label": "`src/lib/reminder-service.ts` (single quotes, 2-space indent \u2014 matched existing style)"
     },
     {
@@ -8864,7 +9154,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_commands_run",
-      "community": 63,
+      "community": 71,
       "norm_label": "commands run"
     },
     {
@@ -8874,7 +9164,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_files_changed",
-      "community": 63,
+      "community": 71,
       "norm_label": "files changed"
     },
     {
@@ -8884,7 +9174,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_self_review",
-      "community": 63,
+      "community": 71,
       "norm_label": "self-review"
     },
     {
@@ -8894,7 +9184,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_concerns",
-      "community": 63,
+      "community": 71,
       "norm_label": "concerns"
     },
     {
@@ -8904,7 +9194,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_report_commit",
-      "community": 63,
+      "community": 71,
       "norm_label": "commit"
     },
     {
@@ -8914,7 +9204,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_brief",
-      "community": 62,
+      "community": 80,
       "norm_label": "task-5-brief.md"
     },
     {
@@ -8924,7 +9214,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_brief_task_5_enforce_blocking_and_quota_in_the_pipeline",
-      "community": 62,
+      "community": 80,
       "norm_label": "task 5: enforce blocking and quota in the pipeline"
     },
     {
@@ -8934,7 +9224,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report",
-      "community": 62,
+      "community": 80,
       "norm_label": "task-5-report.md"
     },
     {
@@ -8944,7 +9234,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_task_5_report_enforce_blocking_and_quota_in_the_pipeline",
-      "community": 62,
+      "community": 93,
       "norm_label": "task 5 report: enforce blocking and quota in the pipeline"
     },
     {
@@ -8954,7 +9244,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_what_changed",
-      "community": 62,
+      "community": 93,
       "norm_label": "what changed"
     },
     {
@@ -8964,7 +9254,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_final_ordering_of_the_seven_checks_verbatim_from_the_edited_file",
-      "community": 62,
+      "community": 93,
       "norm_label": "final ordering of the seven checks (verbatim from the edited file)"
     },
     {
@@ -8974,7 +9264,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_commands_run_and_output",
-      "community": 62,
+      "community": 93,
       "norm_label": "commands run and output"
     },
     {
@@ -8984,7 +9274,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_files_changed",
-      "community": 62,
+      "community": 93,
       "norm_label": "files changed"
     },
     {
@@ -8994,7 +9284,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_self_review_findings_read_the_final_file_not_just_the_diff",
-      "community": 62,
+      "community": 93,
       "norm_label": "self-review findings (read the final file, not just the diff)"
     },
     {
@@ -9004,7 +9294,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_report_concerns",
-      "community": 62,
+      "community": 93,
       "norm_label": "concerns"
     },
     {
@@ -9684,7 +9974,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "agents",
-      "community": 59,
+      "community": 77,
       "norm_label": "agents.md"
     },
     {
@@ -9694,7 +9984,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "agents_this_is_not_the_next_js_you_know",
-      "community": 59,
+      "community": 77,
       "norm_label": "this is not the next.js you know"
     },
     {
@@ -9704,7 +9994,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "agents_aws_guidance",
-      "community": 59,
+      "community": 77,
       "norm_label": "aws guidance"
     },
     {
@@ -9714,7 +10004,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "agents_secret_safety",
-      "community": 59,
+      "community": 77,
       "norm_label": "secret safety"
     },
     {
@@ -10134,7 +10424,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_bdapps_bkash_subscription_integration",
-      "community": 93,
+      "community": 77,
       "norm_label": "bdapps_bkash_subscription_integration.md"
     },
     {
@@ -10224,7 +10514,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "docs_bdapps_bkash_subscription_integration_5_endpoints_in_remique",
-      "community": 95,
+      "community": 77,
       "norm_label": "5. endpoints in remique"
     },
     {
@@ -10234,7 +10524,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "docs_bdapps_bkash_subscription_integration_1_initiate_subscription_post_or_get",
-      "community": 95,
+      "community": 77,
       "norm_label": "1. initiate subscription (`post` or `get`)"
     },
     {
@@ -10244,7 +10534,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "docs_bdapps_bkash_subscription_integration_2_browser_callback_get",
-      "community": 95,
+      "community": 77,
       "norm_label": "2. browser callback (`get`)"
     },
     {
@@ -10254,7 +10544,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "docs_bdapps_bkash_subscription_integration_3_ipn_webhook_notification_post",
-      "community": 95,
+      "community": 77,
       "norm_label": "3. ipn / webhook notification (`post`)"
     },
     {
@@ -10594,7 +10884,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "specs_2026_09_05_document_storage_design",
-      "community": 71,
+      "community": 75,
       "norm_label": "2026-09-05-document-storage-design.md"
     },
     {
@@ -10814,7 +11104,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design",
-      "community": 80,
+      "community": 6,
       "norm_label": "2026-09-08-landing-language-toggle-design.md"
     },
     {
@@ -10824,7 +11114,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_landing_page_en_bn_language_toggle",
-      "community": 79,
+      "community": 6,
       "norm_label": "landing page en/bn language toggle"
     },
     {
@@ -10834,7 +11124,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_goal",
-      "community": 79,
+      "community": 6,
       "norm_label": "goal"
     },
     {
@@ -10844,7 +11134,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_decisions",
-      "community": 79,
+      "community": 6,
       "norm_label": "decisions"
     },
     {
@@ -10854,7 +11144,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_architecture",
-      "community": 79,
+      "community": 6,
       "norm_label": "architecture"
     },
     {
@@ -10864,7 +11154,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_src_lib_i18n_copy_ts",
-      "community": 79,
+      "community": 6,
       "norm_label": "`src/lib/i18n/copy.ts`"
     },
     {
@@ -10874,7 +11164,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_src_components_lang_provider_tsx",
-      "community": 79,
+      "community": 6,
       "norm_label": "`src/components/lang-provider.tsx`"
     },
     {
@@ -10884,7 +11174,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_src_components_lang_toggle_tsx",
-      "community": 79,
+      "community": 6,
       "norm_label": "`src/components/lang-toggle.tsx`"
     },
     {
@@ -10894,7 +11184,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_files_changed",
-      "community": 79,
+      "community": 6,
       "norm_label": "files changed"
     },
     {
@@ -10904,7 +11194,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_fonts",
-      "community": 79,
+      "community": 6,
       "norm_label": "fonts"
     },
     {
@@ -10914,7 +11204,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_trade_offs",
-      "community": 79,
+      "community": 6,
       "norm_label": "trade-offs"
     },
     {
@@ -10924,7 +11214,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "specs_2026_09_08_landing_language_toggle_design_testing",
-      "community": 79,
+      "community": 6,
       "norm_label": "testing"
     },
     {
@@ -11264,7 +11554,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "aws_readme",
-      "community": 99,
+      "community": 77,
       "norm_label": "readme.md"
     },
     {
@@ -11274,7 +11564,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "aws_readme_remique_aws_webhook_sqs_migration",
-      "community": 99,
+      "community": 77,
       "norm_label": "remique aws webhook & sqs migration"
     },
     {
@@ -11284,7 +11574,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "aws_readme_architecture",
-      "community": 99,
+      "community": 77,
       "norm_label": "architecture"
     },
     {
@@ -11294,7 +11584,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "aws_readme_deployment_instructions",
-      "community": 106,
+      "community": 77,
       "norm_label": "deployment instructions"
     },
     {
@@ -11304,7 +11594,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "aws_readme_1_create_sqs_queues",
-      "community": 106,
+      "community": 77,
       "norm_label": "1. create sqs queues"
     },
     {
@@ -11314,7 +11604,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "aws_readme_2_deploy_webhook_lambda_remique_webhook",
-      "community": 106,
+      "community": 77,
       "norm_label": "2. deploy webhook lambda (`remique-webhook`)"
     },
     {
@@ -11324,7 +11614,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "aws_readme_3_deploy_worker_lambda_remique_worker",
-      "community": 106,
+      "community": 77,
       "norm_label": "3. deploy worker lambda (`remique-worker`)"
     },
     {
@@ -11334,7 +11624,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "aws_readme_4_reconfigure_meta_webhook",
-      "community": 106,
+      "community": 77,
       "norm_label": "4. reconfigure meta webhook"
     },
     {
@@ -11344,7 +11634,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "aws_readme_testing_the_migration",
-      "community": 99,
+      "community": 77,
       "norm_label": "testing the migration"
     },
     {
@@ -11354,7 +11644,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "aws_readme_cleanup",
-      "community": 99,
+      "community": 77,
       "norm_label": "cleanup"
     },
     {
@@ -11418,7 +11708,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 16,
       "norm_label": "scheduling horizon guard (30s past buffer, 3-year ceiling)",
       "id": "lib_date_normalizer_scheduling_horizon_guard"
     },
@@ -12407,7 +12697,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 80,
       "norm_label": "quota notice suppression must match the quota window",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_quota_notice_window"
     },
@@ -12433,7 +12723,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 30,
+      "community": 42,
       "norm_label": "positiveintor guard for hand-entered token caps",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_positive_int_guard"
     },
@@ -12446,7 +12736,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 42,
+      "community": 30,
       "norm_label": "lambda freeze silently loses fire-and-forget usage rows",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_final_fix_report_lambda_freeze_loss"
     },
@@ -12459,7 +12749,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 79,
       "norm_label": "usageevent model (one row per paid api call)",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_usageevent_model"
     },
@@ -12472,7 +12762,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 79,
       "norm_label": "cost stored as integer usd micros",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_cost_micros"
     },
@@ -12485,7 +12775,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 79,
       "norm_label": "denormalised usage totals on user",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_denormalised_totals"
     },
@@ -12498,7 +12788,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 80,
       "norm_label": "user blocking columns (blockedat, blocknoticesentat)",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_blocking_columns"
     },
@@ -12511,7 +12801,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 79,
       "norm_label": "deliberately unused billing scaffolding columns",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_1_brief_billing_scaffolding"
     },
@@ -12524,7 +12814,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 30,
+      "community": 42,
       "norm_label": "unknown models charge at the most expensive rate",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_2_brief_fallback_price"
     },
@@ -12537,7 +12827,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 39,
+      "community": 97,
       "norm_label": "longest-prefix model price resolution",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_2_brief_longest_prefix_model_resolution"
     },
@@ -12563,7 +12853,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 39,
+      "community": 97,
       "norm_label": "pure module with zero imports for testability",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_2_brief_zero_import_testability"
     },
@@ -12576,7 +12866,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 79,
       "norm_label": "single transaction keeps counters from drifting",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_3_brief_usage_transaction"
     },
@@ -12589,7 +12879,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 42,
+      "community": 30,
       "norm_label": "metering must never fail a user's turn",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_3_brief_never_throws"
     },
@@ -12602,7 +12892,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 97,
+      "community": 42,
       "norm_label": "cached tokens are a subset of input tokens",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_3_brief_cached_token_no_double_count"
     },
@@ -12615,7 +12905,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 63,
+      "community": 71,
       "norm_label": "parseresult { parsed, usage }",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_brief_parseresult"
     },
@@ -12641,7 +12931,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 63,
+      "community": 71,
       "norm_label": "null usage rather than a zero row on provider failure",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_4_brief_null_usage_not_zero"
     },
@@ -12667,7 +12957,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 80,
       "norm_label": "pipeline quota gate",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_brief_quota_gate"
     },
@@ -12693,7 +12983,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 80,
       "norm_label": "notify once, then drop silently",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_5_brief_notice_once"
     },
@@ -12810,7 +13100,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 1,
       "norm_label": "unconfigured admin surface returns 404",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_6_brief_unconfigured_404"
     },
@@ -12849,7 +13139,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 1,
       "norm_label": "per-instance in-memory login rate limiter",
       "id": "2026_09_08_usage_metering_and_admin_dashboard_task_7_brief_login_rate_limiter"
     },
@@ -12940,7 +13230,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 39,
+      "community": 97,
       "norm_label": "tests must not transitively import db.ts",
       "id": "plans_2026_09_08_usage_metering_and_admin_dashboard_tests_never_touch_db"
     },
@@ -12953,7 +13243,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 42,
+      "community": 58,
       "norm_label": "int4 ceiling on lifetime cost and token counters",
       "id": "plans_2026_09_08_usage_metering_and_admin_dashboard_int4_overflow"
     },
@@ -12966,7 +13256,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 75,
       "norm_label": "retry storm burns quota on undelivered replies",
       "id": "plans_2026_09_08_usage_metering_and_admin_dashboard_retry_storm_quota_risk"
     },
@@ -13018,7 +13308,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 1,
       "norm_label": "rolling token quota enforcement",
       "id": "specs_2026_09_08_usage_metering_and_admin_design_quota_enforcement"
     },
@@ -13031,7 +13321,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 1,
       "norm_label": "single-password admin threat model",
       "id": "specs_2026_09_08_usage_metering_and_admin_design_admin_threat_model"
     },
@@ -13057,7 +13347,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 99,
+      "community": 75,
       "norm_label": "two-cloud deployment topology (aws + vercel)",
       "id": "specs_2026_09_08_usage_metering_and_admin_design_deployment_topology"
     },
@@ -13070,7 +13360,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 93,
+      "community": 77,
       "norm_label": "billing scaffolding columns (sub-project e)",
       "id": "specs_2026_09_08_usage_metering_and_admin_design_billing_scaffolding"
     },
@@ -13083,7 +13373,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "label-only document matching",
       "id": "specs_2026_09_05_document_storage_design_label_only_matching"
     },
@@ -13096,7 +13386,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "document bytes live in private s3",
       "id": "specs_2026_09_05_document_storage_design_s3_bytes_storage"
     },
@@ -13109,7 +13399,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "retrieval lists before it sends",
       "id": "specs_2026_09_05_document_storage_design_list_before_send"
     },
@@ -13122,7 +13412,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "model returns indices, never uuids",
       "id": "specs_2026_09_05_document_storage_design_indices_not_uuids"
     },
@@ -13135,7 +13425,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "unlabeled document orphan sweep",
       "id": "specs_2026_09_05_document_storage_design_orphan_sweep"
     },
@@ -13187,7 +13477,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "ordinals resolve against remembered display order",
       "id": "specs_2026_09_06_conversational_assistant_design_positional_resolution"
     },
@@ -13213,7 +13503,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "client-side toggle on one url",
       "id": "specs_2026_09_08_landing_language_toggle_design_client_side_toggle"
     },
@@ -13226,7 +13516,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "typed copy dictionary prevents language drift",
       "id": "specs_2026_09_08_landing_language_toggle_design_typed_copy_dictionary"
     },
@@ -13278,7 +13568,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "the fired-moment rule",
       "id": "design_fired_moment_rule"
     },
@@ -13330,7 +13620,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "the one panel rule",
       "id": "design_one_panel_rule"
     },
@@ -13356,7 +13646,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "the parsed-data rule",
       "id": "design_parsed_data_rule"
     },
@@ -13408,7 +13698,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "the server-complete rule",
       "id": "design_server_complete_rule"
     },
@@ -13421,7 +13711,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "live thread panel (signature component)",
       "id": "design_live_thread_panel"
     },
@@ -13434,7 +13724,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 93,
+      "community": 77,
       "norm_label": "remique product definition",
       "id": "product_remique"
     },
@@ -13447,7 +13737,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 93,
+      "community": 77,
       "norm_label": "zero friction is the product",
       "id": "product_zero_friction_principle"
     },
@@ -13460,7 +13750,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "the language wedge (bangla / banglish parsing)",
       "id": "product_language_wedge"
     },
@@ -13473,7 +13763,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 6,
       "norm_label": "bangladeshi temporal idiom model",
       "id": "product_bangladeshi_time_model"
     },
@@ -13499,7 +13789,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 93,
+      "community": 77,
       "norm_label": "never invent commercial or scale claims",
       "id": "product_no_fabricated_claims"
     },
@@ -13512,7 +13802,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 75,
       "norm_label": "remique-webhook lambda",
       "id": "aws_readme_remique_webhook_lambda"
     },
@@ -13525,7 +13815,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 75,
       "norm_label": "remique-inbound.fifo sqs queue",
       "id": "aws_readme_remique_inbound_fifo_queue"
     },
@@ -13538,7 +13828,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "remique-worker lambda",
       "id": "aws_readme_remique_worker_lambda"
     },
@@ -13551,7 +13841,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 88,
+      "community": 75,
       "norm_label": "fifo ordering by sender with meta message-id dedup",
       "id": "aws_readme_fifo_ordering_and_dedup"
     },
@@ -13564,7 +13854,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 71,
+      "community": 75,
       "norm_label": "lambda must use supabase transaction-mode pooler",
       "id": "aws_readme_transaction_pooler_requirement"
     },
@@ -13577,7 +13867,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "sha-512 authorization signature formula",
       "id": "docs_bdapps_bkash_subscription_integration_sha512_signature"
     },
@@ -13590,7 +13880,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "15-digit requestid format",
       "id": "docs_bdapps_bkash_subscription_integration_request_id_format"
     },
@@ -13603,7 +13893,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "/api/billing/bdapps/subscribe route",
       "id": "docs_bdapps_bkash_subscription_integration_subscribe_route"
     },
@@ -13616,7 +13906,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "/api/billing/bdapps/callback route",
       "id": "docs_bdapps_bkash_subscription_integration_callback_route"
     },
@@ -13629,7 +13919,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "/api/billing/bdapps/webhook ipn route",
       "id": "docs_bdapps_bkash_subscription_integration_webhook_route"
     },
@@ -13642,7 +13932,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "server-side secret never reaches the browser",
       "id": "docs_bdapps_bkash_subscription_integration_server_side_secret"
     },
@@ -22460,6 +22750,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L529",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "bdapps_subscription_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L468",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -22509,6 +22810,17 @@
       "weight": 1.0,
       "source": "bdapps_subscription_service_handlebdappscallback",
       "target": "lib_whatsapp_sendwhatsappmessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L530",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "bdapps_subscription_service_cancelsubscription"
     },
     {
       "relation": "calls",
@@ -22873,11 +23185,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1806",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_conversation_log_replytouser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1833",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "lib_reminder_service_deliverdocuments",
       "target": "lib_conversation_log_replytouser"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1850",
+      "weight": 1.0,
+      "source": "lib_reminder_service_followupdeferreddocument",
+      "target": "lib_conversation_log_replytouser",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -22906,6 +23240,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1725",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_conversation_log_replytouser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1710",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -22927,6 +23272,17 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L517",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_conversation_log_replytouser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L456",
@@ -22938,12 +23294,45 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1708",
+      "weight": 1.0,
+      "source": "lib_reminder_service_savedocumentlabel",
+      "target": "lib_conversation_log_replytouser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/conversation-log.ts",
       "source_location": "L63",
       "weight": 1.0,
       "source": "lib_conversation_log_replywithbuttons",
       "target": "lib_whatsapp_sendwhatsappbuttons"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_conversation_log_replywithbuttons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L737",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_conversation_log_replywithbuttons",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -23049,6 +23438,17 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service",
       "target": "lib_date_normalizer_validateandnormalizedate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L955",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_date_normalizer_validateandnormalizedate",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -23372,6 +23772,672 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L192",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_chosenlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_decidelabelreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L221",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_describependingcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_hascommandsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_intent_button_titles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_label_button_actions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_labelbuttonaction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L162",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_labelchoicebuttons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L202",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_labelclarificationfallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_labeldecision",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_lookslikelabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L180",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_parselabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L153",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_requestbuttontitle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L142",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_resolvelabelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L79",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "lib_label_intent_striplabelfiller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "types_llm_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "types_llm_types_assistantintent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "types_llm_types_labelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "lib_label_intent",
+      "target": "types_llm_types_parsedassistantresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/llm.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "lib_llm",
+      "target": "lib_label_intent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L229",
+      "weight": 1.0,
+      "source": "lib_label_intent_describependingcontext",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "lib_label_intent_labelchoicebuttons",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L209",
+      "weight": 1.0,
+      "source": "lib_label_intent_labelclarificationfallback",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1806",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1852",
+      "weight": 1.0,
+      "source": "lib_reminder_service_followupdeferreddocument",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1745",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_label_intent_filenoun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L193",
+      "weight": 1.0,
+      "source": "lib_label_intent_chosenlabel",
+      "target": "lib_label_intent_striplabelfiller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "lib_label_intent_decidelabelreply",
+      "target": "lib_label_intent_striplabelfiller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "lib_label_intent_hascommandsignal",
+      "target": "lib_label_intent_striplabelfiller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "lib_label_intent_lookslikelabel",
+      "target": "lib_label_intent_striplabelfiller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L128",
+      "weight": 1.0,
+      "source": "lib_label_intent_decidelabelreply",
+      "target": "lib_label_intent_hascommandsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "lib_label_intent_lookslikelabel",
+      "target": "lib_label_intent_hascommandsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/label-intent.ts",
+      "source_location": "L128",
+      "weight": 1.0,
+      "source": "lib_label_intent_decidelabelreply",
+      "target": "lib_label_intent_lookslikelabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_lookslikelabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_decidelabelreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L712",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_decidelabelreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_decidelabelreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_resolvelabelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L751",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_resolvelabelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_resolvelabelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_requestbuttontitle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L722",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_requestbuttontitle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_requestbuttontitle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_labelchoicebuttons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L740",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_labelchoicebuttons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_labelchoicebuttons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_parselabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L501",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_parselabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_parselabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_chosenlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1793",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_label_intent_chosenlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_chosenlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_label_intent_labelclarificationfallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L728",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_label_intent_labelclarificationfallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_labelclarificationfallback",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/llm.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "lib_llm",
+      "target": "lib_label_intent_describependingcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/llm.ts",
+      "source_location": "L598",
+      "weight": 1.0,
+      "source": "lib_llm_buildinputtext",
+      "target": "lib_label_intent_describependingcontext"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/label-intent.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_label_intent_test",
+      "target": "lib_label_intent_describependingcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/lib/llm.ts",
       "source_location": "L270",
       "weight": 1.0,
@@ -23688,6 +24754,17 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service",
       "target": "lib_llm_parseusermessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L610",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_llm_parseusermessage",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -24019,9 +25096,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan",
-      "confidence_score": 1.0
+      "target": "lib_plan"
     },
     {
       "relation": "imports",
@@ -24030,9 +25107,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_lockedfeature",
-      "confidence_score": 1.0
+      "target": "lib_plan_lockedfeature"
     },
     {
       "relation": "contains",
@@ -24040,9 +25117,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_feature_openers",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_feature_openers"
     },
     {
       "relation": "contains",
@@ -24050,9 +25127,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L53",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_lockedfeaturemessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_lockedfeaturemessage"
     },
     {
       "relation": "contains",
@@ -24060,9 +25137,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_namesuffix",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_namesuffix"
     },
     {
       "relation": "contains",
@@ -24070,9 +25147,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_pickrandom",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_pickrandom"
     },
     {
       "relation": "contains",
@@ -24080,9 +25157,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_reminderlimitmessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_reminderlimitmessage"
     },
     {
       "relation": "contains",
@@ -24090,9 +25167,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_plan_voice_subscribe_tails",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_subscribe_tails"
     },
     {
       "relation": "imports_from",
@@ -24101,9 +25178,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_reminder_voice",
-      "confidence_score": 1.0
+      "target": "lib_reminder_voice"
     },
     {
       "relation": "imports",
@@ -24112,9 +25189,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice",
-      "target": "lib_reminder_voice_shortname",
-      "confidence_score": 1.0
+      "target": "lib_reminder_voice_shortname"
     },
     {
       "relation": "imports_from",
@@ -24123,9 +25200,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_plan_voice",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice"
     },
     {
       "relation": "imports_from",
@@ -24134,9 +25211,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_voice",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice"
     },
     {
       "relation": "calls",
@@ -24145,9 +25222,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice_lockedfeaturemessage",
-      "target": "lib_plan_voice_pickrandom",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_pickrandom"
     },
     {
       "relation": "calls",
@@ -24156,9 +25233,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L78",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice_reminderlimitmessage",
-      "target": "lib_plan_voice_pickrandom",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_pickrandom"
     },
     {
       "relation": "calls",
@@ -24167,9 +25244,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice_lockedfeaturemessage",
-      "target": "lib_plan_voice_namesuffix",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_namesuffix"
     },
     {
       "relation": "calls",
@@ -24178,9 +25255,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L49",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice_namesuffix",
-      "target": "lib_reminder_voice_shortname",
-      "confidence_score": 1.0
+      "target": "lib_reminder_voice_shortname"
     },
     {
       "relation": "calls",
@@ -24189,9 +25266,9 @@
       "source_file": "src/lib/plan-voice.ts",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan_voice_reminderlimitmessage",
-      "target": "lib_plan_voice_namesuffix",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_namesuffix"
     },
     {
       "relation": "imports",
@@ -24200,7 +25277,29 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
+      "target": "lib_plan_voice_lockedfeaturemessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1725",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_plan_voice_lockedfeaturemessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L574",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
       "target": "lib_plan_voice_lockedfeaturemessage",
       "confidence_score": 1.0
     },
@@ -24222,9 +25321,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_voice_lockedfeaturemessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_lockedfeaturemessage"
     },
     {
       "relation": "imports",
@@ -24233,9 +25332,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_plan_voice_reminderlimitmessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_reminderlimitmessage"
     },
     {
       "relation": "calls",
@@ -24244,9 +25343,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1783",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_limitreply",
-      "target": "lib_plan_voice_reminderlimitmessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_reminderlimitmessage"
     },
     {
       "relation": "imports",
@@ -24255,9 +25354,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_voice_reminderlimitmessage",
-      "confidence_score": 1.0
+      "target": "lib_plan_voice_reminderlimitmessage"
     },
     {
       "relation": "contains",
@@ -24265,9 +25364,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_hassecondbrain",
-      "confidence_score": 1.0
+      "target": "lib_plan_hassecondbrain"
     },
     {
       "relation": "contains",
@@ -24275,9 +25374,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L77",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_isownnamefact",
-      "confidence_score": 1.0
+      "target": "lib_plan_isownnamefact"
     },
     {
       "relation": "contains",
@@ -24285,9 +25384,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_lockedfeature",
-      "confidence_score": 1.0
+      "target": "lib_plan_lockedfeature"
     },
     {
       "relation": "contains",
@@ -24295,9 +25394,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L90",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_lockedfeaturefor",
-      "confidence_score": 1.0
+      "target": "lib_plan_lockedfeaturefor"
     },
     {
       "relation": "contains",
@@ -24305,9 +25404,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L42",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_monthwindow",
-      "confidence_score": 1.0
+      "target": "lib_plan_monthwindow"
     },
     {
       "relation": "contains",
@@ -24315,9 +25414,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_reminderallowance",
-      "confidence_score": 1.0
+      "target": "lib_plan_reminderallowance"
     },
     {
       "relation": "contains",
@@ -24325,9 +25424,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_remindersource",
-      "confidence_score": 1.0
+      "target": "lib_plan_remindersource"
     },
     {
       "relation": "contains",
@@ -24335,9 +25434,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L69",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "lib_plan_self_subjects",
-      "confidence_score": 1.0
+      "target": "lib_plan_self_subjects"
     },
     {
       "relation": "imports_from",
@@ -24346,9 +25445,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "types_llm_types",
-      "confidence_score": 1.0
+      "target": "types_llm_types"
     },
     {
       "relation": "imports",
@@ -24357,9 +25456,9 @@
       "source_file": "src/lib/plan.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_plan",
-      "target": "types_llm_types_parsedassistantresponse",
-      "confidence_score": 1.0
+      "target": "types_llm_types_parsedassistantresponse"
     },
     {
       "relation": "imports_from",
@@ -24368,9 +25467,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_plan",
-      "confidence_score": 1.0
+      "target": "lib_plan"
     },
     {
       "relation": "imports_from",
@@ -24379,9 +25478,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan",
-      "confidence_score": 1.0
+      "target": "lib_plan"
     },
     {
       "relation": "imports",
@@ -24390,9 +25489,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_lockedfeature",
-      "confidence_score": 1.0
+      "target": "lib_plan_lockedfeature"
     },
     {
       "relation": "imports",
@@ -24401,7 +25500,29 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
+      "target": "lib_plan_hassecondbrain"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1724",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_plan_hassecondbrain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L542",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
       "target": "lib_plan_hassecondbrain",
       "confidence_score": 1.0
     },
@@ -24423,9 +25544,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_hassecondbrain",
-      "confidence_score": 1.0
+      "target": "lib_plan_hassecondbrain"
     },
     {
       "relation": "imports",
@@ -24434,9 +25555,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_plan_monthwindow",
-      "confidence_score": 1.0
+      "target": "lib_plan_monthwindow"
     },
     {
       "relation": "calls",
@@ -24445,9 +25566,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1736",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_countuserremindersthismonth",
-      "target": "lib_plan_monthwindow",
-      "confidence_score": 1.0
+      "target": "lib_plan_monthwindow"
     },
     {
       "relation": "calls",
@@ -24456,9 +25577,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1782",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_limitreply",
-      "target": "lib_plan_monthwindow",
-      "confidence_score": 1.0
+      "target": "lib_plan_monthwindow"
     },
     {
       "relation": "imports",
@@ -24467,9 +25588,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_monthwindow",
-      "confidence_score": 1.0
+      "target": "lib_plan_monthwindow"
     },
     {
       "relation": "imports",
@@ -24478,7 +25599,18 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
+      "target": "lib_plan_reminderallowance"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L935",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
       "target": "lib_plan_reminderallowance",
       "confidence_score": 1.0
     },
@@ -24489,9 +25621,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1768",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_insertuserreminders",
-      "target": "lib_plan_reminderallowance",
-      "confidence_score": 1.0
+      "target": "lib_plan_reminderallowance"
     },
     {
       "relation": "calls",
@@ -24511,9 +25643,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_reminderallowance",
-      "confidence_score": 1.0
+      "target": "lib_plan_reminderallowance"
     },
     {
       "relation": "imports",
@@ -24522,9 +25654,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_plan_isownnamefact",
-      "confidence_score": 1.0
+      "target": "lib_plan_isownnamefact"
     },
     {
       "relation": "calls",
@@ -24533,9 +25665,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1456",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_persistfacts",
-      "target": "lib_plan_isownnamefact",
-      "confidence_score": 1.0
+      "target": "lib_plan_isownnamefact"
     },
     {
       "relation": "imports",
@@ -24544,9 +25676,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_isownnamefact",
-      "confidence_score": 1.0
+      "target": "lib_plan_isownnamefact"
     },
     {
       "relation": "imports",
@@ -24555,7 +25687,18 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
+      "target": "lib_plan_lockedfeaturefor"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L680",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
       "target": "lib_plan_lockedfeaturefor",
       "confidence_score": 1.0
     },
@@ -24577,9 +25720,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "lib_plan_lockedfeaturefor",
-      "confidence_score": 1.0
+      "target": "lib_plan_lockedfeaturefor"
     },
     {
       "relation": "contains",
@@ -24785,6 +25928,17 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1266",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_qstash_cancelscheduleddelivery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1214",
@@ -24821,6 +25975,16 @@
       "confidence_score": 1.0,
       "source": "lib_recurrence",
       "target": "lib_recurrence_step"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1760",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_applylabelchoice",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24878,9 +26042,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1732",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_reminder_service_countuserremindersthismonth",
-      "confidence_score": 1.0
+      "target": "lib_reminder_service_countuserremindersthismonth"
     },
     {
       "relation": "contains",
@@ -24946,6 +26110,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1822",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_followupdeferreddocument",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1686",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24996,6 +26170,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1717",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_handlelabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1702",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25016,6 +26200,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L488",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_handleturn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L161",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25028,9 +26222,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1744",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_reminder_service_insertremindersresult",
-      "confidence_score": 1.0
+      "target": "lib_reminder_service_insertremindersresult"
     },
     {
       "relation": "contains",
@@ -25038,9 +26232,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1755",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_reminder_service_insertuserreminders",
-      "confidence_score": 1.0
+      "target": "lib_reminder_service_insertuserreminders"
     },
     {
       "relation": "contains",
@@ -25056,10 +26250,30 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L1781",
+      "source_location": "L460",
       "weight": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_reminder_service_limitreply",
+      "target": "lib_reminder_service_labelorrequestdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1781",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_limitreply"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1678",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_loadactivestate",
       "confidence_score": 1.0
     },
     {
@@ -25068,9 +26282,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1729",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service",
-      "target": "lib_reminder_service_newreminder",
-      "confidence_score": 1.0
+      "target": "lib_reminder_service_newreminder"
     },
     {
       "relation": "contains",
@@ -25101,6 +26315,16 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service",
       "target": "lib_reminder_service_normalizerecurrence"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1685",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -25216,6 +26440,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1702",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_savedocumentlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1872",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25231,6 +26465,16 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service",
       "target": "lib_reminder_service_toscheduleentry"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L451",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "lib_reminder_service_turncontext",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -25434,6 +26678,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "lib_reminder_service",
+      "target": "types_llm_types_labelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L12",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25500,11 +26755,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L816",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_normalizecategory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L723",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
       "target": "lib_reminder_service_normalizecategory"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1091",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_normalizecategoryfilter",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25522,6 +26799,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1114",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_describecategories",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1032",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25533,11 +26821,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L971",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_normalizerecurrence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L883",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
       "target": "lib_reminder_service_normalizerecurrence"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1163",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_resolvelistedreminderids",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25577,6 +26887,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1164",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_positionproblemmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1089",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25593,6 +26914,17 @@
       "confidence_score": 1.0,
       "source": "tests_positions_test",
       "target": "lib_reminder_service_positionproblemmessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1104",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_parsefilterbound",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25665,6 +26997,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L505",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_handlebuttontap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L445",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25709,6 +27052,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1124",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_firstname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1042",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25736,6 +27090,17 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service_buildrescheduleconfirmation",
       "target": "lib_reminder_service_friendlywhen"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L831",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_friendlywhen",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25775,6 +27140,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1188",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_describeoffset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1129",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25802,6 +27178,17 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service_buildgroupedlist",
       "target": "lib_reminder_service_formatreminderline"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1147",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_buildgroupedlist",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25854,9 +27241,9 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L491",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
-      "target": "lib_reminder_service_countuserremindersthismonth",
-      "confidence_score": 1.0
+      "target": "lib_reminder_service_countuserremindersthismonth"
     },
     {
       "relation": "calls",
@@ -25868,6 +27255,17 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
       "target": "lib_reminder_service_deliverdocuments"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L484",
+      "weight": 1.0,
+      "source": "lib_reminder_service_processincomingusermessage",
+      "target": "lib_reminder_service_followupdeferreddocument",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25907,11 +27305,22 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
-      "source_location": "L702",
+      "source_location": "L481",
       "weight": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
-      "target": "lib_reminder_service_insertuserreminders",
+      "target": "lib_reminder_service_handleturn",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L702",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "lib_reminder_service_processincomingusermessage",
+      "target": "lib_reminder_service_insertuserreminders"
     },
     {
       "relation": "calls",
@@ -25920,8 +27329,19 @@
       "source_file": "src/lib/reminder-service.ts",
       "source_location": "L706",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_reminder_service_processincomingusermessage",
-      "target": "lib_reminder_service_limitreply",
+      "target": "lib_reminder_service_limitreply"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L473",
+      "weight": 1.0,
+      "source": "lib_reminder_service_processincomingusermessage",
+      "target": "lib_reminder_service_loadactivestate",
       "confidence_score": 1.0
     },
     {
@@ -26005,11 +27425,242 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1778",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_reminder_service_handleturn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1070",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_buildcreationconfirmation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1286",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_buildrescheduleconfirmation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L554",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_countuserremindersthismonth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L781",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_deliverdocuments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L692",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_handleincomingfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L503",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_handlelabelbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L861",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_handlelistdocuments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L885",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_handlesenddocuments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L816",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_insertuserreminders",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L820",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_limitreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L579",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_loadactivestate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L730",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L675",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_persistfacts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L718",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_savedocumentlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L827",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_service_schedulereminderdelivery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L834",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_voice_conflictconfirmedmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L848",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_voice_conflictdeclinedmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1007",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_reminder_voice_conflictwarningmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L648",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleturn",
+      "target": "lib_usage_recordusage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
       "source_location": "L1552",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "lib_reminder_service_persistfacts",
       "target": "lib_reminder_service_istransientfact"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1666",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handleincomingfile",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -26032,6 +27683,83 @@
       "confidence_score": 1.0,
       "source": "lib_reminder_service_handleincomingfile",
       "target": "lib_whatsapp_media_fetchmedia"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1830",
+      "weight": 1.0,
+      "source": "lib_reminder_service_followupdeferreddocument",
+      "target": "lib_reminder_service_loadactivestate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1729",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_reminder_service_loadactivestate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1801",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1846",
+      "weight": 1.0,
+      "source": "lib_reminder_service_followupdeferreddocument",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1742",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_reminder_service_parkstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1788",
+      "weight": 1.0,
+      "source": "lib_reminder_service_applylabelchoice",
+      "target": "lib_reminder_service_savedocumentlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/reminder-service.ts",
+      "source_location": "L1751",
+      "weight": 1.0,
+      "source": "lib_reminder_service_handlelabelbutton",
+      "target": "lib_reminder_service_applylabelchoice",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -27596,9 +29324,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "types_llm_types",
-      "confidence_score": 1.0
+      "target": "types_llm_types"
     },
     {
       "relation": "contains",
@@ -27674,6 +29402,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/types/llm.types.ts",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "types_llm_types",
+      "target": "types_llm_types_labelchoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/llm.types.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "types_llm_types",
+      "target": "types_llm_types_labelreply",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/llm.types.ts",
       "source_location": "L48",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27717,9 +29465,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "types_llm_types_parsedassistantresponse",
-      "confidence_score": 1.0
+      "target": "types_llm_types_parsedassistantresponse"
     },
     {
       "relation": "contains",
@@ -27767,9 +29515,9 @@
       "source_file": "tests/free-plan.test.ts",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_free_plan_test",
-      "target": "tests_free_plan_test_parsed",
-      "confidence_score": 1.0
+      "target": "tests_free_plan_test_parsed"
     },
     {
       "relation": "contains",
@@ -35821,5 +37569,5 @@
       "source_file": "public/whatsappBg.jpg"
     }
   ],
-  "built_at_commit": "56336ad2d6fb69b53aaf37282d45deb77c2bcd87"
+  "built_at_commit": "9fbc22ec2c5185f199e38de6c660d43c62ea7099"
 }

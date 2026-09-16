@@ -9,7 +9,23 @@ import { users, reminders, conversationStates, notes, facts, messages, documents
 import { parseUserMessage } from './llm';
 import { validateAndNormalizeDate } from './date-normalizer';
 import { cancelScheduledDelivery, scheduleDelayedReminder } from './qstash';
-import { replyToUser, replyWithMedia } from './conversation-log';
+import { replyToUser, replyWithButtons, replyWithMedia } from './conversation-log';
+import {
+  AWAITING_REQUEST,
+  BUTTON_LABEL_ELSE,
+  BUTTON_LABEL_REQUEST,
+  LABEL_DOCUMENT,
+  LABEL_OR_REQUEST,
+  chosenLabel,
+  decideLabelReply,
+  fileNoun,
+  labelChoiceButtons,
+  labelClarificationFallback,
+  parseLabelButton,
+  requestButtonTitle,
+  resolveLabelChoice,
+} from './label-intent';
+import type { LabelChoice } from '../types/llm.types';
 import { fetchMedia, MediaTooLargeError } from './whatsapp-media';
 import { putDocument, getDocumentUrl, extensionForMimeType } from './storage';
 import { recordUsage } from './usage';
@@ -428,11 +444,53 @@ function formatReminderLine(
   return `${at} — ${r.title}`;
 }
 
+/**
+ * Per-turn bookkeeping that flows set and the wrapper acts on once the turn
+ * has been answered.
+ */
+interface TurnContext {
+  /**
+   * An unnamed file whose naming question was put aside so another request
+   * could be handled first. The user is asked for its name afterwards.
+   */
+  deferredDocumentId: string | null;
+}
+
+/** What a parked "do that, name the file, or something else?" question holds. */
+interface LabelOrRequestData {
+  documentId: string;
+  mediaType?: string | null;
+  originalMessage: string;
+  requestText?: string | null;
+}
+
 export async function processIncomingUserMessage(
   user: User,
   message: PipelineMessage,
   prefetchedState?: ConversationState | null
 ) {
+  const startState =
+    prefetchedState !== undefined ? prefetchedState : ((await loadActiveState(user.id)) ?? null);
+
+  // A file put aside on an earlier turn rides along on whatever question was
+  // open since, and comes back once that question is answered.
+  const carried = (startState?.pendingData as { deferredDocumentId?: unknown } | null)
+    ?.deferredDocumentId;
+  const turn: TurnContext = { deferredDocumentId: typeof carried === 'string' ? carried : null };
+
+  await handleTurn(user, message, startState, turn);
+
+  if (turn.deferredDocumentId && hasSecondBrain(user)) {
+    await followUpDeferredDocument(user, turn.deferredDocumentId);
+  }
+}
+
+async function handleTurn(
+  user: User,
+  message: PipelineMessage,
+  prefetchedState: ConversationState | null | undefined,
+  turn: TurnContext
+): Promise<void> {
   const userMessage = message.messageText;
 
   // A tap on one of our own buttons carries exactly what was meant, so it is
@@ -440,7 +498,12 @@ export async function processIncomingUserMessage(
   // "Done" through an LLM would cost a request to rediscover something we
   // already encoded in the button id.
   if (message.buttonReplyId) {
-    await handleButtonTap(user, message.buttonReplyId);
+    const labelButton = parseLabelButton(message.buttonReplyId);
+    if (labelButton) {
+      await handleLabelButton(user, message, labelButton.action, labelButton.documentId, turn);
+    } else {
+      await handleButtonTap(user, message.buttonReplyId);
+    }
     return;
   }
 
@@ -513,9 +576,7 @@ export async function processIncomingUserMessage(
   }
 
   const activeState =
-    prefetchedState !== undefined
-      ? prefetchedState
-      : await db.query.conversationStates.findFirst({ where: (cs, { and, eq, gt }) => and(eq(cs.userId, user.id), gt(cs.expiresAt, new Date())) });
+    prefetchedState !== undefined ? prefetchedState : await loadActiveState(user.id);
 
   // Notes and document labels are both prompt context, so they are read
   // together — this is on the user's critical path.
@@ -548,6 +609,7 @@ export async function processIncomingUserMessage(
 
   const { parsed, usage } = await parseUserMessage(userMessage, user.timezone, {
     pendingContext: activeState?.pendingData,
+    pendingIntent: activeState?.pendingIntent ?? null,
     savedNotes: notesText,
     userName: user.name,
     userPlan: secondBrain ? `Pro (${user.planPeriod || 'monthly'})` : 'Free',
@@ -603,6 +665,8 @@ export async function processIncomingUserMessage(
       `turns=${recentMessages.length} ` +
       `facts=${parsed.facts?.length ?? 0} ` +
       `forget=${parsed.forget_facts?.length ?? 0} ` +
+      `labelReply=${parsed.label_reply ?? null} ` +
+      `labelChoice=${parsed.label_choice ?? null} ` +
       `hasMedia=${Boolean(message.mediaId)}`
   );
 
@@ -633,21 +697,71 @@ export async function processIncomingUserMessage(
   // Document flows below need the second brain. A Free user can only have one
   // of these states parked if they downgraded mid-conversation; the message
   // then falls through to ordinary handling instead.
-  if (secondBrain && activeState?.pendingIntent === 'label_document') {
-    const pending = activeState.pendingData as { documentId?: string } | null;
+  //
+  // A reply is not the name just because a name was asked for: "remind me to
+  // repair my watch" was once saved as a filename here. Anything that is not
+  // plainly a name is asked about, and neither saved nor acted on.
+  if (secondBrain && activeState?.pendingIntent === LABEL_DOCUMENT && userMessage.trim()) {
+    const pending = activeState.pendingData as {
+      documentId?: string;
+      mediaType?: string | null;
+      confirmed?: boolean;
+    } | null;
 
     if (pending?.documentId) {
-      // The label is whatever they just said. Falling back to the raw message
-      // matters: a one-word reply like "passport" is a perfectly good name that
-      // the model sometimes returns as general_reply instead of a label.
-      const label = (parsed.document_label || userMessage).trim();
+      const decision = decideLabelReply(parsed, userMessage, Boolean(pending.confirmed));
+      console.log(
+        `[Remique] label reply verdict=${parsed.label_reply ?? 'none'} decision=${decision.kind}`
+      );
 
-      if (label) {
-        (await db.update(documents).set({ label }).where(eq(documents.id, pending.documentId)).returning())[0];
-        await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
-        await replyToUser(user, `✅ Saved as *${label}*.`);
+      if (decision.kind === 'name') {
+        await saveDocumentLabel(user, pending.documentId, decision.label);
         return;
       }
+
+      const requestTitle = requestButtonTitle(parsed);
+      // Only a question written for this situation is used. Without a verdict
+      // the model was not thinking about the file, and its question may be
+      // "what time?" — which skips straight past what they meant.
+      const question =
+        (parsed.label_reply && parsed.clarification_question?.trim()) ||
+        labelClarificationFallback(userMessage, pending.mediaType, Boolean(requestTitle));
+
+      await parkState(user.id, LABEL_OR_REQUEST, {
+        documentId: pending.documentId,
+        mediaType: pending.mediaType ?? null,
+        originalMessage: userMessage,
+        requestText: parsed.request_restatement?.trim() || null,
+      } satisfies LabelOrRequestData);
+
+      await replyWithButtons(
+        user,
+        question,
+        labelChoiceButtons(pending.documentId, requestTitle, pending.mediaType)
+      );
+      return;
+    }
+  }
+
+  // ─── Flow H2: "Set that reminder" / "Name the image" / something else ─
+  if (secondBrain && activeState?.pendingIntent === LABEL_OR_REQUEST) {
+    const pending = activeState.pendingData as LabelOrRequestData | null;
+
+    if (pending?.documentId) {
+      const choice = resolveLabelChoice(parsed, AFFIRMATIVE.test(userMessage.trim()));
+      console.log(`[Remique] label choice=${choice} verdict=${parsed.label_choice ?? 'none'}`);
+
+      const handled = await applyLabelChoice(
+        user,
+        message,
+        pending,
+        choice,
+        { label: parsed.document_label, restatement: parsed.request_restatement },
+        turn
+      );
+      if (handled) return;
+      // "Something else": this message is itself the new request, and the
+      // flows below already have its parse.
     }
   }
 
@@ -1549,17 +1663,193 @@ async function handleIncomingFile(
 
   // No caption, or a caption with no usable name in it. Park the document and
   // ask — the reply lands in Flow H.
-  (await db.insert(conversationStates).values({ userId: user.id, 
-pendingIntent: 'label_document',
-      pendingData: { documentId: document.id },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), }).onConflictDoUpdate({ target: conversationStates.userId, set: { 
-pendingIntent: 'label_document',
-      pendingData: { documentId: document.id },
-      expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(), } }).returning())[0];
+  await parkState(user.id, LABEL_DOCUMENT, {
+    documentId: document.id,
+    mediaType: document.mediaType,
+  });
 
   await replyToUser(
     user,
     'Got it! 📁 What should I call this so you can ask for it later?'
+  );
+}
+
+/** The user's unexpired pending question, if any. */
+function loadActiveState(userId: string): Promise<ConversationState | undefined> {
+  return db.query.conversationStates.findFirst({
+    where: (cs, { and, eq, gt }) => and(eq(cs.userId, userId), gt(cs.expiresAt, new Date())),
+  });
+}
+
+/** Parks one pending question for the user, replacing whatever was there. */
+async function parkState(
+  userId: string,
+  pendingIntent: string,
+  pendingData: Record<string, unknown>
+): Promise<void> {
+  const values = {
+    pendingIntent,
+    pendingData,
+    expiresAt: DateTime.now().plus({ minutes: 15 }).toJSDate(),
+  };
+  await db
+    .insert(conversationStates)
+    .values({ userId, ...values })
+    .onConflictDoUpdate({ target: conversationStates.userId, set: values });
+}
+
+/** Names a stored file, closes the naming question, and confirms. */
+async function saveDocumentLabel(user: User, documentId: string, label: string): Promise<void> {
+  await db
+    .update(documents)
+    .set({ label })
+    .where(and(eq(documents.id, documentId), eq(documents.userId, user.id)));
+  await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
+  await replyToUser(user, `✅ Saved as *${label}*.`);
+}
+
+/**
+ * Handles a tap on "Set reminder" / "Name the image" / "Something else".
+ *
+ * A tap only counts against the question it came with. An old button further
+ * up the chat must not replay a request that was settled long ago.
+ */
+async function handleLabelButton(
+  user: User,
+  message: PipelineMessage,
+  action: string,
+  documentId: string,
+  turn: TurnContext
+): Promise<void> {
+  if (!hasSecondBrain(user)) {
+    await replyToUser(user, lockedFeatureMessage('files', user.name));
+    return;
+  }
+
+  const state = await loadActiveState(user.id);
+  const pending =
+    state?.pendingIntent === LABEL_OR_REQUEST ? (state.pendingData as LabelOrRequestData | null) : null;
+
+  if (!pending || pending.documentId !== documentId) {
+    console.log(`[Remique] stale label button ${action}:${documentId}`);
+    await replyToUser(user, "That question has timed out. Mind telling me again what you'd like to do?");
+    return;
+  }
+
+  if (action === BUTTON_LABEL_ELSE) {
+    // Nothing to act on yet. The file stays unnamed and is asked about again
+    // once they have said what they actually want.
+    await parkState(user.id, AWAITING_REQUEST, { deferredDocumentId: documentId });
+    await replyToUser(
+      user,
+      `No problem, what would you like to do? I'll hold on to the ${fileNoun(pending.mediaType)} until you give it a name.`
+    );
+    return;
+  }
+
+  const choice: LabelChoice = action === BUTTON_LABEL_REQUEST ? 'do_request' : 'name_file';
+  await applyLabelChoice(user, message, pending, choice, {}, turn);
+}
+
+/**
+ * Acts on the answer to "do that, name the file, or something else?".
+ *
+ * Returns false when the message should carry on through the normal flows:
+ * the "something else" case, where what they said is itself the new request.
+ */
+async function applyLabelChoice(
+  user: User,
+  message: PipelineMessage,
+  pending: LabelOrRequestData,
+  choice: LabelChoice,
+  answer: { label?: string | null; restatement?: string | null },
+  turn: TurnContext
+): Promise<boolean> {
+  if (choice === 'do_request') {
+    await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
+    turn.deferredDocumentId = pending.documentId;
+
+    // Replayed as if they had just said it, so every check a fresh request
+    // gets (plan limits, clashes, a missing time) still applies.
+    const replay =
+      answer.restatement?.trim() || pending.requestText?.trim() || pending.originalMessage;
+    console.log(`[Remique] label question resolved, replaying ${JSON.stringify(replay)}`);
+
+    await handleTurn(
+      user,
+      { ...message, messageText: replay, buttonReplyId: null, mediaId: null },
+      null,
+      turn
+    );
+    return true;
+  }
+
+  if (choice === 'use_as_name') {
+    await saveDocumentLabel(user, pending.documentId, pending.originalMessage.trim().slice(0, 100));
+    return true;
+  }
+
+  if (choice === 'name_file') {
+    const label = chosenLabel(answer.label);
+    if (label) {
+      await saveDocumentLabel(user, pending.documentId, label);
+      return true;
+    }
+
+    // They want to name it but have not said what. Their next message is the
+    // name, so it is taken without the request checks that led here.
+    await parkState(user.id, LABEL_DOCUMENT, {
+      documentId: pending.documentId,
+      mediaType: pending.mediaType ?? null,
+      confirmed: true,
+    });
+    await replyToUser(user, `Sure, what should I call the ${fileNoun(pending.mediaType)}?`);
+    return true;
+  }
+
+  await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
+  turn.deferredDocumentId = pending.documentId;
+  return false;
+}
+
+/**
+ * Asks again for the name of a file that was put aside for another request.
+ *
+ * If that request left a question of its own open ("what time?"), asking about
+ * the file now would talk over it. The file then rides along on that question
+ * and is asked about once it has been answered.
+ */
+async function followUpDeferredDocument(user: User, documentId: string): Promise<void> {
+  const document = await db.query.documents.findFirst({
+    where: (d, { and, eq }) => and(eq(d.id, documentId), eq(d.userId, user.id)),
+  });
+
+  // Named in the meantime, or already swept.
+  if (!document || document.label) return;
+
+  const state = await loadActiveState(user.id);
+
+  if (state && state.pendingIntent !== AWAITING_REQUEST) {
+    // A newer naming question (another file arrived) takes over.
+    if (state.pendingIntent === LABEL_DOCUMENT || state.pendingIntent === LABEL_OR_REQUEST) return;
+
+    const data = (state.pendingData ?? {}) as Record<string, unknown>;
+    if (data.deferredDocumentId !== documentId) {
+      await db
+        .update(conversationStates)
+        .set({ pendingData: { ...data, deferredDocumentId: documentId } })
+        .where(eq(conversationStates.userId, user.id));
+    }
+    return;
+  }
+
+  await parkState(user.id, LABEL_DOCUMENT, {
+    documentId: document.id,
+    mediaType: document.mediaType,
+  });
+  await replyToUser(
+    user,
+    `Still holding the ${fileNoun(document.mediaType)} you sent 📁 What should I call it?`
   );
 }
 
