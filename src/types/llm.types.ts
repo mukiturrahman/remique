@@ -21,7 +21,12 @@ export type AssistantIntent =
 
 export type LabelReply = 'name' | 'other_request' | 'unclear';
 
-export type LabelChoice = 'do_request' | 'name_file' | 'use_as_name' | 'something_else';
+export type LabelChoice =
+  | 'do_request'
+  | 'name_file'
+  | 'use_as_name'
+  | 'something_else'
+  | 'discard';
 
 /** One durable thing the model learned from this message. */
 export interface ExtractedFact {
@@ -138,6 +143,12 @@ export interface ParsedAssistantResponse {
   request_restatement?: string | null;
   /** Short button title for that request, e.g. "Set reminder". */
   request_button_title?: string | null;
+  /**
+   * The user wants the file they just sent thrown away ("don't save this", "I
+   * uploaded it by mistake"). About the FILE — never a reminder, which is how
+   * "do not save this image" once came back as cancel_reminder.
+   */
+  discard_file?: boolean | null;
   /**
    * Facts stated in this message. Populated independently of `intent` — one
    * message can both create a reminder and teach a birthday.

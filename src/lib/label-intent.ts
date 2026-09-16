@@ -57,6 +57,20 @@ const COMMAND_START =
 const COMMAND_ANYWHERE =
   /\bremind me\b|\bmone kor|\b(?:koro|korio|koiro|koren|dio|diyo|dao|daw|pathao|pathan|dekhao|dekhaw|bolo)\b|মনে করি|করো|পাঠাও|দেখাও|\b(?:tomorrow|tonight|today|kalke|ajke|porshu)\b|\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/i;
 
+/** Anything aimed at a reminder or a note, which discarding must never touch. */
+const REMINDER_SUBJECT =
+  /\b(?:reminder|reminders|remind|reminding|alarm|meeting|meetings|appointment|schedule|event|note|notes)\b/i;
+
+/** Explicitly getting rid of something, in English, Banglish and Bangla. */
+const DISCARD_VERB =
+  /\b(?:do\s*n[o']?t|don'?t|dont|never)\s+(?:save|keep|store)\b|\b(?:delete|remove|discard|erase|unsave)\b|\bno need to (?:save|keep|store)\b|save\s+ko?ro\s*na|rakho\s*na|muche\s+fel|delete\s+kor|সেভ\s*কোরো\s*না|মুছে/i;
+
+const MISTAKE_PHRASE =
+  /\b(?:by\s+)?mistake(?:nly)?\b|\bwrong (?:image|photo|file|one|pic)\b|\baccident(?:al|ally)?\b|bhul kore/i;
+
+/** Confirms a mistake phrase is about the upload, not something else. */
+const UPLOAD_WORD = /\b(?:save[d]?|keep|kept|upload(?:ed)?|sent|send|share[d]?|attach(?:ed)?)\b/i;
+
 const INTENT_BUTTON_TITLES: Partial<Record<AssistantIntent, string>> = {
   create_reminder: 'Set reminder',
   clarification_required: 'Set reminder',
@@ -138,11 +152,29 @@ export function decideLabelReply(
   return passive && looksLikeLabel(candidate) ? { kind: 'name', label: candidate } : { kind: 'ask' };
 }
 
+/**
+ * Asking for the file to be thrown away, rather than named.
+ *
+ * Deliberately narrow: this deletes data, so it needs an explicit discard verb
+ * aimed at the file, or an admission of a mistaken upload. Anything naming a
+ * reminder is a reminder request and is left well alone.
+ */
+export function looksLikeDiscard(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || REMINDER_SUBJECT.test(trimmed)) return false;
+  if (DISCARD_VERB.test(trimmed)) return true;
+  return MISTAKE_PHRASE.test(trimmed) && UPLOAD_WORD.test(trimmed);
+}
+
 /** What the user picked after "do that, name the file, or something else?". */
 export function resolveLabelChoice(
   parsed: Pick<ParsedAssistantResponse, 'label_choice'>,
-  isAffirmative: boolean
+  isAffirmative: boolean,
+  isDiscard = false
 ): LabelChoice {
+  // The plain reading of "delete it" wins over the model's verdict: the cost
+  // of getting this wrong is saving a file they asked you to throw away.
+  if (isDiscard) return 'discard';
   if (parsed.label_choice) return parsed.label_choice;
   // No verdict. A bare "yes" to a question that led with their own request
   // most plausibly agrees to that request; anything else is handled fresh.

@@ -13,6 +13,7 @@ import {
   describePendingContext,
   labelChoiceButtons,
   labelClarificationFallback,
+  looksLikeDiscard,
   looksLikeLabel,
   parseLabelButton,
   requestButtonTitle,
@@ -126,7 +127,47 @@ describe('decideLabelReply', () => {
   });
 });
 
+describe('looksLikeDiscard', () => {
+  // Regression: this was answered with "You don't have any upcoming reminders
+  // to cancel", because nothing could throw a file away.
+  test('recognises asking for the file not to be kept', () => {
+    for (const text of [
+      'Do not save this image i uploaded it mistakenly',
+      "don't save it",
+      'delete it',
+      'remove that photo',
+      'wrong image, dont save',
+      'i uploaded it by mistake',
+      'eta save koro na',
+      'muche felo',
+    ]) {
+      assert.ok(looksLikeDiscard(text), text);
+    }
+  });
+
+  // This deletes data, so everything below must stay a reminder request or
+  // plain chat.
+  test('leaves reminders, notes and plain refusals alone', () => {
+    for (const text of [
+      'cancel my 5pm',
+      'delete the meeting at 5',
+      'remove the 2nd reminder',
+      "don't remind me tomorrow",
+      'delete my note',
+      'no',
+      'not now',
+      'passport',
+    ]) {
+      assert.ok(!looksLikeDiscard(text), text);
+    }
+  });
+});
+
 describe('resolveLabelChoice', () => {
+  test('a plain discard wins over the model', () => {
+    assert.equal(resolveLabelChoice({ label_choice: 'name_file' }, false, true), 'discard');
+  });
+
   test("the model's choice wins", () => {
     assert.equal(resolveLabelChoice({ label_choice: 'name_file' }, true), 'name_file');
   });

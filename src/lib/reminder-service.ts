@@ -21,13 +21,14 @@ import {
   fileNoun,
   labelChoiceButtons,
   labelClarificationFallback,
+  looksLikeDiscard,
   parseLabelButton,
   requestButtonTitle,
   resolveLabelChoice,
 } from './label-intent';
 import type { LabelChoice } from '../types/llm.types';
 import { fetchMedia, MediaTooLargeError } from './whatsapp-media';
-import { putDocument, getDocumentUrl, extensionForMimeType } from './storage';
+import { putDocument, getDocumentUrl, deleteDocument, extensionForMimeType } from './storage';
 import { recordUsage } from './usage';
 import { env } from './env';
 import type { PipelineMessage } from './message-pipeline';
@@ -693,6 +694,24 @@ async function handleTurn(
     return;
   }
 
+  // ─── Flow G2: "Don't save that, I sent it by mistake" ───────────────
+  // Before every reminder flow. A message about the file was once answered by
+  // the cancel flow ("you don't have any reminders to cancel") because
+  // discarding was not something the bot could do at all.
+  const unnamedDocumentId =
+    activeState?.pendingIntent === LABEL_DOCUMENT || activeState?.pendingIntent === LABEL_OR_REQUEST
+      ? ((activeState.pendingData as { documentId?: string } | null)?.documentId ?? null)
+      : turn.deferredDocumentId;
+
+  if (
+    secondBrain &&
+    unnamedDocumentId &&
+    (parsed.discard_file || parsed.label_choice === 'discard' || looksLikeDiscard(userMessage))
+  ) {
+    await discardDocument(user, unnamedDocumentId, activeState, turn);
+    return;
+  }
+
   // ─── Flow H: The answer to "what should I call this?" ───────────────
   // Document flows below need the second brain. A Free user can only have one
   // of these states parked if they downgraded mid-conversation; the message
@@ -748,7 +767,17 @@ async function handleTurn(
     const pending = activeState.pendingData as LabelOrRequestData | null;
 
     if (pending?.documentId) {
-      const choice = resolveLabelChoice(parsed, AFFIRMATIVE.test(userMessage.trim()));
+      const choice = resolveLabelChoice(
+        parsed,
+        AFFIRMATIVE.test(userMessage.trim()),
+        looksLikeDiscard(userMessage)
+      );
+
+      if (choice === 'discard') {
+        await discardDocument(user, pending.documentId, activeState, turn);
+        return;
+      }
+
       console.log(`[Remique] label choice=${choice} verdict=${parsed.label_choice ?? 'none'}`);
 
       const handled = await applyLabelChoice(
@@ -1810,6 +1839,58 @@ async function applyLabelChoice(
   await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
   turn.deferredDocumentId = pending.documentId;
   return false;
+}
+
+/**
+ * Throws away a file the user never named and does not want kept.
+ *
+ * S3 first, then the row, matching the sweeper: if the object delete fails the
+ * row is left behind so the next sweep retries it, where the reverse order
+ * would strand the bytes with nothing left pointing at them.
+ */
+async function discardDocument(
+  user: User,
+  documentId: string,
+  activeState: ConversationState | null | undefined,
+  turn: TurnContext
+): Promise<void> {
+  const document = await db.query.documents.findFirst({
+    where: (d, { and, eq }) => and(eq(d.id, documentId), eq(d.userId, user.id)),
+  });
+
+  // Nothing further to ask about it.
+  turn.deferredDocumentId = null;
+
+  if (
+    activeState?.pendingIntent === LABEL_DOCUMENT ||
+    activeState?.pendingIntent === LABEL_OR_REQUEST ||
+    activeState?.pendingIntent === AWAITING_REQUEST
+  ) {
+    await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
+  } else if (activeState) {
+    // Some other question is open ("what time?"). Only the file rides away.
+    const { deferredDocumentId: _discarded, ...rest } = (activeState.pendingData ?? {}) as Record<
+      string,
+      unknown
+    >;
+    await db
+      .update(conversationStates)
+      .set({ pendingData: rest })
+      .where(eq(conversationStates.userId, user.id));
+  }
+
+  if (document) {
+    try {
+      await deleteDocument(document.s3Key);
+      await db.delete(documents).where(eq(documents.id, document.id));
+      console.log(`[Remique] discarded unnamed document ${document.id}`);
+    } catch (error: any) {
+      // The row stays, so the sweeper clears both later.
+      console.warn(`[Remique] discard failed for ${document.id}: ${error?.message}`);
+    }
+  }
+
+  await replyToUser(user, `Okay, I won't save that ${fileNoun(document?.mediaType)}. 👍`);
 }
 
 /**

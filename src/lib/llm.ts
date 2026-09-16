@@ -254,7 +254,11 @@ EXTRACTION RULES:
      "name_file"      — they want to name the file ("name the image", "call it watch pic"). Put the name in "document_label" if they gave one, otherwise null.
      "use_as_name"    — they want their earlier message itself used as the name ("use that as the name", "name it that").
      "something_else" — anything else, including a brand-new request. Classify "intent" and its fields normally for USER MESSAGE.
-   - In every other situation set "label_reply", "label_choice", "request_restatement" and "request_button_title" to null.
+   - THROWING THE FILE AWAY: while a file of theirs is unnamed, "do not save this image", "I uploaded it by mistake", "delete it", "remove that photo", "eta save koro na", "bhul kore diyechi" are about the FILE. Set "discard_file": true, and "label_choice": "discard" when they are answering the choice question.
+     This is NEVER cancel_reminder. Returning a reminder intent for it is how "Do not save this image, I uploaded it mistakenly" was once answered with "You don't have any upcoming reminders to cancel" — a reply about the wrong thing entirely.
+     The system deletes the file and confirms, so never claim in reply_text that you deleted it.
+     "cancel my 5pm", "delete the meeting" and "don't remind me" are reminder requests as usual — leave "discard_file" false.
+   - In every other situation set "label_reply", "label_choice", "request_restatement" and "request_button_title" to null, and "discard_file" false.
 
 4d. Conversation Context:
    - RECENT CONVERSATION below is what was just said, oldest first. "You:" lines are your own earlier replies.
@@ -315,6 +319,7 @@ const ASSISTANT_SCHEMA = {
         "label_choice",
         "request_restatement",
         "request_button_title",
+        "discard_file",
         "category",
         "anchor_iso",
         "anchor_title",
@@ -367,10 +372,11 @@ const ASSISTANT_SCHEMA = {
         },
         label_choice: {
             type: ["string", "null"],
-            enum: ["do_request", "name_file", "use_as_name", "something_else", null],
+            enum: ["do_request", "name_file", "use_as_name", "something_else", "discard", null],
         },
         request_restatement: { type: ["string", "null"] },
         request_button_title: { type: ["string", "null"] },
+        discard_file: { type: ["boolean", "null"] },
         category: {
             type: ["string", "null"],
             enum: [...["MEETING", "BIRTHDAY", "TASK", "HABIT", "GENERAL"], null],
