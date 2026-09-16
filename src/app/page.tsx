@@ -390,7 +390,7 @@ function HomeContent() {
                                 {c.overload.title}
                             </h2>
 
-                            <p className="mx-auto mt-7 max-w-[52ch] text-[16.5px] leading-relaxed text-ink-2 lg:mx-0">
+                            <p className="mx-auto mt-7 max-w-[52ch] text-[16.5px] leading-relaxed whitespace-pre-line text-ink-2 lg:mx-0">
                                 {c.overload.body}
                             </p>
 
@@ -493,37 +493,6 @@ function HomeContent() {
                                     </p>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── 7. THE LOOP ─────────────────────────────────────────────── */}
-                <section className="mx-auto max-w-6xl px-5 py-12 sm:py-14 lg:py-16 sm:px-8">
-                    <div className="text-center">
-                        <h2 className="mx-auto max-w-[22ch] text-balance font-display text-[clamp(1.55rem,3.4vw,2.6rem)] font-semibold leading-[1.08] tracking-display text-ink">
-                            {c.loop.title}
-                        </h2>
-                        <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[rgba(11,21,18,0.72)]">
-                            {c.loop.sub}
-                        </p>
-                    </div>
-
-                    <div className="mt-14 text-center">
-                        <p className="inline-block max-w-[32ch] rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-left text-[15px] leading-snug text-white shadow-lift">
-                            {c.loop.sample}
-                        </p>
-                        <div className="mt-5 flex flex-wrap items-baseline justify-center gap-x-2.5 gap-y-1 font-mono text-[13px] uppercase tracking-[0.09em]">
-                            <span className="text-[rgba(11,21,18,0.6)]">{c.loop.repeats}</span>
-                            <span className="tabular text-ink">{c.loop.daily}</span>
-                            <span className="text-[rgba(11,21,18,0.3)]">·</span>
-                            <span className="text-[rgba(11,21,18,0.6)]">{c.loop.at}</span>
-                            <span className="tabular font-semibold text-signal-deep">
-                                {c.loop.time}
-                            </span>
-                            <span className="text-[rgba(11,21,18,0.3)]">·</span>
-                            <span className="tabular text-[rgba(11,21,18,0.6)]">
-                                {c.loop.timezone}
-                            </span>
                         </div>
                     </div>
                 </section>

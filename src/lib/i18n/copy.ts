@@ -179,33 +179,6 @@ const en = {
         ],
     },
 
-    loop: {
-        title: "Whatever you need to remember, we make sure you don’t forget.",
-        sub: "Recurring reminders and follow-up nudges — Remique handles the stuff that slips through the cracks.",
-        // The sample message is Banglish demo input in both languages.
-        sample: "protidin bikal 5 tay medicine",
-        repeats: "repeats",
-        daily: "daily",
-        at: "at",
-        time: "5:00 pm",
-        timezone: "asia/dhaka",
-        rows: [
-            {
-                title: "The chain lays itself.",
-                body: "Every delivery schedules the next one before it goes out. Nothing to renew, nothing to re-enter.",
-            },
-            {
-                title: "A gap never stacks.",
-                body: "If delivery is down for three days, your daily reminder resumes tomorrow — it does not fire three times catching up.",
-            },
-            {
-                title: "Missed one? Say so.",
-                body: "Every reminder ends with “Done or need more time?” Tell Remique when, and it comes back then.",
-            },
-        ],
-        cta: "See everything it does",
-    },
-
     pricing: {
         eyebrow: "Pricing",
         title: "Cheaper than the late fee it saves you.",
@@ -572,17 +545,23 @@ const bn: Copy = {
     },
 
     hero: {
-        socialProof: "2,000+ মানুষ এখন কিছু ভোলেন না কারণ রেমিকিউ সব মনে রাখে",
+        socialProof: "2,000+ মানুষকে মনে করিয়ে দেওয়ার দায়িত্বে Remique.",
         avatarAlt: "ইউজার অ্যাভাটার",
         // Bangla puts the whole verb phrase after the rotating noun, so the
         // prefix is empty here by design and the layout skips its line break.
         headlinePrefix: "",
         headlineSuffix: "আর কখনো ভুলবেন না।",
-        rotator: ["বাবার ওষুধ এর সময়", "স্কুলের ফি", "৩টার মিটিং", "স্ত্রীর জন্মদিন", "ট্যাক্সের ডেডলাইন"],
+        rotator: [
+            "বাবার ওষুধ এর সময়",
+            "স্কুলের ফি",
+            "৩টার মিটিং",
+            "স্ত্রীর জন্মদিন",
+            "ট্যাক্সের ডেডলাইন",
+        ],
         subBefore:
             "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা ",
         subAfter:
-            "য়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। আপনি নিশ্চিন্ত।",
+            "য়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। মাথা হালকা, চিন্তা শূন্য…",
         worksOnWhatsApp: "WhatsApp-এই চলে",
         noApp: "কোনো অ্যাপ লাগবে না",
         ctaPrimary: "আনলক সেকেন্ড ব্রেইন 🧠",
@@ -592,24 +571,23 @@ const bn: Copy = {
 
     buried: {
         title: "আপনার ফোনেই সব রাখেন, কিন্তু সময় মত খুঁজে পান না...",
-        body: "ডাক্তারের প্রেসক্রিপশন, বাইকের কাগজ, এন আই ডি, বিদ্যুৎ বিলের কপি সব তো জমা আছেই। সমস্যা রেখে দেওয়ায় না। সমস্যা হলো, যে মুহূর্তে দরকার ছিল, তখন কিছুই সামনে আসে না।",
+        body: "ডাক্তারের প্রেসক্রিপশন, বাইকের কাগজ, এন আই ডি, বিদ্যুৎ বিলের কপি সব আছে। কিন্তু ঠিক যে মুহূর্তে পুলিশ থামায়, ডাক্তার জিজ্ঞেস করে, বা অফিসে লাগে তখনই কিছু খুঁজে পাওয়া যায় না।",
         problemAlt: "ছড়ানো নোট, স্ক্রিনশট আর কাগজের নিচে চাপা পড়া একজন",
         solutionAlt: "Remique সেই কাগজগুলোই গুছিয়ে হাতে ধরে আছে",
-        kicker: "আপনার কাজ শুধু বলা। মনে করিয়ে দেওয়ার কাজ Remique-এর।",
+        kicker: "আপনার মাথা ফ্রি রাখুন, মনে রাখার দায়িত্ব Remique-এর।",
     },
 
     overload: {
-        // The hyphen in "reaction‑ই" is U+2011, a non-breaking hyphen: a plain
-        // "-" lets the line break between it and the ই.
-        title: "ওভারলোড হওয়া ব্রেইনের স্বাভাবিক reaction‑ই হচ্ছে ভুলে যাওয়া",
-        body: "Science বলে, ব্রেইন যখন capacity-র বেশি জিনিস ধরে রাখার চেষ্টা করে, তখন ভুলে যাওয়াটাই স্বাভাবিক। আপনি অলস না, আপনার memory খারাপ না, আপনার ব্রেইন শুধু ওভারলোডেড।",
-        fix: "সমাধান জটিল কিছু না। ব্রেইনরে একটু জায়গা দিন, আর ছোট ছোট জিনিসগুলা Remique-কে মনে রাখতে দিন। WhatsApp-এই বলে দিলেই হবে।",
+        title: "সফলতার সিক্রেট: ফ্রি ব্রেইন",
+        body: "Cognitive load থিওরি বলে, ব্রেইন যখন একসাথে অনেক কিছু ট্র্যাক করার চেষ্টা করে, তখন গুরুত্বপূর্ণ জিনিসেই মনোযোগ কমে যায়।\n\nযারা ব্যবসা/ক্যারিয়ারে বা ব্যক্তিগত জীবনে সামনে এগিয়ে যায়, তাদের সিক্রেট বেশি পরিশ্রম না তাদের ব্রেইন ফ্রি থাকে সঠিক জিনিসে ফোকাস করার জন্য। ছোট জিনিস - ডেট, ডেডলাইন, কার কাছে কী কমিটমেন্ট আছে এসব যদি মাথায় বয়ে বেড়াতে হয়, তাহলে বড় সিদ্ধান্তের জন্য ব্রেইনে শক্তিই থাকে না।",
+        fix: "Remique এই বোঝাটা নিয়ে নেয়, আপনার ব্রেইন থাকে শুধু আসল কাজে।",
         imageAlt: "ওভারলোডেড ব্রেইন একসাথে সবকিছু ধরে রাখার চেষ্টা করছে",
     },
 
     quotesSection: {
         eyebrow: "স্মৃতি ও বিজ্ঞানের কথা",
-        headline: 'আলবার্ট আইনস্টাইন বিখ্যাতভাবে বলেছিলেন, "যা কোথাও খুঁজে পাওয়া যায়, তা কখনোই মুখস্থ করতে যেও না"',
+        headline:
+            'আলবার্ট আইনস্টাইন বিখ্যাতভাবে বলেছিলেন, "যা কোথাও খুঁজে পাওয়া যায়, তা কখনোই মুখস্থ করতে যেও না"',
         quotes: [
             {
                 quote: "আপনার মন আইডিয়া তৈরি করার জন্য, সেগুলো ধরে রাখার জন্য না।",
@@ -691,7 +669,7 @@ const bn: Copy = {
     },
 
     problem: {
-        title: "সব রিমাইন্ডার অ্যাপ একইভাবে ব্যর্থ হয়: একসময় আপনি আর অ্যাপটাই খোলেন না।",
+        title: "রিমাইন্ডার অ্যাপ আছে, কিন্তু সমস্যা হলো কিছুদিন পর সেই অ্যাপের কথাই আর মনে থাকে না।",
         body: "নোটিফিকেশনভিত্তিক রিমাইন্ডার মানে আরেকটা অ্যাপ খোলা, আরেকটা লিস্ট দেখা, আরেকটা ব্যাজ ক্লিয়ার করা। Remique থাকে যেখানে আপনি এমনিতেই আছেন — WhatsApp-এ।",
         cards: [
             {
@@ -709,41 +687,15 @@ const bn: Copy = {
         ],
     },
 
-    loop: {
-        title: "যা-ই মনে রাখা দরকার, আমরা নিশ্চিত করি আপনি সেটা ভুলবেন না।",
-        sub: "রিকারিং রিমাইন্ডার আর ফলো-আপ নাজ — যেসব জিনিস ফাঁক গলে বেরিয়ে যায়, Remique সেগুলোই সামলায়।",
-        sample: "protidin bikal 5 tay medicine",
-        repeats: "রিপিট",
-        daily: "প্রতিদিন",
-        at: "সময়",
-        time: "5:00 pm",
-        timezone: "asia/dhaka",
-        rows: [
-            {
-                title: "চেইনটা নিজেই তৈরি হয়।",
-                body: "প্রতিটা ডেলিভারি বেরোনোর আগেই পরেরটার সময় ঠিক করে রাখে। নতুন করে কিছু দিতে হয় না।",
-            },
-            {
-                title: "ফাঁক কখনো জমে না।",
-                body: "তিন দিন ডেলিভারি বন্ধ থাকলে আপনার প্রতিদিনের রিমাইন্ডার কাল থেকে আবার চালু হবে — জমে থাকা তিনটা একসঙ্গে আসবে না।",
-            },
-            {
-                title: "একটা মিস হয়েছে? বলে দিন।",
-                body: "প্রতিটা রিমাইন্ডার শেষ হয় “হয়ে গেছে, নাকি আরেকটু সময় লাগবে?” দিয়ে। কখন লাগবে বলে দিন, Remique তখনই ফিরে আসবে।",
-            },
-        ],
-        cta: "ও কী কী পারে দেখুন",
-    },
-
     pricing: {
         eyebrow: "প্রাইসিং",
-        title: "যে লেট ফি বাঁচায়, দাম তার চেয়েও কম।",
+        title: "লেট ফি দেওয়ার চেয়ে Remique-এ খরচ কম।",
         sub: "কার্ড লাগবে না, ঝামেলাও নেই। bKash দিয়ে সাবস্ক্রাইব করে এক মিনিটের মধ্যেই Remique চালু করুন।",
         weekly: "সাপ্তাহিক",
         monthly: "মাসিক",
         tier: "Pro",
         planName: "Remique Pro",
-        planDesc: "যেকোনো ভাষায় আনলিমিটেড রিমাইন্ডার।",
+        planDesc: "নিজের সেকেন্ড ব্রেইনে ইনভেস্ট করুন, খরচটা ছোট কিন্তু কাজে লাগে প্রতিদিন।",
         perWeek: "/সপ্তাহ",
         perMonth: "/মাস",
         subscribeWith: "সাবস্ক্রাইব করুন",
