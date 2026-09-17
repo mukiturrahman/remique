@@ -230,7 +230,9 @@ export async function initiateBdappsSubscription(
 export async function handleBdappsCallback(
   searchParams: URLSearchParams
 ): Promise<HandleBdappsCallbackResult> {
-  console.log('[bdApps Callback] Received searchParams:', Object.fromEntries(searchParams.entries()));
+  console.log('\n=============================================');
+  console.log('[bdApps Browser Callback] Initiated!');
+  console.log('Received searchParams:', Object.fromEntries(searchParams.entries()));
   
   const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
 
@@ -253,8 +255,10 @@ export async function handleBdappsCallback(
     status === 'DECLINED' ||
     statusCode === 'E1001';
 
-  // If it's explicitly failed, or if it lacks any clear success signal
-  const isFailed = isExplicitFailure || !isSuccess;
+  const isStatusMissing = !status && !errorCode && !statusCode;
+  const isFailed = isExplicitFailure || (!isSuccess && !isStatusMissing);
+
+  console.log(`[bdApps Browser Callback] Analysis - isSuccess: ${!!isSuccess}, isExplicitFailure: ${!!isExplicitFailure}, isStatusMissing: ${isStatusMissing}, isFailed: ${isFailed}`);
 
   if (isFailed) {
     const errorMsg =
@@ -262,16 +266,23 @@ export async function handleBdappsCallback(
       statusDetail ||
       'Subscription was cancelled or could not be completed.';
 
+    console.log(`[bdApps Browser Callback] Detected explicit failure. Error: ${errorMsg}`);
+
     if (requestId) {
-      // Mark payment as FAILED
+      console.log(`[bdApps Browser Callback] Reverting subscription ${requestId} to FREE tier...`);
       await db.update(payments)
         .set({ status: 'FAILED' })
         .where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING')))
         .catch(() => {});
 
-      // If subscription was pending, update it
       await db.update(subscriptions)
-        .set({ status: 'CANCELLED' })
+        .set({ 
+          planTier: 'free',
+          planPeriod: null,
+          status: 'ACTIVE',
+          currentPeriodStart: null,
+          currentPeriodEnd: null
+        })
         .where(and(eq(subscriptions.requestId, requestId), eq(subscriptions.status, 'PENDING')))
         .catch(() => {});
     }
@@ -286,18 +297,26 @@ export async function handleBdappsCallback(
     };
   }
 
-  // Find subscription by requestId
   let subscriptionRecord = null;
   let userRecord = null;
   
   if (requestId) {
-    const res = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.requestId, requestId),
-      with: { user: true },
-    });
-    if (res) {
-      subscriptionRecord = res;
-      userRecord = res.user;
+    console.log(`[bdApps Browser Callback] Looking up subscription for requestId: ${requestId}`);
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      const res = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.requestId, requestId),
+        with: { user: true },
+      });
+      if (res) {
+        subscriptionRecord = res;
+        userRecord = res.user;
+        if (isStatusMissing && res.status !== 'ACTIVE') {
+          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/4)`);
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+      }
+      break;
     }
   }
 
@@ -336,6 +355,21 @@ export async function handleBdappsCallback(
     };
   }
 
+  // If status is still missing and webhook hasn't activated it, we cannot proceed.
+  // The user probably backed out or closed the page without paying.
+  if (isStatusMissing && subscription.status !== 'ACTIVE') {
+    console.log('[bdApps Browser Callback] Polling exhausted. DB is still not ACTIVE. Aborting with Ghosting/Timeout error.');
+    return {
+      success: false,
+      requestId,
+      subscriberId,
+      error: 'Payment not completed or pending confirmation.',
+      redirectUrl: `${appBaseUrl}/billing/cancelled?error=${encodeURIComponent(
+        'Payment was not completed. If you paid, please wait a few seconds and check WhatsApp.'
+      )}`,
+    };
+  }
+
   const user = subscription.user;
   if (!user) throw new Error("Subscription has no associated user");
   const planPeriod = ((subscription.planPeriod || '').toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
@@ -343,26 +377,32 @@ export async function handleBdappsCallback(
   const now = new Date();
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-  // Activate Subscription
-  await db.update(subscriptions).set({
-    status: 'ACTIVE',
-    subscriberId: subscriberId || subscription.subscriberId,
-    currentPeriodStart: now,
-    currentPeriodEnd: periodEnd,
-    cancelledAt: null,
-  }).where(eq(subscriptions.id, subscription.id));
+  // Activate Subscription ONLY if we have an explicit success signal
+  // (If it was already active from webhook, this is just a safe idempotent update)
+  if (isSuccess) {
+    console.log('[bdApps Browser Callback] Explicit success signal found. Activating in DB (if not already)...');
+    await db.update(subscriptions).set({
+      status: 'ACTIVE',
+      subscriberId: subscriberId || subscription.subscriberId,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      cancelledAt: null,
+    }).where(eq(subscriptions.id, subscription.id));
 
-
-  // Mark Payment as PAID
-  if (requestId) {
-    await db.update(payments)
-      .set({
-        status: 'PAID',
-        subscriptionId: subscription.id,
-      })
-      .where(eq(payments.externalId, requestId))
-      .catch(() => {});
+    if (requestId) {
+      await db.update(payments)
+        .set({
+          status: 'PAID',
+          subscriptionId: subscription.id,
+        })
+        .where(eq(payments.externalId, requestId))
+        .catch(() => {});
+    }
+  } else {
+    console.log('[bdApps Browser Callback] DB was already ACTIVE from webhook. Proceeding to success redirect!');
   }
+
+  console.log('[bdApps Browser Callback] Complete! Redirecting user to WhatsApp.\n=============================================');
 
   // Notify user via WhatsApp
   try {

@@ -33,9 +33,14 @@ export interface PlanState {
 
 export function planStateOf(user: { subscription: any }): PlanState {
   const sub = user.subscription;
-  if (!sub) {
+  
+  // If no subscription, or if it's pending/failed, they only get free features
+  if (!sub || sub.status === 'PENDING' || sub.status === 'FAILED') {
     return { planTier: 'free', planPeriod: null, planExpiresAt: null };
   }
+
+  // If they legitimately paid and cancelled, they keep pro features until currentPeriodEnd
+  // If they are on free, they get free features.
   return {
     planTier: sub.planTier || 'free',
     planPeriod: sub.planPeriod || null,
