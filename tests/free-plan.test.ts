@@ -21,36 +21,36 @@ describe('hasSecondBrain', () => {
   const now = new Date('2026-09-16T12:00:00Z');
 
   test('free users do not have it', () => {
-    assert.equal(hasSecondBrain({ planTier: 'free', planExpiresAt: null }, now), false);
+    assert.equal(hasSecondBrain({ planTier: 'free', planPeriod: null, planExpiresAt: null }, now), false);
   });
 
   test('active pro and permanent users do', () => {
-    assert.equal(hasSecondBrain({ planTier: 'pro', planExpiresAt: new Date('2026-10-01') }, now), true);
-    assert.equal(hasSecondBrain({ planTier: 'pro', planExpiresAt: null }, now), true);
-    assert.equal(hasSecondBrain({ planTier: 'permanent', planExpiresAt: null }, now), true);
+    assert.equal(hasSecondBrain({ planTier: 'pro', planPeriod: 'monthly', planExpiresAt: new Date('2026-10-01') }, now), true);
+    assert.equal(hasSecondBrain({ planTier: 'pro', planPeriod: 'monthly', planExpiresAt: null }, now), true);
+    assert.equal(hasSecondBrain({ planTier: 'permanent', planPeriod: null, planExpiresAt: null }, now), true);
   });
 
   test('a lapsed pro plan does not', () => {
-    assert.equal(hasSecondBrain({ planTier: 'pro', planExpiresAt: new Date('2026-09-01') }, now), false);
+    assert.equal(hasSecondBrain({ planTier: 'pro', planPeriod: 'monthly', planExpiresAt: new Date('2026-09-01') }, now), false);
   });
 });
 
 describe('reminderAllowance', () => {
   test('allows up to the limit', () => {
-    assert.deepEqual(reminderAllowance(4, 1), { allowed: true, remaining: 1 });
+    assert.deepEqual(reminderAllowance(FREE_MONTHLY_REMINDER_LIMIT - 1, 1), { allowed: true, remaining: 1 });
   });
 
-  test('refuses the 6th reminder of the month', () => {
-    assert.deepEqual(reminderAllowance(5, 1), { allowed: false, remaining: 0 });
+  test('refuses the reminder past the limit of the month', () => {
+    assert.deepEqual(reminderAllowance(FREE_MONTHLY_REMINDER_LIMIT, 1), { allowed: false, remaining: 0 });
   });
 
   // Two alerts with one left creates neither, rather than half an event.
   test('is all or nothing for a multi-alert request', () => {
-    assert.deepEqual(reminderAllowance(4, 2), { allowed: false, remaining: 1 });
+    assert.deepEqual(reminderAllowance(FREE_MONTHLY_REMINDER_LIMIT - 1, 2), { allowed: false, remaining: 1 });
   });
 
   test('never reports a negative remainder', () => {
-    assert.equal(reminderAllowance(9, 1).remaining, 0);
+    assert.equal(reminderAllowance(FREE_MONTHLY_REMINDER_LIMIT + 4, 1).remaining, 0);
   });
 });
 

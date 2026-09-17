@@ -19,7 +19,7 @@
  * Idempotent — running it twice changes nothing the second time.
  */
 import { db } from '../src/db';
-import { users } from '../src/db/schema';
+import { users, subscriptions } from '../src/db/schema';
 import { not, eq, sql } from 'drizzle-orm';
 
 export const PERMANENT_TIER = 'permanent';
@@ -30,18 +30,17 @@ async function main() {
   const totalRes = await db.select({ count: sql<number>`count(*)` }).from(users);
   const total = Number(totalRes[0].count);
 
-  const pending = await db.query.users.findMany({
-    where: not(eq(users.planTier, PERMANENT_TIER)),
-    columns: {
-      id: true,
-      name: true,
-      phoneNumber: true,
-      planTier: true,
-      planExpiresAt: true,
-      createdAt: true,
-    },
-    orderBy: (u, { asc }) => asc(u.createdAt),
-  });
+  const pending = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      phoneNumber: users.phoneNumber,
+      planTier: sql<string>`COALESCE(${subscriptions.planTier}, 'free')`,
+    })
+    .from(users)
+    .leftJoin(subscriptions, eq(users.id, subscriptions.userId))
+    .where(not(eq(sql<string>`COALESCE(${subscriptions.planTier}, 'free')`, PERMANENT_TIER)))
+    .orderBy(users.createdAt);
 
   console.log(`\n${total} users in the database.`);
   console.log(`${pending.length} not yet on the permanent plan.\n`);
@@ -63,15 +62,28 @@ async function main() {
     return;
   }
 
-  const result = await db.update(users)
-    .set({
+  const userIds = pending.map(u => u.id);
+  const now = new Date();
+
+  const values = userIds.map(id => ({
+    userId: id,
+    planTier: PERMANENT_TIER,
+    planPeriod: null,
+    currentPeriodStart: now,
+    currentPeriodEnd: null,
+    status: 'ACTIVE'
+  }));
+  
+  const result = await db.insert(subscriptions).values(values).onConflictDoUpdate({
+    target: subscriptions.userId,
+    set: {
       planTier: PERMANENT_TIER,
       planPeriod: null,
-      planExpiresAt: null,
-      planStartedAt: new Date(),
-    })
-    .where(not(eq(users.planTier, PERMANENT_TIER)))
-    .returning({ id: users.id });
+      currentPeriodStart: now,
+      currentPeriodEnd: null,
+      status: 'ACTIVE'
+    }
+  }).returning();
 
   console.log(`\nUpdated ${result.length} users to the permanent plan.`);
 }

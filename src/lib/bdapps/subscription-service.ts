@@ -78,9 +78,13 @@ export async function initiateBdappsSubscription(
           phoneNumber: formatted,
           email: params.email || null,
           timezone: 'Asia/Dhaka',
-          planTier: 'free',
         }).returning();
         user = newUser;
+        await db.insert(subscriptions).values({
+          userId: user.id,
+          planTier: 'free',
+          status: 'ACTIVE'
+        });
       } else if (params.email && user.email !== params.email) {
         const [updatedUser] = await db.update(users).set({ email: params.email }).where(eq(users.id, user!.id)).returning();
         user = updatedUser;
@@ -109,7 +113,7 @@ export async function initiateBdappsSubscription(
   });
 
   if (activeSub) {
-    if (user.planTier === 'pro' && activeSub.planPeriod === plan.period) {
+    if (activeSub.planTier === 'pro' && activeSub.planPeriod === plan.period) {
       return {
         success: false,
         error: 'ALREADY_SUBSCRIBED',
@@ -121,12 +125,13 @@ export async function initiateBdappsSubscription(
     const now = new Date();
     const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
     
-    await db.update(users).set({
+    await db.update(subscriptions).set({
       planTier: 'pro',
       planPeriod: plan.period,
-      planStartedAt: now,
-      planExpiresAt: activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
-    }).where(eq(users.id, user!.id));
+      status: 'ACTIVE',
+      currentPeriodStart: now,
+      currentPeriodEnd: activeSub.currentPeriodEnd && activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
+    }).where(eq(subscriptions.userId, user!.id));
     
     await db.update(subscriptions).set({
       planPeriod: plan.period,
@@ -317,7 +322,7 @@ export async function handleBdappsCallback(
 
   const user = subscription.user;
   if (!user) throw new Error("Subscription has no associated user");
-  const planPeriod = (subscription.planPeriod.toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
+  const planPeriod = ((subscription.planPeriod || '').toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
   const plan = BDAPPS_PLANS[planPeriod];
   const now = new Date();
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
@@ -331,13 +336,6 @@ export async function handleBdappsCallback(
     cancelledAt: null,
   }).where(eq(subscriptions.id, subscription.id));
 
-  // Activate User Pro plan
-  await db.update(users).set({
-    planTier: 'pro',
-    planPeriod: plan.period,
-    planStartedAt: now,
-    planExpiresAt: periodEnd,
-  }).where(eq(users.id, user!.id));
 
   // Mark Payment as PAID
   if (requestId) {
@@ -477,7 +475,7 @@ export async function handleBdappsWebhook(
     }
 
     if (subscription) {
-      const planPeriod = (subscription.planPeriod.toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
+      const planPeriod = ((subscription.planPeriod || '').toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
       const plan = BDAPPS_PLANS[planPeriod];
       const now = new Date();
       const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
@@ -490,12 +488,6 @@ export async function handleBdappsWebhook(
         cancelledAt: null,
       }).where(eq(subscriptions.id, subscription.id));
 
-      await db.update(users).set({
-        planTier: 'pro',
-        planPeriod: plan.period,
-        planStartedAt: now,
-        planExpiresAt: periodEnd,
-      }).where(eq(users.id, subscription.userId));
 
       // Record renewal or active payment
       await db.insert(payments).values({
@@ -535,9 +527,6 @@ export async function handleBdappsWebhook(
         cancelledAt: new Date(),
       }).where(eq(subscriptions.id, subscription.id));
 
-      await db.update(users).set({
-        planTier: 'free',
-      }).where(eq(users.id, subscription.userId));
 
       return {
         success: true,
@@ -575,9 +564,6 @@ export async function cancelSubscription(userId: string): Promise<{ success: boo
     cancelledAt: new Date(),
   }).where(eq(subscriptions.userId, userId));
 
-  await db.update(users).set({
-    planTier: 'free',
-  }).where(eq(users.id, userId));
 
   return { success: true };
 }

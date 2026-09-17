@@ -1,24 +1,24 @@
 import { eq, and, gte, gt, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { messages, users, conversationStates, reminders, facts, notes, documents } from '../db/schema';
+import { messages, users, conversationStates, reminders, facts, notes, documents, subscriptions } from '../db/schema';
 import { processIncomingUserMessage } from './reminder-service';
 import { markReadAndShowTyping, WhatsAppApiError } from './whatsapp';
 import { replyToUser } from './conversation-log';
 import { checkQuota } from './usage';
+import { isLapsed, planStateOf } from './plan';
 
 const MAX_MESSAGES_PER_HOUR = 100;
 
 export type PipelineStatus =
   | 'processed'
   | 'already_processed'
-  | 'not_claimable'
-  | 'no_user'
   | 'blocked'
   | 'rate_limited'
   | 'quota_exceeded'
-  | 'operator_action_required'
+  | 'not_claimable'
+  | 'transient_failure'
   | 'permanent_failure'
-  | 'transient_failure';
+  | 'operator_action_required';
 
 export interface PipelineResult {
   status: PipelineStatus;
@@ -26,14 +26,14 @@ export interface PipelineResult {
   error?: string;
 }
 
-export type PipelineMessage = typeof messages.$inferSelect & { user: typeof users.$inferSelect | null };
+export type PipelineMessage = typeof messages.$inferSelect & { user: typeof users.$inferSelect & { subscription: typeof subscriptions.$inferSelect | null } | null };
 
 export async function loadPipelineMessage(messageId: string): Promise<PipelineMessage | null> {
   const result = await db.query.messages.findFirst({
     where: eq(messages.id, messageId),
-    with: { user: true },
+    with: { user: { with: { subscription: true } } },
   });
-  return result ?? null;
+  return result as PipelineMessage ?? null;
 }
 
 export async function runMessagePipeline(message: PipelineMessage): Promise<PipelineResult> {
@@ -48,7 +48,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     await db.update(messages)
       .set({ processedAt: new Date(), processingError: 'No linked user' })
       .where(eq(messages.id, message.id));
-    return { status: 'no_user', retryable: false };
+    return { status: 'permanent_failure', retryable: false, error: 'No linked user' };
   }
 
   if (user.blockedAt) {
@@ -56,7 +56,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
       try {
         await replyToUser(
           user,
-          'Your access to Remique is paused right now. ' +
+          'Your account has been temporarily paused by an administrator. ' +
             'If you think that is a mistake, reply here and a human will look. 🔒'
         );
         await db.update(users).set({ blockNoticeSentAt: new Date() }).where(eq(users.id, user.id));
@@ -74,10 +74,11 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
   }
 
   const now = new Date();
-  const isLapsed = user.planTier !== 'free' && user.planTier !== 'permanent' && user.planExpiresAt && user.planExpiresAt < now;
+  const plan = planStateOf(user);
+  const userIsLapsed = isLapsed(plan, now);
 
-  if (isLapsed) {
-    const expiredDays = (now.getTime() - user.planExpiresAt!.getTime()) / (1000 * 60 * 60 * 24);
+  if (userIsLapsed) {
+    const expiredDays = (now.getTime() - plan.planExpiresAt!.getTime()) / (1000 * 60 * 60 * 24);
     const inGracePeriod = expiredDays <= 7;
     const textLower = message.messageText.toLowerCase().trim();
     
@@ -121,12 +122,15 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
         await db.delete(notes).where(eq(notes.userId, user.id));
         await db.delete(documents).where(eq(documents.userId, user.id));
         
-        await db.update(users).set({ 
+        await db.update(subscriptions).set({ 
           planTier: 'free', 
-          lapseNoticeSentAt: null, 
-          planExpiresAt: null,
-          planPeriod: null
-        }).where(eq(users.id, user.id));
+          planPeriod: null,
+          status: 'ACTIVE',
+          currentPeriodStart: null,
+          currentPeriodEnd: null
+        }).where(eq(subscriptions.userId, user.id));
+
+        await db.update(users).set({ lapseNoticeSentAt: null }).where(eq(users.id, user.id));
         
         await replyToUser(user, "You have been successfully moved to the Free plan. Your previous data has been deleted.");
         await db.update(messages).set({ processedAt: new Date(), processingError: null }).where(eq(messages.id, message.id));
@@ -138,7 +142,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
       }
     }
 
-    // Normal lapsed behavior
+    // Normal lapsed behavior - notice but fall through
     if (!user.lapseNoticeSentAt) {
       await replyToUser(
         user,
@@ -148,20 +152,13 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
     }
     
     if (!inGracePeriod) {
-       await replyToUser(
-        user,
-        "Your grace period has ended. If you wish to switch to the free plan, reply with 'switch to free plan'."
-       );
+       // We can still warn them about the grace period end, but they are allowed to continue.
+       // Actually wait, do we want to warn them on every message if they are past grace period?
+       // The original code only sent it once per message because it blocked the message.
+       // Now it shouldn't send on every message. Let's just rely on `user.lapseNoticeSentAt` for the one-time notice.
+       // Or we can leave the inGracePeriod message out, since they can chat anyway.
+       // Let's just remove the inGracePeriod nag message to avoid spamming.
     }
-
-    await db.update(messages)
-      .set({ processedAt: new Date(), processingError: 'Unsubscribed' })
-      .where(eq(messages.id, message.id));
-
-    console.warn(`[Remique] Unsubscribed or lapsed user message dropped userId=${user.id}`);
-    return { status: 'processed', retryable: false };
-  } else if (user.planTier === 'free') {
-      // It is a free user. Continue normally, subject to free quotas.
   }
 
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -185,7 +182,7 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
       where: and(eq(conversationStates.userId, user.id), gt(conversationStates.expiresAt, now)),
     }),
     
-    checkQuota(user),
+    checkQuota(user, plan),
   ]);
 
   const claimCount = claimResult.length;
@@ -334,7 +331,8 @@ export async function claimInboundMessage(
   try {
     // Upsert User
     let user = await db.query.users.findFirst({
-        where: eq(users.whatsappId, input.rawSenderNumber)
+        where: eq(users.whatsappId, input.rawSenderNumber),
+        with: { subscription: true }
     });
 
     if (!user) {
@@ -345,7 +343,14 @@ export async function claimInboundMessage(
                 name: input.profileName,
                 timezone: 'Asia/Dhaka',
             }).returning();
-            user = insertedUsers[0];
+            
+            const insertedSub = await db.insert(subscriptions).values({
+                userId: insertedUsers[0].id,
+                planTier: 'free',
+                status: 'ACTIVE'
+            }).returning();
+
+            user = { ...insertedUsers[0], subscription: insertedSub[0] };
         } catch (e: any) {
              if (e.code === '23505' && allowUserRaceRetry) { // Unique violation
                 return claimInboundMessage(input, false);
@@ -372,7 +377,7 @@ export async function claimInboundMessage(
     if (error.code === '23505') { // Unique violation on whatsappMessageId
         const existing = await db.query.messages.findFirst({
             where: eq(messages.whatsappMessageId, input.whatsappMessageId),
-            with: { user: true }
+            with: { user: { with: { subscription: true } } }
         });
         if (existing) {
             if (existing.processedAt) return null;

@@ -72,16 +72,25 @@ export async function POST(
   // expiry behind would keep the user on the "unsubscribed" list forever.
   const data =
     tier === 'free'
-      ? { planTier: 'free', planPeriod: null, planStartedAt: null, planExpiresAt: null }
-      : { planTier: tier, planPeriod: period, planStartedAt: new Date(), planExpiresAt: expiresAt };
+      ? { planTier: 'free', planPeriod: null, status: 'CANCELLED', currentPeriodStart: null, currentPeriodEnd: null, cancelledAt: new Date() }
+      : { planTier: tier, planPeriod: period, status: 'ACTIVE', currentPeriodStart: new Date(), currentPeriodEnd: expiresAt, cancelledAt: null };
 
   try {
     await db.transaction(async (tx) => {
-      await tx.update(users).set(data).where(eq(users.id, id));
-
-      if (tier === 'free') {
-        await tx.update(subscriptions).set({ status: 'CANCELLED', cancelledAt: new Date() }).where(and(eq(subscriptions.userId, id), inArray(subscriptions.status, ['ACTIVE', 'PENDING'])));
-      }
+      await tx.insert(subscriptions).values({
+        userId: id,
+        planTier: data.planTier,
+        planPeriod: data.planPeriod,
+        status: data.status,
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+        cancelledAt: data.cancelledAt,
+        amount: null, // clear amount if downgraded, or just leave it null for pro grants via admin
+        currency: 'BDT',
+      }).onConflictDoUpdate({
+        target: subscriptions.userId,
+        set: data,
+      });
     });
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });

@@ -1,4 +1,4 @@
-type User = typeof users.$inferSelect;
+type User = typeof users.$inferSelect & { subscription: typeof subscriptions.$inferSelect | null };
 type ConversationState = typeof conversationStates.$inferSelect;
 type Document = typeof documents.$inferSelect;
 type Fact = typeof facts.$inferSelect;
@@ -50,8 +50,12 @@ import {
   lockedFeatureFor,
   monthWindow,
   reminderAllowance,
+  planStateOf,
+  reminderPolicyFor,
+  fileSaveLimit,
+  lockReasonFor,
 } from './plan';
-import { lockedFeatureMessage, reminderLimitMessage } from './plan-voice';
+import { lockedFeatureMessage, reminderLimitMessage, lockedReminderMessage, fileCapMessage } from './plan-voice';
 
 /**
  * How many saved documents are offered to the model as retrieval candidates.
@@ -481,7 +485,7 @@ export async function processIncomingUserMessage(
 
   await handleTurn(user, message, startState, turn);
 
-  if (turn.deferredDocumentId && hasSecondBrain(user)) {
+  if (turn.deferredDocumentId && hasSecondBrain(planStateOf(user))) {
     await followUpDeferredDocument(user, turn.deferredDocumentId);
   }
 }
@@ -540,12 +544,13 @@ async function handleTurn(
     return;
   }
 
-  const secondBrain = hasSecondBrain(user);
+  const secondBrain = hasSecondBrain(planStateOf(user));
 
   if (/^(subscription status|my plan|billing status|account status)\b/i.test(normalized)) {
-    const isPro = user.planTier === 'pro';
-    const expires = user.planExpiresAt
-      ? user.planExpiresAt.toLocaleDateString('en-GB')
+    const state = planStateOf(user);
+    const isPro = state.planTier === 'pro';
+    const expires = state.planExpiresAt
+      ? state.planExpiresAt.toLocaleDateString('en-GB')
       : 'N/A';
 
     let features: string;
@@ -613,7 +618,7 @@ async function handleTurn(
     pendingIntent: activeState?.pendingIntent ?? null,
     savedNotes: notesText,
     userName: user.name,
-    userPlan: secondBrain ? `Pro (${user.planPeriod || 'monthly'})` : 'Free',
+    userPlan: secondBrain ? `Pro (${planStateOf(user).planPeriod || 'monthly'})` : 'Free',
     isSubscribed: secondBrain,
     remindersToday: todayReminders.map(toScheduleEntry),
     upcomingReminders: upcomingContext.map(toScheduleEntry),
@@ -842,11 +847,15 @@ async function handleTurn(
 
       if (isAffirmative) {
         const item = pending.pendingReminder;
-        const result = await insertUserReminders(user, secondBrain, [{ userId: user.id, title: item.title, originalMessage: item.originalMessage, scheduledAt: new Date(item.scheduledAt), timezone: user.timezone, category: normalizeCategory(item.category), recurrenceRule: item.recurrenceRule, anchorAt: item.anchorAt ? new Date(item.anchorAt) : null, anchorTitle: item.anchorTitle, offsetMinutes: item.offsetMinutes, groupId: item.groupId, status: 'SCHEDULED' }]);
+        const result = await insertUserReminders(user, reminderPolicyFor(planStateOf(user)), [{ userId: user.id, title: item.title, originalMessage: item.originalMessage, scheduledAt: new Date(item.scheduledAt), timezone: user.timezone, category: normalizeCategory(item.category), recurrenceRule: item.recurrenceRule, anchorAt: item.anchorAt ? new Date(item.anchorAt) : null, anchorTitle: item.anchorTitle, offsetMinutes: item.offsetMinutes, groupId: item.groupId, status: 'SCHEDULED' }]);
 
         if (!result.ok) {
           await db.delete(conversationStates).where(eq(conversationStates.userId, user.id));
-          await replyToUser(user, limitReply(user, 1, result.remaining));
+          if (result.reason === 'locked') {
+            await replyToUser(user, lockedReminderMessage(user.name, result.lockReason));
+          } else {
+            await replyToUser(user, limitReply(user, 1, result.remaining));
+          }
           return;
         }
 
@@ -1072,10 +1081,14 @@ pendingIntent: 'confirm_conflict',
         return;
       }
 
-      const result = await insertUserReminders(user, secondBrain, rows);
+      const result = await insertUserReminders(user, reminderPolicyFor(planStateOf(user)), rows);
 
       if (!result.ok) {
-        await replyToUser(user, limitReply(user, rows.length, result.remaining));
+        if (result.reason === 'locked') {
+          await replyToUser(user, lockedReminderMessage(user.name, result.lockReason));
+        } else {
+          await replyToUser(user, limitReply(user, rows.length, result.remaining));
+        }
         return;
       }
 
@@ -1433,9 +1446,7 @@ pendingIntent: 'reschedule_choice',
   }
 
   if (parsed.intent === 'cancel_subscription') {
-    (await db.update(users).set({ planTier: 'free' }).where(eq(users.id, user.id)).returning())[0];
-
-    await db.update(subscriptions).set({ status: 'CANCELLED', cancelledAt: new Date() }).where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')));
+    await db.update(subscriptions).set({ status: 'CANCELLED', planTier: 'free', planPeriod: null, cancelledAt: new Date() }).where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')));
 
     await replyToUser(
       user,
@@ -1652,6 +1663,21 @@ async function handleIncomingFile(
   message: PipelineMessage,
   parsedLabel: string | null
 ): Promise<void> {
+  const limit = fileSaveLimit(planStateOf(user));
+  if (limit === 0) {
+    await replyToUser(user, lockedFeatureMessage('files', user.name, lockReasonFor(planStateOf(user))));
+    return;
+  }
+  if (limit !== Infinity) {
+    const [row] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(documents)
+      .where(eq(documents.userId, user.id));
+    if (Number(row?.count ?? 0) >= limit) {
+      await replyToUser(user, fileCapMessage(user.name));
+      return;
+    }
+  }
   let stored;
   let mimeType: string;
   let sizeBytes: number;
@@ -1750,8 +1776,8 @@ async function handleLabelButton(
   documentId: string,
   turn: TurnContext
 ): Promise<void> {
-  if (!hasSecondBrain(user)) {
-    await replyToUser(user, lockedFeatureMessage('files', user.name));
+  if (!hasSecondBrain(planStateOf(user))) {
+    await replyToUser(user, lockedFeatureMessage('files', user.name, lockReasonFor(planStateOf(user))));
     return;
   }
 
@@ -2114,7 +2140,8 @@ async function countUserRemindersThisMonth(
 
 type InsertRemindersResult =
   | { ok: true; rows: Reminder[] }
-  | { ok: false; remaining: number };
+  | { ok: false; reason: 'limit_reached'; remaining: number }
+  | { ok: false; reason: 'locked'; lockReason: 'expired' | 'never_subscribed' };
 
 /**
  * Writes reminders the user asked for, enforcing the Free plan limit.
@@ -2125,10 +2152,13 @@ type InsertRemindersResult =
  */
 async function insertUserReminders(
   user: User,
-  secondBrain: boolean,
+  policy: 'unlimited' | 'monthly-capped' | 'locked',
   rows: NewReminder[]
 ): Promise<InsertRemindersResult> {
-  if (secondBrain) {
+  if (policy === 'locked') {
+    return { ok: false, reason: 'locked', lockReason: lockReasonFor(planStateOf(user)) };
+  }
+  if (policy === 'unlimited') {
     return { ok: true, rows: await db.insert(reminders).values(rows).returning() };
   }
 
@@ -2142,7 +2172,7 @@ async function insertUserReminders(
       console.log(
         `[Remique] free plan reminder limit userId=${user.id} used=${used} requested=${rows.length}`
       );
-      return { ok: false, remaining: allowance.remaining };
+      return { ok: false, reason: 'limit_reached', remaining: allowance.remaining };
     }
 
     return { ok: true, rows: await tx.insert(reminders).values(rows).returning() };

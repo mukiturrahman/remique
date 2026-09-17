@@ -36,11 +36,6 @@ export const users = pgTable(
 
     dailyTokenCap: integer('daily_token_cap'),
     weeklyTokenCap: integer('weekly_token_cap'),
-
-    planTier: text('plan_tier').default('free').notNull(),
-    planPeriod: text('plan_period'),
-    planStartedAt: timestamp('plan_started_at', { mode: 'date' }),
-    planExpiresAt: timestamp('plan_expires_at', { mode: 'date' }),
   }
 );
 
@@ -93,15 +88,15 @@ export const subscriptions = pgTable(
       .notNull()
       .unique()
       .references(() => users.id, { onDelete: 'cascade' }),
-    planTier: text('plan_tier').default('pro').notNull(),
-    planPeriod: text('plan_period').default('monthly').notNull(),
-    amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+    planTier: text('plan_tier').default('free').notNull(),
+    planPeriod: text('plan_period'),
+    amount: decimal('amount', { precision: 12, scale: 2 }),
     currency: text('currency').default('BDT').notNull(),
     status: text('status').default('ACTIVE').notNull(),
     requestId: text('request_id').unique(),
     subscriberId: text('subscriber_id'),
-    currentPeriodStart: timestamp('current_period_start', { mode: 'date' }).notNull(),
-    currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }).notNull(),
+    currentPeriodStart: timestamp('current_period_start', { mode: 'date' }),
+    currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
     cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),

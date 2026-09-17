@@ -3,6 +3,7 @@ import { db } from "../db";
 import {
   users,
   usageEvents,
+  subscriptions,
   messages,
   payments,
   documents,
@@ -72,7 +73,7 @@ const ORDER_BY = {
   cost: desc(users.totalCostMicros),
   recent: desc(users.updatedAt),
   joined: desc(users.createdAt),
-  unsubscribed: desc(users.planExpiresAt),
+  unsubscribed: desc(subscriptions.currentPeriodEnd),
 };
 
 export interface ListUsersOptions {
@@ -121,9 +122,9 @@ export async function listUsers(options: ListUsersOptions = {}) {
   const baseWhere = composeWhere(
     sort === "unsubscribed"
       ? and(
-          isNotNull(users.planExpiresAt),
-          lt(users.planExpiresAt, new Date()),
-          start ? gte(users.planExpiresAt, start) : undefined,
+          isNotNull(subscriptions.currentPeriodEnd),
+          lt(subscriptions.currentPeriodEnd, new Date()),
+          start ? gte(subscriptions.currentPeriodEnd, start) : undefined,
         )
       : undefined,
     searchWhere(q),
@@ -146,9 +147,9 @@ export async function listUsers(options: ListUsersOptions = {}) {
     totalLlmCalls: users.totalLlmCalls,
     dailyTokenCap: users.dailyTokenCap,
     weeklyTokenCap: users.weeklyTokenCap,
-    planTier: users.planTier,
-    planPeriod: users.planPeriod,
-    planExpiresAt: users.planExpiresAt,
+    planTier: sql<string>`COALESCE(${subscriptions.planTier}, 'free')`,
+    planPeriod: subscriptions.planPeriod,
+    planExpiresAt: subscriptions.currentPeriodEnd,
   };
 
   if (!start || period === "all") {
@@ -160,8 +161,7 @@ export async function listUsers(options: ListUsersOptions = {}) {
         _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
         _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
       })
-      .from(users)
-      .where(baseWhere)
+      .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(baseWhere)
       .orderBy(ORDER_BY[sort] ?? ORDER_BY.cost)
       .limit(limit)
       .offset(offset);
@@ -257,8 +257,7 @@ export async function listUsers(options: ListUsersOptions = {}) {
         _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
         _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
       })
-      .from(users)
-      .where(inArray(users.id, pageUserIds));
+      .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(inArray(users.id, pageUserIds));
 
     const userMap = new Map(fetchedUsers.map((u) => [u.id, u]));
     pageUsers = pageUserIds
@@ -273,8 +272,7 @@ export async function listUsers(options: ListUsersOptions = {}) {
         _count_reminders: sql<number>`(SELECT count(*) FROM ${reminders} WHERE ${reminders.userId} = ${users.id})::int`,
         _count_facts: sql<number>`(SELECT count(*) FROM ${facts} WHERE ${facts.userId} = ${users.id})::int`,
       })
-      .from(users)
-      .where(baseWhere)
+      .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(baseWhere)
       .orderBy(ORDER_BY[sort] ?? ORDER_BY.recent)
       .limit(limit)
       .offset(offset);
@@ -361,14 +359,12 @@ export async function countListedUsers(
 
   const [res] = await db
     .select({ count: count() })
-    .from(users)
-    .where(
-      composeWhere(
+    .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(composeWhere(
         sort === "unsubscribed"
           ? and(
-              isNotNull(users.planExpiresAt),
-              lt(users.planExpiresAt, new Date()),
-              start ? gte(users.planExpiresAt, start) : undefined,
+              isNotNull(subscriptions.currentPeriodEnd),
+              lt(subscriptions.currentPeriodEnd, new Date()),
+              start ? gte(subscriptions.currentPeriodEnd, start) : undefined,
             )
           : undefined,
         searchWhere(q),
@@ -416,19 +412,16 @@ export async function getAttention(limit = 12): Promise<AttentionItem[]> {
         id: users.id,
         name: users.name,
         phoneNumber: users.phoneNumber,
-        planTier: users.planTier,
-        planPeriod: users.planPeriod,
-        planExpiresAt: users.planExpiresAt,
+        planTier: sql<string>`COALESCE(${subscriptions.planTier}, 'free')`,
+        planPeriod: subscriptions.planPeriod,
+        planExpiresAt: subscriptions.currentPeriodEnd,
       })
-      .from(users)
-      .where(
-        and(
-          isNotNull(users.planExpiresAt),
-          lt(users.planExpiresAt, new Date()),
-          not(eq(users.planTier, "free")),
+      .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(and(isNotNull(subscriptions.currentPeriodEnd),
+          lt(subscriptions.currentPeriodEnd, new Date()),
+          not(eq(subscriptions.planTier, "free")),
         ),
       )
-      .orderBy(desc(users.planExpiresAt))
+      .orderBy(desc(subscriptions.currentPeriodEnd))
       .limit(limit),
     db
       .select({
@@ -466,9 +459,9 @@ export async function getAttention(limit = 12): Promise<AttentionItem[]> {
         name: users.name,
         phoneNumber: users.phoneNumber,
         dailyTokenCap: users.dailyTokenCap,
-        planTier: users.planTier,
+        planTier: sql<string>`COALESCE(${subscriptions.planTier}, 'free')`,
       })
-      .from(users)
+      .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId))
       .where(
         inArray(
           users.id,
@@ -612,12 +605,9 @@ const [{ count: activeCount }] = await db
 
 const [{ count: unsubscribedCount }] = await db
     .select({ count: count() })
-    .from(users)
-    .where(
-        and(
-            isNotNull(users.planExpiresAt),
-            lt(users.planExpiresAt, now),
-            start ? gte(users.planExpiresAt, start) : undefined,
+    .from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(and(isNotNull(subscriptions.currentPeriodEnd),
+            lt(subscriptions.currentPeriodEnd, now),
+            start ? gte(subscriptions.currentPeriodEnd, start) : undefined,
         ),
     );
 
@@ -712,8 +702,9 @@ export async function getUserDetail(id: string) {
     .startOf("day")
     .toJSDate();
 
-  const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  if (!user) return null;
+    const [result] = await db.select().from(users).leftJoin(subscriptions, eq(users.id, subscriptions.userId)).where(eq(users.id, id)).limit(1);
+  if (!result) return null;
+  const user = { ...result.users, planTier: result.subscriptions?.planTier ?? 'free', planPeriod: result.subscriptions?.planPeriod ?? null, planExpiresAt: result.subscriptions?.currentPeriodEnd ?? null };
 
   const [
     [{ count: messageCount }],

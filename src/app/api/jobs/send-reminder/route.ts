@@ -79,20 +79,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'not_claimable' }, { status: 200 });
     }
 
-    // A blocked or lapsed user must never receive another send — otherwise a recurring
+    // A blocked user must never receive another send — otherwise a recurring
     // reminder keeps relaying itself indefinitely, as paid template sends once
     // it falls outside the 24-hour service window. Cancelling rather than
     // silently skipping stops the recurrence chain here (no next occurrence is
     // queued below) and keeps this delivery visible in the dashboard's
     // past-reminders list instead of vanishing without a trace.
     //
-    // Free users are delivered to: reminders are what the Free plan includes,
+    // Free and lapsed users are delivered to: reminders are what the Free plan includes,
     // and the monthly limit is enforced when they are created, not here.
-    const now = new Date();
-    const isLapsed = reminder.user.planTier !== 'free' && reminder.user.planTier !== 'permanent' && reminder.user.planExpiresAt && reminder.user.planExpiresAt < now;
-    if (reminder.user.blockedAt || isLapsed) {
-      await db.update(reminders).set({ status: 'CANCELLED', errorMessage: reminder.user.blockedAt ? 'User is blocked' : 'User is unsubscribed' }).where(eq(reminders.id, reminderId));
-      return NextResponse.json({ status: reminder.user.blockedAt ? 'user_blocked' : 'user_unsubscribed' }, { status: 200 });
+    if (reminder.user.blockedAt) {
+      await db.update(reminders).set({ status: 'CANCELLED', errorMessage: 'User is blocked' }).where(eq(reminders.id, reminderId));
+      return NextResponse.json({ status: 'user_blocked' }, { status: 200 });
     }
 
     // Check 24-Hour Customer Service Window

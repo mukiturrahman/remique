@@ -9,7 +9,8 @@ import type { ParsedAssistantResponse } from '../types/llm.types';
  */
 
 /** New reminders a Free user may ask for per calendar month. */
-export const FREE_MONTHLY_REMINDER_LIMIT = 5;
+export const FREE_MONTHLY_REMINDER_LIMIT = 15;
+export const WEEKLY_FILE_LIMIT = 10;
 
 /**
  * How a reminder row came to exist.
@@ -24,13 +25,50 @@ export type ReminderSource = 'user' | 'snooze' | 'recurrence';
 /** The second-brain features a Free user is refused, each with its own reply. */
 export type LockedFeature = 'files' | 'notes' | 'documents' | 'memory';
 
-export function hasSecondBrain(
-  user: { planTier: string; planExpiresAt: Date | null },
-  now: Date = new Date()
-): boolean {
-  if (user.planTier === 'permanent') return true;
-  if (user.planTier !== 'pro') return false;
-  return !user.planExpiresAt || user.planExpiresAt >= now;
+export interface PlanState {
+  planTier: string;
+  planPeriod: string | null;
+  planExpiresAt: Date | null;
+}
+
+export function planStateOf(user: { subscription: any }): PlanState {
+  const sub = user.subscription;
+  if (!sub) {
+    return { planTier: 'free', planPeriod: null, planExpiresAt: null };
+  }
+  return {
+    planTier: sub.planTier || 'free',
+    planPeriod: sub.planPeriod || null,
+    planExpiresAt: sub.currentPeriodEnd || null,
+  };
+}
+
+export function isLapsed(plan: PlanState, now: Date = new Date()): boolean {
+  if (plan.planTier !== 'pro') return false;
+  return plan.planExpiresAt !== null && plan.planExpiresAt < now;
+}
+
+export function reminderPolicyFor(plan: PlanState, now: Date = new Date()): 'unlimited' | 'monthly-capped' | 'locked' {
+  if (isLapsed(plan, now)) return 'locked';
+  if (plan.planTier === 'free') return 'monthly-capped';
+  return 'unlimited'; // permanent or active pro
+}
+
+export function fileSaveLimit(plan: PlanState, now: Date = new Date()): number {
+  if (isLapsed(plan, now)) return 0;
+  if (plan.planTier === 'free') return 0;
+  if (plan.planTier === 'pro' && plan.planPeriod === 'weekly') return WEEKLY_FILE_LIMIT;
+  return Infinity; // permanent or active-pro-monthly
+}
+
+export function lockReasonFor(plan: PlanState, now: Date = new Date()): 'expired' | 'never_subscribed' {
+  return isLapsed(plan, now) ? 'expired' : 'never_subscribed';
+}
+
+export function hasSecondBrain(plan: PlanState, now: Date = new Date()): boolean {
+  if (plan.planTier === 'permanent') return true;
+  if (plan.planTier !== 'pro') return false;
+  return !isLapsed(plan, now);
 }
 
 /**

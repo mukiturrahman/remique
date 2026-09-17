@@ -47,17 +47,20 @@ export async function recordUsage(params: RecordUsageParams): Promise<void> {
   }
 }
 
+import { type PlanState, isLapsed as planIsLapsed } from './plan';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export async function checkQuota(user: {
-  id: string;
-  planTier?: string;
-  dailyTokenCap: number | null;
-  weeklyTokenCap: number | null;
-  planExpiresAt?: Date | null;
-}): Promise<QuotaVerdict> {
-  const isLapsed = user.planTier !== 'free' && user.planTier !== 'permanent' && user.planExpiresAt && user.planExpiresAt < new Date();
-  const isUnlimited = (user.planTier === 'permanent' || user.planTier === 'pro') && !isLapsed;
+export async function checkQuota(
+  user: {
+    id: string;
+    dailyTokenCap: number | null;
+    weeklyTokenCap: number | null;
+  },
+  plan: PlanState
+): Promise<QuotaVerdict> {
+  const isLapsed = planIsLapsed(plan);
+  const isUnlimited = (plan.planTier === 'permanent' || plan.planTier === 'pro') && !isLapsed;
 
   if (isUnlimited && user.dailyTokenCap === null && user.weeklyTokenCap === null) {
     return { allowed: true, window: null, used: 0, cap: Infinity };
