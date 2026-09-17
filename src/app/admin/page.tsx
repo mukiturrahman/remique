@@ -189,13 +189,9 @@ export default async function AdminOverviewPage({
   // the door need the count, which the list above already carries.
   const onlyIds = view === 'attention' ? await getAttentionUserIds() : null;
 
-  console.log("[admin] 1. getAttention starting");
+
   const attention = await getAttention();
-  console.log("[admin] 1. getAttention finished");
-
-
-
-  console.log("[admin] 2. listUsers starting");
+ 
   const users = await listUsers({
       sort,
       period,
@@ -204,20 +200,18 @@ export default async function AdminOverviewPage({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
   });
-  console.log("[admin] 2. listUsers finished");
-
-  console.log("[admin] 3. getDashboardTotals starting");
+ 
   const totals = await getDashboardTotals(period);
-  console.log("[admin] 3. getDashboardTotals finished");
+ 
 
-  console.log("[admin] 4. countListedUsers starting");
+
   const matchCount = await countListedUsers({
       sort,
       period,
       q,
       onlyIds,
   });
-  console.log("[admin] 4. countListedUsers finished");
+ 
 
   const pageCount = Math.max(1, Math.ceil(matchCount / PAGE_SIZE));
   const filtered = q !== '' || view === 'attention';

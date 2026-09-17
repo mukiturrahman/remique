@@ -12,6 +12,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log('\n=============================================');
+    console.log('[bdApps Webhook] Received payload:');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('=============================================\n');
+
     const result = await handleBdappsWebhook(payload);
 
     return NextResponse.json({

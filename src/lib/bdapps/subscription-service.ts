@@ -241,13 +241,20 @@ export async function handleBdappsCallback(
   const statusDetail = searchParams.get('statusDetail');
   const errorCode = searchParams.get('errorCode') || searchParams.get('error');
 
-  // Check failure cases
-  const isFailed =
-    (errorCode && !['0', '0000', 'null', 'undefined', 'success'].includes(errorCode.toLowerCase())) ||
+  const isSuccess = 
+    status === 'SUCCESS' || 
+    status === 'REGISTERED' || 
+    statusCode === 'S1000' ||
+    (errorCode && ['0', '0000', 'success'].includes(errorCode.toLowerCase()));
+
+  const isExplicitFailure =
     status === 'CANCELLED' ||
     status === 'FAILED' ||
     status === 'DECLINED' ||
     statusCode === 'E1001';
+
+  // If it's explicitly failed, or if it lacks any clear success signal
+  const isFailed = isExplicitFailure || !isSuccess;
 
   if (isFailed) {
     const errorMsg =
