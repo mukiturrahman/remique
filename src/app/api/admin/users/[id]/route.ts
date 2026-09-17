@@ -5,10 +5,10 @@ import { eq } from 'drizzle-orm';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     if (!id) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
