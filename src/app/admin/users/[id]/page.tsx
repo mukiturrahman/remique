@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { BlockToggle } from '@/components/admin/block-toggle';
+import { DeleteUserButton } from '@/components/admin/delete-user-button';
 import { legend } from '@/components/admin/controls';
 import { BackIcon, ClockIcon, FileIcon } from '@/components/admin/icons';
 import { planLabel } from '@/components/admin/plan-badge';
@@ -171,7 +172,10 @@ export default async function AdminUserDetailPage({
             ) : null}
           </div>
 
-          <BlockToggle userId={user.id} blocked={user.blockedAt !== null} />
+          <div className="flex items-center">
+            <BlockToggle userId={user.id} blocked={user.blockedAt !== null} />
+            <DeleteUserButton userId={user.id} />
+          </div>
         </div>
       </div>
 
