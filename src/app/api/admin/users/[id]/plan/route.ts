@@ -72,7 +72,7 @@ export async function POST(
   // expiry behind would keep the user on the "unsubscribed" list forever.
   const data =
     tier === 'free'
-      ? { planTier: 'free', planPeriod: null, status: 'CANCELLED', currentPeriodStart: null, currentPeriodEnd: null, cancelledAt: new Date() }
+      ? { planTier: 'free', planPeriod: null, status: 'ACTIVE', currentPeriodStart: null, currentPeriodEnd: null, cancelledAt: new Date() }
       : { planTier: tier, planPeriod: period, status: 'ACTIVE', currentPeriodStart: new Date(), currentPeriodEnd: expiresAt, cancelledAt: null };
 
   try {

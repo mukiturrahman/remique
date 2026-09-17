@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { users, subscriptions, payments } from '@/db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { eq, or, and, not } from 'drizzle-orm';
 import { env } from '../env';
 import { buildBdappsAuthorizationUrl, generateRequestId } from './signer';
 import {
@@ -107,9 +107,13 @@ export async function initiateBdappsSubscription(
     };
   }
 
-  // Check for active subscription regardless of current user.planTier
+  // Check for active PRO subscription (free tier users must always go through PGW)
   const activeSub = await db.query.subscriptions.findFirst({
-    where: and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')),
+    where: and(
+      eq(subscriptions.userId, user.id), 
+      eq(subscriptions.status, 'ACTIVE'),
+      not(eq(subscriptions.planTier, 'free'))
+    ),
   });
 
   if (activeSub) {
@@ -198,9 +202,14 @@ export async function initiateBdappsSubscription(
     ? `${baseRedirect}&requestId=${requestId}` 
     : `${baseRedirect}?requestId=${requestId}`;
 
+  // The user's whatsappId is typically in '8801...' format, but we'll strip the '88'
+  // to match the expected local BD format '01...' if it starts with '8801'.
+  const msisdn = user.whatsappId.startsWith('8801') ? user.whatsappId.slice(2) : user.whatsappId;
+
   const { url } = buildBdappsAuthorizationUrl({
     redirectUrl,
     requestId,
+    msisdn,
   });
 
   return {

@@ -52,6 +52,7 @@ export function buildBdappsAuthorizationUrl(params: {
   requestId?: string;
   requestTime?: string;
   authBaseUrl?: string;
+  msisdn?: string;
 }): {
   url: string;
   requestId: string;
@@ -72,13 +73,20 @@ export function buildBdappsAuthorizationUrl(params: {
   const requestTime = params.requestTime || new Date().toISOString();
   const signature = generateBdappsSignature(apiKey, requestTime, apiSecret);
 
-  const query = new URLSearchParams({
+  const queryParams: Record<string, string> = {
     apiKey,
     requestId,
     requestTime,
     signature,
     redirectUrl: params.redirectUrl,
-  });
+  };
+
+  if (params.msisdn) {
+    queryParams.msisdn = params.msisdn;
+    queryParams.paymentOption = 'bKash';
+  }
+
+  const query = new URLSearchParams(queryParams);
 
   return {
     url: `${authBaseUrl}?${query.toString()}`,

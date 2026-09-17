@@ -1446,7 +1446,7 @@ pendingIntent: 'reschedule_choice',
   }
 
   if (parsed.intent === 'cancel_subscription') {
-    await db.update(subscriptions).set({ status: 'CANCELLED', planTier: 'free', planPeriod: null, cancelledAt: new Date() }).where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')));
+    await db.update(subscriptions).set({ status: 'ACTIVE', planTier: 'free', planPeriod: null, cancelledAt: new Date() }).where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, 'ACTIVE')));
 
     await replyToUser(
       user,
