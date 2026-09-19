@@ -43,15 +43,7 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-    const searchParams = new URLSearchParams();
-    
-    if (formData) {
-      formData.forEach((value, key) => {
-        if (typeof value === 'string') {
-          searchParams.append(key, value);
-        }
-      });
-    }
+
 
     // Also fallback to URL search params if any
     req.nextUrl.searchParams.forEach((value, key) => {
