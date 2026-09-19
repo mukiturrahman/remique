@@ -18,6 +18,7 @@
     "@aws-sdk/client-s3": "^3.1127.0",
     "@aws-sdk/client-sqs": "^3.1126.0",
     "@aws-sdk/s3-request-presigner": "^3.1127.0",
+    "@microsoft/clarity": "^1.0.2",
     "@upstash/qstash": "^2.7.20",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",

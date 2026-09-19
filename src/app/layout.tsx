@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Geist, Geist_Mono, Anek_Bangla, Caveat } from "nex
 import { LangProvider } from "@/components/lang-provider";
 import { FloatingLangToggle } from "@/components/lang-toggle";
 import { Analytics } from "@/components/analytics";
+import ClarityProvider from "@/components/clarity";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -116,6 +117,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-ground font-sans text-ink">
         <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
         <Analytics />
+        <ClarityProvider />
         <LangProvider>
           <FloatingLangToggle />
           {children}
