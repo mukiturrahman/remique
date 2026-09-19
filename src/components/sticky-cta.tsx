@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLang } from '@/components/lang-provider';
 
 export function StickyCta() {
   const [isVisible, setIsVisible] = useState(false);
+  const { lang } = useLang();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,7 +36,7 @@ export function StickyCta() {
         href="/pricing"
         className="flex items-center gap-2 rounded-full bg-brand px-6 py-4 font-display font-semibold text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-brand-deep hover:scale-105 active:scale-95 transition-all duration-200"
       >
-        <span className="text-[15px] sm:text-[16px] tracking-wide">আনলক সেকেন্ড ব্রেইন 🧠</span>
+        <span className="text-[15px] sm:text-[16px] tracking-wide">{lang === 'en' ? 'Unlock Second Brain 🧠' : 'আনলক সেকেন্ড ব্রেইন 🧠'}</span>
       </Link>
     </div>
   );
