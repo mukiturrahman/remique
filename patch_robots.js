@@ -1,4 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server';
+const fs = require('fs');
+let code = fs.readFileSync('src/middleware.ts', 'utf8');
+
+const newCode = `import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, adminConfigured, verifySessionToken } from './lib/admin-auth';
 
 export const config = {
@@ -35,3 +38,7 @@ export async function middleware(request: NextRequest) {
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   return response;
 }
+`;
+
+fs.writeFileSync('src/middleware.ts', newCode);
+console.log('Patched middleware');

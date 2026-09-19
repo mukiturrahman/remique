@@ -41,36 +41,50 @@ const cursive = Caveat({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://remique.com"),
-  title: "Remique | Your WhatsApp AI Assistant",
-  description:
-    "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali. No app to install, no account to make.",
-  keywords: ["WhatsApp AI", "WhatsApp reminders", "Banglish reminders", "Bengali AI assistant", "Remique", "AI reminder bot"],
-  openGraph: {
-    title: "Remique | Your WhatsApp AI Assistant",
-    description: "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali.",
-    url: "/",
-    siteName: "Remique",
-    locale: "en_US",
-    type: "website",
-    images: [
-      {
-        url: "/openGraphBannerImage.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Remique | Your WhatsApp AI Assistant",
-      },
+    alternates: { canonical: "/" },
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://remique.app"),
+    title: "Remique | আপনার WhatsApp AI অ্যাসিস্ট্যান্ট",
+    description:
+        "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা বাংলায়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। মাথা হালকা, চিন্তা শূন্য…",
+    keywords: [
+        "WhatsApp AI",
+        "WhatsApp reminders",
+        "Banglish reminders",
+        "Bengali AI assistant",
+        "Remique",
+        "AI reminder bot",
+        "বাংলা এআই",
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Remique | Your WhatsApp AI Assistant",
-    description: "Set reminders by texting Remique on WhatsApp the way you actually type — English, Banglish or Bengali.",
-    images: ["/openGraphBannerImage.jpg"],
-  },
-  icons: {
-    icon: "/logo.ico",
-  },
+    openGraph: {
+        title: "Remique | আপনার WhatsApp AI অ্যাসিস্ট্যান্ট",
+        description:
+            "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা বাংলায়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। মাথা হালকা, চিন্তা শূন্য…",
+        url: "/",
+        siteName: "Remique",
+        locale: "en_US",
+        type: "website",
+        images: [
+            {
+                url: "https://remique.app/og.png",
+                width: 1200,
+                height: 630,
+                alt: "Remique | Your WhatsApp AI Assistant",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Remique | আপনার WhatsApp AI অ্যাসিস্ট্যান্ট",
+        description:
+            "Remique একটা WhatsApp AI অ্যাসিস্ট্যান্ট, যে আপনার হয়ে সব মনে রাখে। যেভাবে মাথায় আসে সেভাবেই লিখুন — ইংরেজিতে, বাংলিশে, বা বাংলায়। ও কনফার্ম করে, সময় ঠিক করে রাখে, আর সময়মতো মনে করিয়ে দেয়। মাথা হালকা, চিন্তা শূন্য…",
+        images: ["/openGraphBannerImage.jpg"],
+    },
+    icons: {
+        icon: "/logo.ico",
+    },
+    verification: {
+        google: "S1eQjpOnmD5rCjEXeC7Sop2YECwbxMy6oGyeLO4Lppc",
+    },
 };
 
 export const viewport: Viewport = {
@@ -111,7 +125,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="bn"
       className={`${display.variable} ${sans.variable} ${mono.variable} ${bangla.variable} ${cursive.variable}`}
     >
       <body className="antialiased min-h-screen bg-ground font-sans text-ink">
