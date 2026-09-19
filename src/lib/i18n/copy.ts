@@ -234,7 +234,7 @@ const en = {
         title: "Your memory has a backup now.",
         body: "Pick a plan, pay with bKash, and start texting Remique. That is the whole setup.",
         cta: "Unlock 2nd Brain 🧠",
-        priceNote: "Starts at ৳49/week",
+        priceNote: "Only ৳190/month",
         cardNote: "No card needed",
     },
 
@@ -744,7 +744,7 @@ const bn: Copy = {
         title: "আপনার মেমোরির এখন একটা ব্যাকআপ আছে।",
         body: "একটা প্ল্যান বাছুন, bKash-এ পে করুন, আর Remique-কে মেসেজ দেওয়া শুরু করুন। সেটআপ বলতে এটুকুই।",
         cta: "আনলক সেকেন্ড ব্রেইন 🧠",
-        priceNote: "শুরু ৳49/সপ্তাহ থেকে",
+        priceNote: "মাত্র ৳190/মাসে",
         cardNote: "কার্ড লাগবে না",
     },
 
