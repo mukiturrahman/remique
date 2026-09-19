@@ -1,0 +1,712 @@
+import { db } from '@/db';
+import { users, subscriptions, payments } from '@/db/schema';
+import { eq, or, and, not } from 'drizzle-orm';
+import { env } from '../env';
+import { buildBdappsAuthorizationUrl, generateRequestId } from './signer';
+import {
+  BDAPPS_ERROR_CODES,
+  BDAPPS_PLANS,
+  BdappsPlanPeriod,
+  InitiateBdappsSubscriptionParams,
+  InitiateBdappsSubscriptionResult,
+  HandleBdappsCallbackResult,
+  HandleBdappsWebhookResult,
+} from './types';
+import { sendWhatsAppMessage } from '../whatsapp';
+
+/**
+ * Normalizes a Bangladeshi phone number into standard formats:
+ * - rawNumber: e.g. "8801712345678" (for whatsappId)
+ * - formatted: e.g. "+8801712345678" (for display/E.164)
+ */
+export function normalizeBdPhoneNumber(input: string): {
+  raw: string;
+  formatted: string;
+} {
+  const digits = input.replace(/\D/g, '');
+  let raw = digits;
+
+  if (raw.startsWith('880')) {
+    // already starts with country code
+  } else if (raw.startsWith('0')) {
+    raw = '88' + raw;
+  } else if (raw.length === 10) {
+    raw = '880' + raw;
+  }
+
+  return {
+    raw,
+    formatted: `+${raw}`,
+  };
+}
+
+/**
+ * Initiates a bdApps bKash subscription flow:
+ * 1. Resolves or creates user record
+ * 2. Generates unique 15-char requestId
+ * 3. Records a PENDING subscription & payment
+ * 4. Generates signed bdApps authorization URL
+ */
+export async function initiateBdappsSubscription(
+  params: InitiateBdappsSubscriptionParams
+): Promise<InitiateBdappsSubscriptionResult> {
+  const planPeriod = (params.planPeriod?.toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
+  const plan = BDAPPS_PLANS[planPeriod];
+
+  let user = null;
+
+  if (params.userId) {
+    user = await db.query.users.findFirst({
+      where: eq(users.id, params.userId),
+    });
+  }
+
+  if (!user && params.phoneNumber) {
+    const { raw, formatted } = normalizeBdPhoneNumber(params.phoneNumber);
+    user = await db.query.users.findFirst({
+      where: or(
+        eq(users.whatsappId, raw),
+        eq(users.phoneNumber, formatted),
+        eq(users.phoneNumber, raw)
+      ),
+    });
+
+    try {
+      if (!user) {
+        try {
+          const [newUser] = await db.insert(users).values({
+            whatsappId: raw,
+            phoneNumber: formatted,
+            email: params.email || null,
+            timezone: 'Asia/Dhaka',
+          }).returning();
+          user = newUser;
+        } catch (insertErr: any) {
+          if (insertErr.code === '23505' && insertErr.message?.includes('email')) {
+            // Email taken, insert without email
+            const [newUser] = await db.insert(users).values({
+              whatsappId: raw,
+              phoneNumber: formatted,
+              timezone: 'Asia/Dhaka',
+            }).returning();
+            user = newUser;
+          } else {
+            throw insertErr;
+          }
+        }
+        await db.insert(subscriptions).values({
+          userId: user.id,
+          planTier: 'free',
+          status: 'ACTIVE'
+        });
+      } else if (params.email && user.email !== params.email) {
+        try {
+          const [updatedUser] = await db.update(users).set({ email: params.email }).where(eq(users.id, user!.id)).returning();
+          user = updatedUser;
+        } catch (updateErr) {
+          console.error('[bdApps] Failed to update user email:', updateErr);
+        }
+      }
+    } catch (dbError: any) {
+      if (dbError.code === '23505') {
+        return {
+          success: false,
+          error: 'ALREADY_SUBSCRIBED',
+        };
+      }
+      throw dbError;
+    }
+  }
+
+  if (!user) {
+    return {
+      success: false,
+      error: 'User or valid phone number is required to initiate subscription.',
+    };
+  }
+
+  // Check for active PRO subscription (free tier users must always go through PGW)
+  const activeSub = await db.query.subscriptions.findFirst({
+    where: and(
+      eq(subscriptions.userId, user.id), 
+      eq(subscriptions.status, 'ACTIVE'),
+      not(eq(subscriptions.planTier, 'free'))
+    ),
+  });
+
+  if (activeSub) {
+    if (activeSub.planTier === 'pro' && activeSub.planPeriod === plan.period) {
+      return {
+        success: false,
+        error: 'ALREADY_SUBSCRIBED',
+      };
+    }
+    
+    // User already has an active bdapps subscription but planTier or period got changed.
+    // Handle the plan change directly by restoring 'pro' status without a new authorization.
+    const now = new Date();
+    const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    
+    await db.update(subscriptions).set({
+      planTier: 'pro',
+      planPeriod: plan.period,
+      status: 'ACTIVE',
+      currentPeriodStart: now,
+      currentPeriodEnd: activeSub.currentPeriodEnd && activeSub.currentPeriodEnd > now ? activeSub.currentPeriodEnd : periodEnd,
+    }).where(eq(subscriptions.userId, user!.id));
+    
+    await db.update(subscriptions).set({
+      planPeriod: plan.period,
+      amount: plan.amount.toString(),
+      currency: plan.currency,
+    }).where(eq(subscriptions.id, activeSub.id));
+
+    return {
+      success: true,
+      authorizationUrl: `https://wa.me/8801895638339?text=Hi`,
+      requestId: activeSub.requestId || undefined,
+      user: {
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+      },
+    };
+  }
+
+  let bkashNormalized = null;
+  if (params.bkashNumber) {
+    const { raw } = normalizeBdPhoneNumber(params.bkashNumber);
+    bkashNormalized = raw;
+  }
+
+  const requestId = generateRequestId();
+  const now = new Date();
+  const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+  // Upsert subscription in PENDING state
+  const [subscription] = await db.insert(subscriptions).values({
+    userId: user.id,
+    planTier: 'pro',
+    planPeriod: plan.period,
+    amount: plan.amount.toString(),
+    currency: plan.currency,
+    status: 'PENDING',
+    requestId,
+    subscriberId: bkashNormalized,
+    currentPeriodStart: now,
+    currentPeriodEnd: periodEnd,
+  }).onConflictDoUpdate({
+    target: subscriptions.userId,
+    set: {
+      planTier: 'pro',
+      planPeriod: plan.period,
+      amount: plan.amount.toString(),
+      currency: plan.currency,
+      status: 'PENDING',
+      requestId,
+      subscriberId: bkashNormalized,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+    },
+  }).returning();
+
+  // Track payment attempt
+  await db.insert(payments).values({
+    userId: user.id,
+    amount: plan.amount.toString(),
+    currency: plan.currency,
+    provider: 'bdapps',
+    externalId: requestId,
+    status: 'PENDING',
+    periodStart: now,
+    periodEnd: periodEnd,
+    subscriptionId: subscription.id,
+  });
+
+  const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
+  const baseRedirect = params.redirectUrl || `${appBaseUrl}/api/billing/bdapps/callback`;
+  const redirectUrl = baseRedirect.includes('?') 
+    ? `${baseRedirect}&requestId=${requestId}` 
+    : `${baseRedirect}?requestId=${requestId}`;
+
+  // The user's whatsappId is typically in '8801...' format, but we'll strip the '88'
+  // to match the expected local BD format '01...' if it starts with '8801'.
+  let msisdn = user.whatsappId.startsWith('8801') ? user.whatsappId.slice(2) : user.whatsappId;
+  if (bkashNormalized) {
+    msisdn = bkashNormalized.startsWith('8801') ? bkashNormalized.slice(2) : bkashNormalized;
+  }
+
+  const { url } = buildBdappsAuthorizationUrl({
+    redirectUrl,
+    requestId,
+    msisdn,
+  });
+
+  console.log('\n=============================================');
+  console.log('[bdApps Authorization] Generated URL!');
+  console.log('Original redirectUrl:', redirectUrl);
+  console.log('Final Signed URL:', url.replace(/signature=[^&]+/, 'signature=[REDACTED]').replace(/apiKey=[^&]+/, 'apiKey=[REDACTED]'));
+  console.log('=============================================\n');
+
+  return {
+    success: true,
+    authorizationUrl: url,
+    requestId,
+    user: {
+      id: user.id,
+      phoneNumber: user.phoneNumber,
+    },
+  };
+}
+
+/**
+ * Handles browser return after bdApps authorization.
+ * bdApps redirects back with status, requestId, subscriberId, errorCode, etc.
+ */
+export async function handleBdappsCallback(
+  searchParams: URLSearchParams
+): Promise<HandleBdappsCallbackResult> {
+  console.log('\n=============================================');
+  console.log('[bdApps Browser Callback] Initiated!');
+  console.log('Received searchParams:', Object.fromEntries(searchParams.entries()));
+  
+  const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
+
+  // Make key lookup case-insensitive just in case bdApps changed their casing
+  const getParam = (key: string) => {
+    for (const [k, v] of searchParams.entries()) {
+      if (k.toLowerCase() === key.toLowerCase()) return v;
+    }
+    return null;
+  };
+
+  const requestId = getParam('requestId') || getParam('reference') || undefined;
+  const subscriberId = getParam('subscriberId') || undefined;
+  const status = getParam('status')?.toUpperCase();
+  const statusCode = getParam('statusCode');
+  const statusDetail = getParam('statusDetail');
+  const errorCode = getParam('errorCode') || getParam('error');
+
+  const isSuccess = 
+    status === 'SUCCESS' || 
+    status === 'REGISTERED' || 
+    statusCode === 'S1000' ||
+    (errorCode && ['0', '0000', 'success'].includes(errorCode.toLowerCase()));
+
+  const isExplicitFailure =
+    status === 'CANCELLED' ||
+    status === 'FAILED' ||
+    status === 'DECLINED' ||
+    statusCode === 'E1001';
+
+  const isStatusMissing = !status && !errorCode && !statusCode;
+  const isFailed = isExplicitFailure || (!isSuccess && !isStatusMissing);
+
+  console.log(`[bdApps Browser Callback] Analysis - isSuccess: ${!!isSuccess}, isExplicitFailure: ${!!isExplicitFailure}, isStatusMissing: ${isStatusMissing}, isFailed: ${isFailed}`);
+
+  if (isFailed) {
+    const errorMsg =
+      (errorCode && BDAPPS_ERROR_CODES[errorCode]) ||
+      statusDetail ||
+      'Subscription was cancelled or could not be completed.';
+
+    console.log(`[bdApps Browser Callback] Detected explicit failure. Error: ${errorMsg}`);
+
+    if (requestId) {
+      console.log(`[bdApps Browser Callback] Reverting subscription ${requestId} to FREE tier...`);
+      await db.update(payments)
+        .set({ status: 'FAILED' })
+        .where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING')))
+        .catch(() => {});
+
+      await db.update(subscriptions)
+        .set({ 
+          planTier: 'free',
+          planPeriod: null,
+          status: 'ACTIVE',
+          currentPeriodStart: null,
+          currentPeriodEnd: null
+        })
+        .where(and(eq(subscriptions.requestId, requestId), eq(subscriptions.status, 'PENDING')))
+        .catch(() => {});
+    }
+
+    return {
+      success: false,
+      requestId,
+      subscriberId,
+      error: errorMsg,
+      errorCode: errorCode || undefined,
+      redirectUrl: `${appBaseUrl}/billing/cancelled?error=${encodeURIComponent(errorMsg)}`,
+    };
+  }
+
+  let subscriptionRecord = null;
+  let userRecord = null;
+  
+  if (requestId) {
+    console.log(`[bdApps Browser Callback] Looking up subscription for requestId: ${requestId}`);
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      const res = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.requestId, requestId),
+        with: { user: true },
+      });
+      if (res) {
+        subscriptionRecord = res;
+        userRecord = res.user;
+        if (isStatusMissing && res.status !== 'ACTIVE') {
+          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/5)`);
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  if (!subscriptionRecord && subscriberId) {
+    const cleanSub = subscriberId.replace(/^tel:/, '').replace(/\D/g, '');
+    const res = await db.select({
+      subscription: subscriptions,
+      user: users
+    })
+    .from(subscriptions)
+    .leftJoin(users, eq(subscriptions.userId, users.id))
+    .where(or(
+      eq(subscriptions.subscriberId, subscriberId),
+      eq(users.whatsappId, cleanSub),
+      eq(users.phoneNumber, `+${cleanSub}`)
+    ))
+    .limit(1);
+
+    if (res.length > 0) {
+      subscriptionRecord = res[0].subscription;
+      userRecord = res[0].user;
+    }
+  }
+  
+  const subscription = subscriptionRecord ? { ...subscriptionRecord, user: userRecord } : null;
+
+  if (!subscription) {
+    return {
+      success: false,
+      requestId,
+      subscriberId,
+      error: 'No matching subscription request found.',
+      redirectUrl: `${appBaseUrl}/billing/cancelled?error=${encodeURIComponent(
+        'Subscription session not found. Please try again.'
+      )}`,
+    };
+  }
+
+  // If status is still missing and webhook hasn't activated it, we cannot proceed.
+  // The user probably backed out or closed the page without paying.
+  if (isStatusMissing && subscription.status !== 'ACTIVE') {
+    console.log('[bdApps Browser Callback] Polling exhausted. DB is still not ACTIVE. Aborting with Ghosting/Timeout error.');
+    
+    if (requestId) {
+      console.log(`[bdApps Browser Callback] Reverting ghosted subscription ${requestId} to FREE tier...`);
+      await db.update(payments)
+        .set({ status: 'FAILED' })
+        .where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING')))
+        .catch(() => {});
+
+      await db.update(subscriptions)
+        .set({ 
+          planTier: 'free',
+          planPeriod: null,
+          status: 'ACTIVE',
+          currentPeriodStart: null,
+          currentPeriodEnd: null
+        })
+        .where(and(eq(subscriptions.requestId, requestId), eq(subscriptions.status, 'PENDING')))
+        .catch(() => {});
+    }
+
+    return {
+      success: false,
+      requestId,
+      subscriberId,
+      error: 'Payment not completed or pending confirmation.',
+      redirectUrl: `${appBaseUrl}/billing/cancelled?error=${encodeURIComponent(
+        'Payment was not completed. If you paid, please wait a few seconds and check WhatsApp.'
+      )}`,
+    };
+  }
+
+  const user = subscription.user;
+  if (!user) throw new Error("Subscription has no associated user");
+  const planPeriod = ((subscription.planPeriod || '').toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
+  const plan = BDAPPS_PLANS[planPeriod];
+  const now = new Date();
+  const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+  // Activate Subscription ONLY if we have an explicit success signal
+  // (If it was already active from webhook, this is just a safe idempotent update)
+  if (isSuccess) {
+    console.log('[bdApps Browser Callback] Explicit success signal found. Activating in DB (if not already)...');
+    await db.update(subscriptions).set({
+      status: 'ACTIVE',
+      subscriberId: subscriberId || subscription.subscriberId,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      cancelledAt: null,
+    }).where(eq(subscriptions.id, subscription.id));
+
+    if (requestId) {
+      await db.update(payments)
+        .set({
+          status: 'PAID',
+          subscriptionId: subscription.id,
+        })
+        .where(eq(payments.externalId, requestId))
+        .catch(() => {});
+    }
+  } else {
+    console.log('[bdApps Browser Callback] DB was already ACTIVE from webhook. Proceeding to success redirect!');
+  }
+
+  console.log('[bdApps Browser Callback] Complete! Redirecting user to WhatsApp.\n=============================================');
+
+  // (WhatsApp notification is now handled by the webhook)
+
+  return {
+    success: true,
+    requestId,
+    subscriberId,
+    user: {
+      id: user.id,
+      phoneNumber: user.phoneNumber,
+    },
+    redirectUrl: `${appBaseUrl}/billing/success?requestId=${requestId || ''}`,
+  };
+}
+
+/**
+ * Handles asynchronous IPN notifications (webhooks) from bdApps.
+ */
+export async function handleBdappsWebhook(
+  payload: any
+): Promise<HandleBdappsWebhookResult> {
+  if (!payload || typeof payload !== 'object') {
+    return {
+      success: false,
+      status: 'UNKNOWN',
+      actionTaken: 'ERROR',
+      error: 'Invalid webhook payload structure',
+    };
+  }
+
+  const rawStatus = (payload.status || '').toUpperCase();
+  const requestId = payload.requestId || undefined;
+  const rawSubscriberId = payload.subscriberId || undefined;
+  const subscriberDigits = rawSubscriberId
+    ? rawSubscriberId.replace(/^tel:/, '').replace(/\D/g, '')
+    : undefined;
+
+  // Find existing subscription
+  let subscriptionRecord = null;
+  let userRecord = null;
+  
+  if (requestId) {
+    const res = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.requestId, requestId),
+      with: { user: true },
+    });
+    if (res) {
+      subscriptionRecord = res;
+      userRecord = res.user;
+    }
+  }
+
+  if (!subscriptionRecord && subscriberDigits) {
+    const res = await db.select({
+      subscription: subscriptions,
+      user: users
+    })
+    .from(subscriptions)
+    .leftJoin(users, eq(subscriptions.userId, users.id))
+    .where(or(
+      eq(subscriptions.subscriberId, rawSubscriberId),
+      eq(users.whatsappId, subscriberDigits),
+      eq(users.phoneNumber, `+${subscriberDigits}`)
+    ))
+    .limit(1);
+
+    if (res.length > 0) {
+      subscriptionRecord = res[0].subscription;
+      userRecord = res[0].user;
+    }
+  }
+  
+  let subscription = subscriptionRecord ? { ...subscriptionRecord, user: userRecord } : null;
+
+  if (rawStatus === 'REGISTERED') {
+    if (!subscription && subscriberDigits) {
+      // If user exists, create active subscription
+      const user = await db.query.users.findFirst({
+        where: or(
+          eq(users.whatsappId, subscriberDigits),
+          eq(users.phoneNumber, `+${subscriberDigits}`)
+        ),
+      });
+
+      if (user) {
+        const plan = BDAPPS_PLANS.monthly;
+        const now = new Date();
+        const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+        const [upserted] = await db.insert(subscriptions).values({
+          userId: user.id,
+          planTier: 'pro',
+          planPeriod: plan.period,
+          amount: plan.amount.toString(),
+          currency: plan.currency,
+          status: 'ACTIVE',
+          requestId: requestId || generateRequestId(),
+          subscriberId: rawSubscriberId,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+        }).onConflictDoUpdate({
+          target: subscriptions.userId,
+          set: {
+            status: 'ACTIVE',
+            subscriberId: rawSubscriberId,
+            currentPeriodStart: now,
+            currentPeriodEnd: periodEnd,
+          },
+        }).returning();
+        subscription = { ...upserted, user };
+      }
+    }
+
+    if (subscription) {
+      const planPeriod = ((subscription.planPeriod || '').toLowerCase() === 'weekly' ? 'weekly' : 'monthly') as BdappsPlanPeriod;
+      const plan = BDAPPS_PLANS[planPeriod];
+      const now = new Date();
+      const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+      await db.update(subscriptions).set({
+        status: 'ACTIVE',
+        subscriberId: rawSubscriberId || subscription.subscriberId,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        cancelledAt: null,
+      }).where(eq(subscriptions.id, subscription.id));
+
+
+      // Record renewal or active payment
+      await db.insert(payments).values({
+        userId: subscription.userId,
+        amount: plan.amount.toString(),
+        currency: plan.currency,
+        provider: 'bdapps',
+        externalId: requestId ? `${requestId}_renew_${Date.now()}` : undefined,
+        status: 'PAID',
+        periodStart: now,
+        periodEnd: periodEnd,
+        subscriptionId: subscription.id,
+      });
+
+      // Notify user via WhatsApp if they were pending
+      if (subscription.status !== 'ACTIVE') {
+        try {
+          
+          await sendWhatsAppMessage(
+            subscription.user?.phoneNumber || `+${subscriberDigits}`,
+            `Your second brain has been activated 🧠✨.\n\n` +
+              `You're now on Remique Pro ${plan.label}. You can start chatting right away!`
+          );
+        } catch (notifyErr) {
+          console.warn('[bdApps] Failed to send WhatsApp confirmation message in webhook:', notifyErr);
+        }
+      }
+
+      return {
+        success: true,
+        status: rawStatus,
+        subscriberId: rawSubscriberId,
+        requestId,
+        actionTaken: 'ACTIVATED',
+      };
+    }
+
+    return {
+      success: true,
+      status: rawStatus,
+      subscriberId: rawSubscriberId,
+      requestId,
+      actionTaken: 'IGNORED',
+    };
+  }
+
+  if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED') {
+    if (subscription && subscription.status === 'PENDING') {
+      await db.update(subscriptions).set({
+        planTier: 'free',
+        planPeriod: null,
+        status: 'ACTIVE',
+        currentPeriodStart: null,
+        currentPeriodEnd: null
+      }).where(eq(subscriptions.id, subscription.id));
+      
+      if (requestId) {
+        await db.update(payments).set({ status: 'FAILED' }).where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING'))).catch(() => {});
+      }
+
+      return {
+        success: true,
+        status: rawStatus,
+        subscriberId: rawSubscriberId,
+        requestId,
+        actionTaken: 'REVERTED_TO_FREE',
+      };
+    }
+  }
+
+  if (rawStatus === 'UNREGISTERED') {
+    if (subscription) {
+      await db.update(subscriptions).set({
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+      }).where(eq(subscriptions.id, subscription.id));
+
+
+      return {
+        success: true,
+        status: rawStatus,
+        subscriberId: rawSubscriberId,
+        requestId,
+        actionTaken: 'CANCELLED',
+      };
+    }
+  }
+
+  return {
+    success: true,
+    status: rawStatus,
+    subscriberId: rawSubscriberId,
+    requestId,
+    actionTaken: 'IGNORED',
+  };
+}
+
+/**
+ * Cancels a user's subscription in Remique.
+ */
+export async function cancelSubscription(userId: string): Promise<{ success: boolean; error?: string }> {
+  const subscription = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.userId, userId),
+  });
+
+  if (!subscription || subscription.status !== 'ACTIVE') {
+    return { success: false, error: 'No active subscription found.' };
+  }
+
+  await db.update(subscriptions).set({
+    status: 'CANCELLED',
+    cancelledAt: new Date(),
+  }).where(eq(subscriptions.userId, userId));
+
+
+  return { success: true };
+}

@@ -7,6 +7,21 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.remique.app',
+          },
+        ],
+        destination: 'https://remique.app/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
