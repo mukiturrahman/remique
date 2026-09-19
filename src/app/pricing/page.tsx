@@ -9,6 +9,8 @@ import { useCopy, useLang } from "@/components/lang-provider";
 export default function PricingPage() {
   const [billing, setBilling] = useState<"weekly" | "monthly">("monthly");
   const [phone, setPhone] = useState("");
+  const [bkashPhone, setBkashPhone] = useState("");
+  const [isSameNumber, setIsSameNumber] = useState(false);
   const [email, setEmail] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,7 +46,7 @@ export default function PricingPage() {
 
   async function handleCheckout(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!phone.trim() || !email.trim()) {
+    if (!phone.trim() || !email.trim() || !bkashPhone.trim()) {
       setError(page.modal.errorEmpty);
       return;
     }
@@ -59,6 +61,7 @@ export default function PricingPage() {
         body: JSON.stringify({
           phoneNumber: phone.trim(),
           email: email.trim(),
+          bkashNumber: bkashPhone.trim(),
           planPeriod: billing,
         }),
       });
@@ -118,10 +121,46 @@ export default function PricingPage() {
                     type="tel"
                     placeholder={page.modal.phonePlaceholder}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (isSameNumber) setBkashPhone(e.target.value);
+                    }}
                     disabled={loading}
                     className="w-full rounded-xl border border-white/30 bg-white/40 px-4 py-3 text-[15px] font-medium text-ink placeholder:text-ink-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                     autoFocus
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block font-mono text-[11px] uppercase tracking-wider text-ink-3">
+                      {(page.modal as any).bkashLabel || "bKash Number"}
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        className="w-3.5 h-3.5 accent-[#E2136E] rounded-sm border-white/40 bg-white/20"
+                        checked={isSameNumber}
+                        onChange={(e) => {
+                          setIsSameNumber(e.target.checked);
+                          if (e.target.checked) setBkashPhone(phone);
+                        }}
+                      />
+                      <span className="text-[12px] font-medium text-ink-2 hover:text-ink transition-colors">
+                        {(page.modal as any).sameAsWhatsapp || (lang === 'bn' ? "WhatsApp-এর মত একই" : "Same as WhatsApp")}
+                      </span>
+                    </label>
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder={(page.modal as any).bkashPlaceholder || "018XXXXXXXX"}
+                    value={bkashPhone}
+                    onChange={(e) => {
+                      setBkashPhone(e.target.value);
+                      if (isSameNumber) setIsSameNumber(false);
+                    }}
+                    disabled={loading}
+                    className="w-full rounded-xl border border-white/30 bg-white/40 px-4 py-3 text-[15px] font-medium text-ink placeholder:text-ink-3 focus:border-[#E2136E] focus:outline-none focus:ring-1 focus:ring-[#E2136E]"
+                    required
                   />
                 </div>
 

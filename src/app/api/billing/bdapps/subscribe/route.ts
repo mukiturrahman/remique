@@ -4,7 +4,7 @@ import { initiateBdappsSubscription } from '@/lib/bdapps';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { phoneNumber, email, planPeriod, userId } = body;
+    const { phoneNumber, email, planPeriod, userId, bkashNumber } = body;
 
     if (!phoneNumber && !userId) {
       return NextResponse.json(
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       phoneNumber,
       email,
       userId,
+      bkashNumber,
       planPeriod,
     });
 

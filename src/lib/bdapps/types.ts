@@ -63,6 +63,7 @@ export interface InitiateBdappsSubscriptionParams {
   phoneNumber?: string;
   email?: string;
   userId?: string;
+  bkashNumber?: string;
   planPeriod?: BdappsPlanPeriod | string;
   redirectUrl?: string;
 }

@@ -154,6 +154,12 @@ export async function initiateBdappsSubscription(
     };
   }
 
+  let bkashNormalized = null;
+  if (params.bkashNumber) {
+    const { raw } = normalizeBdPhoneNumber(params.bkashNumber);
+    bkashNormalized = raw;
+  }
+
   const requestId = generateRequestId();
   const now = new Date();
   const periodEnd = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
@@ -167,6 +173,7 @@ export async function initiateBdappsSubscription(
     currency: plan.currency,
     status: 'PENDING',
     requestId,
+    subscriberId: bkashNormalized,
     currentPeriodStart: now,
     currentPeriodEnd: periodEnd,
   }).onConflictDoUpdate({
@@ -178,6 +185,7 @@ export async function initiateBdappsSubscription(
       currency: plan.currency,
       status: 'PENDING',
       requestId,
+      subscriberId: bkashNormalized,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
     },
@@ -204,7 +212,10 @@ export async function initiateBdappsSubscription(
 
   // The user's whatsappId is typically in '8801...' format, but we'll strip the '88'
   // to match the expected local BD format '01...' if it starts with '8801'.
-  const msisdn = user.whatsappId.startsWith('8801') ? user.whatsappId.slice(2) : user.whatsappId;
+  let msisdn = user.whatsappId.startsWith('8801') ? user.whatsappId.slice(2) : user.whatsappId;
+  if (bkashNormalized) {
+    msisdn = bkashNormalized.startsWith('8801') ? bkashNormalized.slice(2) : bkashNormalized;
+  }
 
   const { url } = buildBdappsAuthorizationUrl({
     redirectUrl,
@@ -316,7 +327,7 @@ export async function handleBdappsCallback(
   
   if (requestId) {
     console.log(`[bdApps Browser Callback] Looking up subscription for requestId: ${requestId}`);
-    for (let attempt = 1; attempt <= 12; attempt++) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
       const res = await db.query.subscriptions.findFirst({
         where: eq(subscriptions.requestId, requestId),
         with: { user: true },
@@ -325,7 +336,7 @@ export async function handleBdappsCallback(
         subscriptionRecord = res;
         userRecord = res.user;
         if (isStatusMissing && res.status !== 'ACTIVE') {
-          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/12)`);
+          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/5)`);
           await new Promise(r => setTimeout(r, 1000));
           continue;
         }
@@ -438,21 +449,7 @@ export async function handleBdappsCallback(
 
   console.log('[bdApps Browser Callback] Complete! Redirecting user to WhatsApp.\n=============================================');
 
-  // Notify user via WhatsApp
-  try {
-    const expiryDateStr = periodEnd.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    await sendWhatsAppMessage(
-      user.phoneNumber,
-      `Your second brain has been activated 🧠✨.\n\n` +
-        `You're now on Remique Pro ${plan.label}. You can start chatting right away!`
-    );
-  } catch (notifyErr) {
-    console.warn('[bdApps] Failed to send WhatsApp confirmation message:', notifyErr);
-  }
+  // (WhatsApp notification is now handled by the webhook)
 
   return {
     success: true,
@@ -591,6 +588,20 @@ export async function handleBdappsWebhook(
         periodEnd: periodEnd,
         subscriptionId: subscription.id,
       });
+
+      // Notify user via WhatsApp if they were pending
+      if (subscription.status !== 'ACTIVE') {
+        try {
+          
+          await sendWhatsAppMessage(
+            subscription.user?.phoneNumber || `+${subscriberDigits}`,
+            `Your second brain has been activated 🧠✨.\n\n` +
+              `You're now on Remique Pro ${plan.label}. You can start chatting right away!`
+          );
+        } catch (notifyErr) {
+          console.warn('[bdApps] Failed to send WhatsApp confirmation message in webhook:', notifyErr);
+        }
+      }
 
       return {
         success: true,
