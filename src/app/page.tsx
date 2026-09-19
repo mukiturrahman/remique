@@ -3,6 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/navbar";
+import { NavHeader } from "@/components/nav-header";
+import { CopyButton } from "@/components/copy-button";
+import { StickyCta } from "@/components/sticky-cta";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroRotator } from "@/components/hero-rotator";
 import { HeroVideo } from "@/components/hero-video";
@@ -603,6 +606,7 @@ function HomeContent() {
 
                 <SiteFooter />
             </div>
+            <StickyCta />
         </main>
     );
 }
