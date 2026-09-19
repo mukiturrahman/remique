@@ -96,7 +96,7 @@ export interface HandleBdappsWebhookResult {
   status: string;
   subscriberId?: string;
   requestId?: string;
-  actionTaken: 'ACTIVATED' | 'CANCELLED' | 'IGNORED' | 'ERROR';
+  actionTaken: 'ACTIVATED' | 'CANCELLED' | 'IGNORED' | 'ERROR' | 'REVERTED_TO_FREE';
   error?: string;
 }
 
