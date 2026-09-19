@@ -1,17 +1,36 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { SiteFooter } from "@/components/site-footer";
 import { IconCheck, IconArrow } from "@/components/icons";
-import { useCopy } from "@/components/lang-provider";
+import { useCopy, useLang } from "@/components/lang-provider";
 
 function BillingSuccessInner() {
   const searchParams = useSearchParams();
+  const [countdown, setCountdown] = useState(3);
+  
+  useEffect(() => {
+    // Auto-redirect to WhatsApp after 3 seconds to give the pixel time to fire
+    const redirectTimer = setTimeout(() => {
+      window.location.href = "https://wa.me/8801895638339?text=Hi";
+    }, 3000);
+    
+    const interval = setInterval(() => {
+      setCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    
+    return () => {
+      clearTimeout(redirectTimer);
+      clearInterval(interval);
+    };
+  }, []);
+
   const displayId = searchParams.get("requestId") || searchParams.get("trxID");
   const c = useCopy();
+  const { lang } = useLang();
   const copy = c.billingSuccess;
 
   return (
@@ -49,7 +68,7 @@ function BillingSuccessInner() {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 font-display text-[15px] font-semibold tracking-tight text-white shadow-lift transition-all duration-200 hover:bg-brand-deep hover:shadow-panel"
           >
-            {copy.ctaWhatsApp}
+            {countdown > 0 ? (lang === 'bn' ? `${countdown} সেকেন্ডের মধ্যে রিডাইরেক্ট হচ্ছে...` : `Redirecting in ${countdown}...`) : copy.ctaWhatsApp}
             <IconArrow className="h-4 w-4" />
           </a>
           <Link

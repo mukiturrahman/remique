@@ -477,7 +477,7 @@ export async function handleBdappsCallback(
       id: user.id,
       phoneNumber: user.phoneNumber,
     },
-    redirectUrl: `https://wa.me/8801895638339?text=Hi`,
+    redirectUrl: `${appBaseUrl}/billing/success?requestId=${requestId || ''}`,
   };
 }
 

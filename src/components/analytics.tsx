@@ -13,6 +13,13 @@ function AnalyticsTracker() {
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).fbq) {
       (window as any).fbq('track', 'PageView');
+      
+      if (pathname === '/billing/success') {
+        // Track the purchase/subscription event for Meta Pixel
+        // Assuming 190 BDT since we only offer monthly now.
+        (window as any).fbq('track', 'Purchase', { currency: 'BDT', value: 190 });
+        (window as any).fbq('track', 'Subscribe', { currency: 'BDT', value: 190 });
+      }
     }
   }, [pathname, searchParams]);
 

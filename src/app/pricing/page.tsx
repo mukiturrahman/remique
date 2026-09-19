@@ -82,6 +82,11 @@ export default function PricingPage() {
         throw new Error(data.error || page.modal.errorFailed);
       }
 
+      // Track InitiateCheckout just before leaving the site
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'InitiateCheckout', { currency: 'BDT', value: price });
+      }
+
       // Redirect to bdApps bKash hosted authorization page
       window.location.href = data.authorizationUrl;
     } catch (err: any) {
