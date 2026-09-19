@@ -3,6 +3,7 @@ import { handleBdappsCallback } from '@/lib/bdapps';
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('\n[bdApps Callback API] GET called. Raw URL:', req.url);
     const result = await handleBdappsCallback(req.nextUrl.searchParams);
     return NextResponse.redirect(result.redirectUrl);
   } catch (error: any) {
@@ -14,7 +15,34 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData().catch(() => null);
+        console.log('[bdApps Callback API] Method POST called. Content-Type:', req.headers.get('content-type'));
+    const contentType = req.headers.get('content-type') || '';
+    
+    let formData = null;
+    let jsonBody = null;
+    if (contentType.includes('application/json')) {
+      jsonBody = await req.clone().json().catch(() => null);
+    } else {
+      formData = await req.clone().formData().catch(() => null);
+    }
+    
+    const searchParams = new URLSearchParams();
+    
+    if (formData) {
+      formData.forEach((value, key) => {
+        if (typeof value === 'string') {
+          searchParams.append(key, value);
+        }
+      });
+    }
+
+    if (jsonBody) {
+      Object.entries(jsonBody).forEach(([key, value]) => {
+        if (typeof value === 'string' || typeof value === 'number') {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
     const searchParams = new URLSearchParams();
     
     if (formData) {

@@ -212,6 +212,12 @@ export async function initiateBdappsSubscription(
     msisdn,
   });
 
+  console.log('\n=============================================');
+  console.log('[bdApps Authorization] Generated URL!');
+  console.log('Original redirectUrl:', redirectUrl);
+  console.log('Final Signed URL:', url.replace(/signature=[^&]+/, 'signature=[REDACTED]').replace(/apiKey=[^&]+/, 'apiKey=[REDACTED]'));
+  console.log('=============================================\n');
+
   return {
     success: true,
     authorizationUrl: url,
@@ -236,12 +242,20 @@ export async function handleBdappsCallback(
   
   const appBaseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '');
 
-  const requestId = searchParams.get('requestId') || searchParams.get('reference') || undefined;
-  const subscriberId = searchParams.get('subscriberId') || undefined;
-  const status = searchParams.get('status')?.toUpperCase();
-  const statusCode = searchParams.get('statusCode');
-  const statusDetail = searchParams.get('statusDetail');
-  const errorCode = searchParams.get('errorCode') || searchParams.get('error');
+  // Make key lookup case-insensitive just in case bdApps changed their casing
+  const getParam = (key: string) => {
+    for (const [k, v] of searchParams.entries()) {
+      if (k.toLowerCase() === key.toLowerCase()) return v;
+    }
+    return null;
+  };
+
+  const requestId = getParam('requestId') || getParam('reference') || undefined;
+  const subscriberId = getParam('subscriberId') || undefined;
+  const status = getParam('status')?.toUpperCase();
+  const statusCode = getParam('statusCode');
+  const statusDetail = getParam('statusDetail');
+  const errorCode = getParam('errorCode') || getParam('error');
 
   const isSuccess = 
     status === 'SUCCESS' || 
@@ -302,7 +316,7 @@ export async function handleBdappsCallback(
   
   if (requestId) {
     console.log(`[bdApps Browser Callback] Looking up subscription for requestId: ${requestId}`);
-    for (let attempt = 1; attempt <= 4; attempt++) {
+    for (let attempt = 1; attempt <= 12; attempt++) {
       const res = await db.query.subscriptions.findFirst({
         where: eq(subscriptions.requestId, requestId),
         with: { user: true },
@@ -311,7 +325,7 @@ export async function handleBdappsCallback(
         subscriptionRecord = res;
         userRecord = res.user;
         if (isStatusMissing && res.status !== 'ACTIVE') {
-          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/4)`);
+          console.log(`[bdApps Browser Callback] Status missing from URL. DB is still PENDING. Waiting 1s for webhook... (Attempt ${attempt}/12)`);
           await new Promise(r => setTimeout(r, 1000));
           continue;
         }
@@ -359,6 +373,26 @@ export async function handleBdappsCallback(
   // The user probably backed out or closed the page without paying.
   if (isStatusMissing && subscription.status !== 'ACTIVE') {
     console.log('[bdApps Browser Callback] Polling exhausted. DB is still not ACTIVE. Aborting with Ghosting/Timeout error.');
+    
+    if (requestId) {
+      console.log(`[bdApps Browser Callback] Reverting ghosted subscription ${requestId} to FREE tier...`);
+      await db.update(payments)
+        .set({ status: 'FAILED' })
+        .where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING')))
+        .catch(() => {});
+
+      await db.update(subscriptions)
+        .set({ 
+          planTier: 'free',
+          planPeriod: null,
+          status: 'ACTIVE',
+          currentPeriodStart: null,
+          currentPeriodEnd: null
+        })
+        .where(and(eq(subscriptions.requestId, requestId), eq(subscriptions.status, 'PENDING')))
+        .catch(() => {});
+    }
+
     return {
       success: false,
       requestId,
@@ -574,6 +608,30 @@ export async function handleBdappsWebhook(
       requestId,
       actionTaken: 'IGNORED',
     };
+  }
+
+  if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED') {
+    if (subscription && subscription.status === 'PENDING') {
+      await db.update(subscriptions).set({
+        planTier: 'free',
+        planPeriod: null,
+        status: 'ACTIVE',
+        currentPeriodStart: null,
+        currentPeriodEnd: null
+      }).where(eq(subscriptions.id, subscription.id));
+      
+      if (requestId) {
+        await db.update(payments).set({ status: 'FAILED' }).where(and(eq(payments.externalId, requestId), eq(payments.status, 'PENDING'))).catch(() => {});
+      }
+
+      return {
+        success: true,
+        status: rawStatus,
+        subscriberId: rawSubscriberId,
+        requestId,
+        actionTaken: 'REVERTED_TO_FREE',
+      };
+    }
   }
 
   if (rawStatus === 'UNREGISTERED') {

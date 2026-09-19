@@ -1,4 +1,4 @@
-import { eq, and, gte, gt, sql } from 'drizzle-orm';
+import { eq, and, gte, gt, sql, desc } from 'drizzle-orm';
 import { db } from '../db';
 import { messages, users, conversationStates, reminders, facts, notes, documents, subscriptions } from '../db/schema';
 import { processIncomingUserMessage } from './reminder-service';
@@ -75,6 +75,35 @@ export async function runMessagePipeline(message: PipelineMessage): Promise<Pipe
 
   const now = new Date();
   const plan = planStateOf(user);
+
+  // Free Tier Pause Logic
+  if (plan.planTier === 'free') {
+    const botMessages = await db.select({ messageText: messages.messageText })
+      .from(messages)
+      .where(and(eq(messages.userId, user.id), eq(messages.direction, 'OUTBOUND')))
+      .orderBy(desc(messages.createdAt))
+      .limit(50);
+      
+    const sentWelcome = botMessages.some(m => m.messageText.includes('Your second brain is activated'));
+    const sentPaywall = botMessages.some(m => m.messageText.includes('You are not subscribed'));
+
+    if (!sentWelcome) {
+      const welcomeMsg = user.name
+        ? `Hey ${user.name}! 🧠 Your second brain is activated. I'm Remique, your WhatsApp AI assistant, here to keep your schedule on point. ✨`
+        : `Hey! 🧠 Your second brain is activated. I'm Remique, your WhatsApp AI assistant, here to keep your schedule on point. What should I call you? ✨`;
+      await replyToUser(user, welcomeMsg);
+      await db.update(messages).set({ processedAt: new Date(), processingError: 'free_tier_welcome' }).where(eq(messages.id, message.id));
+      return { status: 'processed', retryable: false };
+    } else if (!sentPaywall) {
+      await replyToUser(user, "Ohho :( You are not subscribed. Please visit the website to subscribe and get your second brain activated! 🚀\n\n🔗 https://www.remique.app/pricing");
+      await db.update(messages).set({ processedAt: new Date(), processingError: 'free_tier_paywall' }).where(eq(messages.id, message.id));
+      return { status: 'processed', retryable: false };
+    } else {
+      console.warn(`[Remique] Free user message dropped userId=${user.id}`);
+      await db.update(messages).set({ processedAt: new Date(), processingError: 'free_tier_ignored' }).where(eq(messages.id, message.id));
+      return { status: 'processed', retryable: false };
+    }
+  }
   const userIsLapsed = isLapsed(plan, now);
 
   if (userIsLapsed) {
